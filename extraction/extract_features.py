@@ -1,19 +1,19 @@
 """
-Unified offline feature extraction via single generate() call.
-Qwen2.5-7B-Instruct, 2 GPUs, per-field storage.
+Offline feature extraction: 3-step approach (A->B->C).
+  Step A: model(prompt) — extract all prompt-side features via hooks + output_attentions
+  Step B: model.generate(prompt) — get generated token ids only
+  Step C: model(prompt+gen) — extract all generation-side features via hooks + output_attentions
 
-One generate() call per sample extracts BOTH input and generation features:
-- The first generation step's hidden_states contains the full prompt hidden states
-- Subsequent steps contain per-token generation hidden states
+Qwen2.5-7B-Instruct, 2 x A100, device_map='auto', attn_implementation='eager'.
+All hidden states captured via explicit hooks (embed_tokens, each layer, final norm)
+to avoid any ambiguity in outputs.hidden_states indexing.
 """
 
 import os
 import json
 import torch
-import numpy as np
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from scipy.stats import skew as scipy_skew
 
 # ============================================================
 # Config
@@ -40,12 +40,8 @@ def load_geometry_of_truth_cities():
             continue
         with open(path) as f:
             for row in csv.DictReader(f):
-                samples.append({
-                    "text": row["statement"],
-                    "label": int(row["label"]),
-                    "dataset": "geometry_of_truth_cities",
-                    "split": split,
-                })
+                samples.append({"text": row["statement"], "label": int(row["label"]),
+                                "dataset": "geometry_of_truth_cities", "split": split})
     return samples
 
 
@@ -62,12 +58,8 @@ def load_easy2hard_amc():
                 text = d.get("problem", "")
                 difficulty = d.get("rating", None)
                 if text and difficulty is not None:
-                    samples.append({
-                        "text": text,
-                        "label": float(difficulty),
-                        "dataset": "easy2hard_amc",
-                        "split": split,
-                    })
+                    samples.append({"text": text, "label": float(difficulty),
+                                    "dataset": "easy2hard_amc", "split": split})
     return samples
 
 
@@ -84,12 +76,8 @@ def load_metatool_task1():
                 text = d.get("query", "")
                 label = 1 if d.get("label") == "positive" else 0
                 if text:
-                    samples.append({
-                        "text": text,
-                        "label": label,
-                        "dataset": "metatool_task1",
-                        "split": split,
-                    })
+                    samples.append({"text": text, "label": label,
+                                    "dataset": "metatool_task1", "split": split})
     return samples
 
 
@@ -106,46 +94,62 @@ def load_retrievalqa():
                 text = d.get("question", "")
                 label = d.get("param_knowledge_answerable", None)
                 if text and label is not None:
-                    samples.append({
-                        "text": text,
-                        "label": int(label),
-                        "dataset": "retrievalqa",
-                        "split": split,
-                    })
+                    samples.append({"text": text, "label": int(label),
+                                    "dataset": "retrievalqa", "split": split})
     return samples
 
 
 # ============================================================
 # Helpers
 # ============================================================
-def compute_attn_stats(attentions, n_layers, n_heads, seq_len):
-    """Compute per-head attention stats: skewness, entropy, diag_logmean."""
-    attn_stats = torch.zeros(n_layers, n_heads, 3, dtype=torch.float32)
-    for li in range(min(n_layers, len(attentions))):
-        attn_layer = attentions[li][0].float()  # (n_heads, seq_len, seq_len) — move to float, stays on same device
-        for hi in range(n_heads):
-            attn_row = attn_layer[hi, -1, :seq_len]
-            if attn_row.sum() > 0:
-                attn_stats[li, hi, 0] = scipy_skew(attn_row.cpu().numpy())
-            ar = attn_row.clamp(min=1e-10)
-            attn_stats[li, hi, 1] = -(ar * torch.log(ar)).sum().item()
-            diag = torch.diagonal(attn_layer[hi, :seq_len, :seq_len])
-            attn_stats[li, hi, 2] = torch.log(diag.clamp(min=1e-10)).mean().item()
-    return attn_stats
+def safe_log(x, eps=1e-12):
+    return x.clamp_min(eps).log()
 
 
-def compute_logit_stats(logits):
-    """Compute scalar stats from logits at a single position."""
-    logits = logits.float()
+def row_skewness(x):
+    x = x.float()
+    m = x.mean()
+    c = x - m
+    var = c.pow(2).mean()
+    if var.item() <= 1e-20:
+        return torch.tensor(0.0, dtype=torch.float32)
+    return (c.pow(3).mean() / var.sqrt().pow(3)).cpu()
+
+
+def row_entropy(p):
+    p = p.float().clamp_min(1e-12)
+    return (-(p * p.log()).sum()).cpu()
+
+
+def compute_logit_stats(logits_1d):
+    logits = logits_1d.float()
     probs = torch.softmax(logits, dim=-1)
-    top5 = torch.topk(logits, 5)
+    topk = torch.topk(logits, k=5, dim=-1)
     return {
-        "logsumexp": torch.logsumexp(logits, dim=-1).item(),
-        "max_prob": probs.max().item(),
-        "entropy": -(probs * torch.log(probs + 1e-10)).sum().item(),
-        "top5_values": top5.values.cpu().tolist(),
-        "top5_indices": top5.indices.cpu().tolist(),
+        "logsumexp": float(torch.logsumexp(logits, dim=-1).item()),
+        "max_prob": float(probs.max().item()),
+        "entropy": float((-(probs * safe_log(probs))).sum().item()),
+        "top5_values": topk.values.cpu().tolist(),
+        "top5_indices": topk.indices.cpu().tolist(),
     }
+
+
+def compute_attn_stats_from_full_matrix(attentions, n_layers, n_heads, row_idx, col_end):
+    """Compute attn stats from full attention matrices (NOT KV-cache decode).
+    attentions: list of (1, n_heads, seq_len, seq_len) tensors on CPU.
+    row_idx: which query position's attention row to analyze.
+    col_end: how many key positions to consider.
+    """
+    out = torch.zeros(n_layers, n_heads, 3, dtype=torch.float32)
+    for li in range(n_layers):
+        attn_layer = attentions[li][0].float()  # (n_heads, seq_len, seq_len)
+        diag = attn_layer[:, torch.arange(col_end), torch.arange(col_end)]  # (n_heads, col_end)
+        for hi in range(n_heads):
+            row = attn_layer[hi, row_idx, :col_end]
+            out[li, hi, 0] = row_skewness(row)
+            out[li, hi, 1] = row_entropy(row)
+            out[li, hi, 2] = safe_log(diag[hi]).mean().cpu()
+    return out
 
 
 # ============================================================
@@ -159,227 +163,219 @@ class FeatureExtractor:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
         self.model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            torch_dtype=torch.float16,
-            device_map="auto",
+            model_name, torch_dtype=torch.float16, device_map="auto",
             attn_implementation="eager",
         )
         self.model.eval()
 
-        config = self.model.config
-        self.n_layers = config.num_hidden_layers
-        self.n_heads = config.num_attention_heads
-        self.n_kv_heads = getattr(config, "num_key_value_heads", self.n_heads)
-        self.hidden_dim = config.hidden_size
-        self.head_dim = self.hidden_dim // self.n_heads
+        cfg = self.model.config
+        self.n_layers = cfg.num_hidden_layers
+        self.n_heads = cfg.num_attention_heads
+        self.n_kv_heads = getattr(cfg, "num_key_value_heads", self.n_heads)
+        self.hidden_dim = cfg.hidden_size
+        self.head_dim = getattr(cfg, "head_dim", self.hidden_dim // self.n_heads)
         self.kv_group_size = self.n_heads // self.n_kv_heads
+        self.input_device = self.model.get_input_embeddings().weight.device
+
         print(f"Model: {self.n_layers}L, {self.n_heads}H, {self.n_kv_heads}KV, "
-              f"dim={self.hidden_dim}, head={self.head_dim}")
+              f"dim={self.hidden_dim}, head={self.head_dim}, input_device={self.input_device}")
 
-        # Determine which device the first and last layers are on
-        self.collect_device = torch.device("cpu")  # always collect to CPU to avoid cross-device issues
-
-        # Hooks for per-head activation (before o_proj) and value states
-        self.head_activations = {}
-        self.value_states = {}
+        self._layer_hidden = {}
+        self._embed_hidden = None
+        self._norm_hidden = None
+        self._o_proj_inputs = {}
+        self._v_proj_outputs = {}
+        self._hooks = []
         self._register_hooks()
 
     def _register_hooks(self):
-        for idx in range(self.n_layers):
-            layer = self.model.model.layers[idx]
+        def hook_embed(module, input, output):
+            self._embed_hidden = output.detach().cpu()
+        self._hooks.append(self.model.model.embed_tokens.register_forward_hook(hook_embed))
+
+        for idx, layer in enumerate(self.model.model.layers):
+            def hook_layer(module, input, output, i=idx):
+                self._layer_hidden[i] = output[0].detach().cpu()
+            self._hooks.append(layer.register_forward_hook(hook_layer))
 
             def hook_oproj(module, input, output, i=idx):
-                # Only capture on first forward (prefill) — don't overwrite
-                if i not in self.head_activations:
-                    self.head_activations[i] = input[0].detach().cpu()
-            layer.self_attn.o_proj.register_forward_hook(hook_oproj)
+                self._o_proj_inputs[i] = input[0].detach().cpu()
+            self._hooks.append(layer.self_attn.o_proj.register_forward_hook(hook_oproj))
 
             def hook_vproj(module, input, output, i=idx):
-                if i not in self.value_states:
-                    self.value_states[i] = output.detach().cpu()
-            layer.self_attn.v_proj.register_forward_hook(hook_vproj)
+                self._v_proj_outputs[i] = output.detach().cpu()
+            self._hooks.append(layer.self_attn.v_proj.register_forward_hook(hook_vproj))
 
-    def _clear_hooks(self):
-        self.head_activations = {}
-        self.value_states = {}
+        def hook_norm(module, input, output):
+            self._norm_hidden = output.detach().cpu()
+        self._hooks.append(self.model.model.norm.register_forward_hook(hook_norm))
+
+    def _clear_hooks_data(self):
+        self._layer_hidden = {}
+        self._embed_hidden = None
+        self._norm_hidden = None
+        self._o_proj_inputs = {}
+        self._v_proj_outputs = {}
+
+    def _get_all_hidden_states(self):
+        """Return list: [embed, layer_0, ..., layer_{n-1}, norm]. Length = n_layers + 2."""
+        states = [self._embed_hidden]
+        for i in range(self.n_layers):
+            assert i in self._layer_hidden, f"Missing layer {i} hidden state"
+            states.append(self._layer_hidden[i])
+        assert self._norm_hidden is not None, "Missing norm hidden state"
+        states.append(self._norm_hidden)
+        return states
+
+    def _to_input_device(self, input_ids, attention_mask):
+        return (input_ids.to(self.input_device, non_blocking=True),
+                attention_mask.to(self.input_device, non_blocking=True))
 
     @torch.no_grad()
     def extract(self, text):
-        """Single generate() call extracts both input and generation features."""
-        inputs = self.tokenizer(
-            text, return_tensors="pt", truncation=True,
-            max_length=MAX_SEQ_LEN, padding=False
+        batch = self.tokenizer(text, return_tensors="pt", truncation=True,
+                               max_length=MAX_SEQ_LEN, padding=False)
+        input_ids, attention_mask = self._to_input_device(batch["input_ids"], batch["attention_mask"])
+        prompt_len = int(input_ids.shape[1])
+
+        # ==========================================================
+        # Step A: model(prompt) — all prompt-side features
+        # ==========================================================
+        self._clear_hooks_data()
+        out_a = self.model(
+            input_ids=input_ids, attention_mask=attention_mask,
+            use_cache=False, output_hidden_states=False, output_attentions=True,
         )
-        input_ids = inputs["input_ids"].to(self.model.device)
-        attention_mask = inputs["attention_mask"].to(self.model.device)
-        prompt_len = input_ids.shape[1]
 
-        self._clear_hooks()
+        prompt_hidden = self._get_all_hidden_states()  # n_layers+2 tensors
 
-        # === Single generate() call ===
+        input_last_token_hidden = torch.stack(
+            [hs[0, prompt_len - 1, :] for hs in prompt_hidden]
+        ).to(torch.float16)
+
+        input_mean_pool_hidden = torch.stack(
+            [hs[0, :prompt_len, :].float().mean(dim=0) for hs in prompt_hidden]
+        ).to(torch.float16)
+
+        input_per_head_activation = torch.empty(
+            self.n_layers, self.n_heads, self.head_dim, dtype=torch.float16)
+        for li in range(self.n_layers):
+            last_tok = self._o_proj_inputs[li][0, prompt_len - 1, :]
+            input_per_head_activation[li] = last_tok.view(self.n_heads, self.head_dim).to(torch.float16)
+
+        input_logit_stats = compute_logit_stats(out_a.logits[0, prompt_len - 1, :])
+
+        prompt_attentions = [a.detach().cpu() for a in out_a.attentions]
+        input_attn_stats = compute_attn_stats_from_full_matrix(
+            prompt_attentions, self.n_layers, self.n_heads,
+            row_idx=prompt_len - 1, col_end=prompt_len
+        )
+
+        input_attn_value_norms = torch.empty(
+            self.n_layers, self.n_heads, prompt_len, dtype=torch.float16)
+        for li in range(self.n_layers):
+            attn = prompt_attentions[li][0].float()
+            v = self._v_proj_outputs[li][0, :prompt_len, :]
+            v = v.view(prompt_len, self.n_kv_heads, self.head_dim).permute(1, 0, 2).float()
+            for hi in range(self.n_heads):
+                kv_hi = hi // self.kv_group_size
+                aw = attn[hi, prompt_len - 1, :prompt_len].unsqueeze(-1)
+                weighted = aw * v[kv_hi]
+                input_attn_value_norms[li, hi] = weighted.norm(dim=-1).to(torch.float16)
+
+        del out_a, prompt_attentions
+        torch.cuda.empty_cache()
+
+        # ==========================================================
+        # Step B: model.generate(prompt) — token ids only
+        # ==========================================================
         gen_out = self.model.generate(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            max_new_tokens=MAX_NEW_TOKENS,
-            do_sample=False,
-            output_hidden_states=True,
-            output_attentions=True,
-            output_scores=True,
+            input_ids=input_ids, attention_mask=attention_mask,
+            max_new_tokens=MAX_NEW_TOKENS, do_sample=False,
             return_dict_in_generate=True,
         )
-
         gen_ids = gen_out.sequences[0]
-        gen_token_ids = gen_ids[prompt_len:]
-        n_gen = len(gen_token_ids)
-        gen_text = self.tokenizer.decode(gen_token_ids, skip_special_tokens=True)
-
-        # ================================================================
-        # INPUT FEATURES (from first generation step's hidden states)
-        # gen_out.hidden_states[0] is a tuple of (n_layers+1) tensors
-        # each has shape (1, prompt_len, hidden_dim) — full prompt states
-        # ================================================================
-        prompt_hs = gen_out.hidden_states[0]  # tuple of (n_layers+1,)
-
-        # input_last_token_hidden: (n_layers+1, hidden_dim)
-        input_last_token_hidden = torch.stack(
-            [h[0, -1, :].cpu() for h in prompt_hs]
-        ).to(torch.float16)
-
-        # input_mean_pool_hidden: (n_layers+1, hidden_dim)
-        input_mean_pool_hidden = torch.stack(
-            [h[0, :prompt_len, :].float().mean(dim=0).cpu() for h in prompt_hs]
-        ).to(torch.float16)
-
-        # input_logit_stats: from first generation step's scores
-        # gen_out.scores[0] = logits at first gen step (= logits after seeing full prompt)
-        input_logit_stats = compute_logit_stats(gen_out.scores[0][0]) if len(gen_out.scores) > 0 else {}
-
-        # input_attn_stats: from first generation step's attentions
-        # gen_out.attentions[0] = attention at first gen step, tuple of n_layers
-        # each (1, n_heads, prompt_len+1, prompt_len+1) — includes first gen token
-        if len(gen_out.attentions) > 0:
-            input_attn_stats = compute_attn_stats(
-                gen_out.attentions[0], self.n_layers, self.n_heads, prompt_len
-            )
-        else:
-            input_attn_stats = torch.zeros(self.n_layers, self.n_heads, 3)
-
-        # ================================================================
-        # INPUT: per_head_activation + attn_value_norms
-        # Hooks captured during prefill (first forward in generate).
-        # Hooks only fire once per layer due to `if i not in self.head_activations` guard.
-        # ================================================================
-
-        # per_head_activation: (n_layers, n_heads, head_dim)
-        input_per_head_activation = torch.zeros(
-            self.n_layers, self.n_heads, self.head_dim, dtype=torch.float16
-        )
-        for li in range(self.n_layers):
-            if li in self.head_activations:
-                act = self.head_activations[li][0, -1, :]  # already on CPU from hook
-                input_per_head_activation[li] = act.reshape(
-                    self.n_heads, self.head_dim
-                ).to(torch.float16)
-
-        # attn_value_norms: (n_layers, n_heads, prompt_len)
-        # Use attention weights from gen_out.attentions[0] (prefill step)
-        # and value states from hooks (also prefill)
-        input_attn_value_norms = torch.zeros(
-            self.n_layers, self.n_heads, prompt_len, dtype=torch.float16
-        )
-        prefill_attentions = gen_out.attentions[0] if len(gen_out.attentions) > 0 else None
-        if prefill_attentions is not None:
-            for li in range(self.n_layers):
-                if li not in self.value_states or li >= len(prefill_attentions):
-                    continue
-                # prefill attention shape: (1, n_heads, prompt_len+1, prompt_len+1)
-                # we want the prompt portion: last prompt token attending to all prompt tokens
-                attn_layer = prefill_attentions[li][0].cpu().float()
-                vs = self.value_states[li][0, :prompt_len, :].reshape(
-                    prompt_len, self.n_kv_heads, self.head_dim
-                ).permute(1, 0, 2)  # (n_kv_heads, prompt_len, head_dim)
-                for hi in range(self.n_heads):
-                    kv_idx = hi // self.kv_group_size
-                    # Use prompt's last token row of attention, only prompt positions
-                    aw = attn_layer[hi, prompt_len - 1, :prompt_len].unsqueeze(-1)
-                    weighted_v = aw * vs[kv_idx]
-                    input_attn_value_norms[li, hi, :] = torch.norm(
-                        weighted_v, dim=-1
-                    ).to(torch.float16)
-
-        # ================================================================
-        # GENERATION FEATURES
-        # ================================================================
-        if n_gen == 0:
-            gen_last_token_hidden = torch.zeros(self.n_layers + 1, self.hidden_dim, dtype=torch.float16)
-            gen_mean_pool_hidden = torch.zeros(self.n_layers + 1, self.hidden_dim, dtype=torch.float16)
-            gen_per_token_hidden_last_layer = torch.zeros(0, self.hidden_dim, dtype=torch.float16)
-            gen_logit_stats_eos = {}
-            gen_attn_stats_last = torch.zeros(self.n_layers, self.n_heads, 3)
-            gen_step_boundary_hidden = torch.zeros(0, self.n_layers + 1, self.hidden_dim, dtype=torch.float16)
-            step_boundary_indices = []
-        else:
-            # gen_out.hidden_states: tuple of (n_gen+1) elements
-            # [0] = prompt step: (n_layers+1) tensors of (1, prompt_len, dim)
-            # [1..n_gen] = gen steps: (n_layers+1) tensors of (1, 1, dim)
-
-            # gen_last_token_hidden: all layers at last generated token
-            last_hs = gen_out.hidden_states[-1]
-            gen_last_token_hidden = torch.stack(
-                [h[0, -1, :].cpu() for h in last_hs]
-            ).to(torch.float16)
-
-            # gen_per_token_hidden_last_layer + accumulate for mean pool
-            gen_per_token_hidden_last_layer = torch.zeros(n_gen, self.hidden_dim, dtype=torch.float16)
-            layer_sums = [torch.zeros(self.hidden_dim, dtype=torch.float32) for _ in range(self.n_layers + 1)]
-
-            for t in range(n_gen):
-                step_hs = gen_out.hidden_states[t + 1]  # +1 because [0] is prompt
-                gen_per_token_hidden_last_layer[t] = step_hs[-1][0, -1, :].cpu().to(torch.float16)
-                for li in range(self.n_layers + 1):
-                    layer_sums[li] += step_hs[li][0, -1, :].cpu().float()
-
-            gen_mean_pool_hidden = torch.stack(
-                [s / n_gen for s in layer_sums]
-            ).to(torch.float16)
-
-            # gen_logit_stats_eos
-            gen_logit_stats_eos = compute_logit_stats(gen_out.scores[-1][0])
-
-            # gen_attn_stats_last
-            if len(gen_out.attentions) > 0:
-                last_attn = gen_out.attentions[-1]
-                total_seq = prompt_len + n_gen
-                gen_attn_stats_last = compute_attn_stats(
-                    last_attn, self.n_layers, self.n_heads, total_seq
-                )
-            else:
-                gen_attn_stats_last = torch.zeros(self.n_layers, self.n_heads, 3)
-
-            # Step boundaries (\n\n) for STEP
-            step_boundary_indices = []
-            for t in range(n_gen):
-                partial = self.tokenizer.decode(gen_token_ids[:t + 1], skip_special_tokens=False)
-                if partial.endswith("\n\n"):
-                    step_boundary_indices.append(t)
-
-            if step_boundary_indices:
-                gen_step_boundary_hidden = torch.stack([
-                    torch.stack([
-                        gen_out.hidden_states[t + 1][li][0, -1, :].cpu()
-                        for li in range(self.n_layers + 1)
-                    ]) for t in step_boundary_indices
-                ]).to(torch.float16)
-            else:
-                gen_step_boundary_hidden = torch.zeros(
-                    0, self.n_layers + 1, self.hidden_dim, dtype=torch.float16
-                )
-
+        raw_gen_token_ids = gen_ids[prompt_len:]
+        n_gen = len(raw_gen_token_ids)
+        gen_text = self.tokenizer.decode(raw_gen_token_ids, skip_special_tokens=True,
+                                         clean_up_tokenization_spaces=False)
         del gen_out
         torch.cuda.empty_cache()
 
+        # ==========================================================
+        # Step C: model(prompt+gen) — all generation-side features
+        # ==========================================================
+        n_hs = self.n_layers + 2
+        if n_gen == 0:
+            return {
+                "input_last_token_hidden": input_last_token_hidden,
+                "input_mean_pool_hidden": input_mean_pool_hidden,
+                "input_per_head_activation": input_per_head_activation,
+                "input_logit_stats": input_logit_stats,
+                "input_attn_stats": input_attn_stats,
+                "input_attn_value_norms": input_attn_value_norms,
+                "input_seq_len": prompt_len,
+                "gen_text": gen_text,
+                "gen_last_token_hidden": torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16),
+                "gen_mean_pool_hidden": torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16),
+                "gen_per_token_hidden_last_layer": torch.zeros(0, self.hidden_dim, dtype=torch.float16),
+                "gen_logit_stats_eos": {},
+                "gen_attn_stats_last": torch.zeros(self.n_layers, self.n_heads, 3, dtype=torch.float32),
+                "gen_step_boundary_hidden": [],
+                "gen_step_boundary_indices": [],
+                "gen_len": 0,
+            }
+
+        full_ids = gen_ids.unsqueeze(0).to(self.input_device)
+        full_mask = torch.ones_like(full_ids, device=self.input_device)
+        total_len = prompt_len + n_gen
+
+        self._clear_hooks_data()
+        out_c = self.model(
+            input_ids=full_ids, attention_mask=full_mask,
+            use_cache=False, output_hidden_states=False, output_attentions=True,
+        )
+
+        full_hidden = self._get_all_hidden_states()
+        full_attentions = [a.detach().cpu() for a in out_c.attentions]
+
+        gen_last_token_hidden = torch.stack(
+            [hs[0, total_len - 1, :] for hs in full_hidden]
+        ).to(torch.float16)
+
+        gen_mean_pool_hidden = torch.stack(
+            [hs[0, prompt_len:total_len, :].float().mean(dim=0) for hs in full_hidden]
+        ).to(torch.float16)
+
+        gen_per_token_hidden_last_layer = self._layer_hidden[self.n_layers - 1][
+            0, prompt_len:total_len, :
+        ].to(torch.float16)
+
+        gen_logit_stats_eos = compute_logit_stats(out_c.logits[0, total_len - 1, :])
+
+        gen_attn_stats_last = compute_attn_stats_from_full_matrix(
+            full_attentions, self.n_layers, self.n_heads,
+            row_idx=total_len - 1, col_end=total_len
+        )
+
+        step_boundary_indices = []
+        for t in range(n_gen):
+            partial = self.tokenizer.decode(
+                raw_gen_token_ids[:t + 1], skip_special_tokens=False,
+                clean_up_tokenization_spaces=False,
+            )
+            if partial.endswith("\n\n"):
+                step_boundary_indices.append(t)
+
+        gen_step_boundary_hidden = [
+            torch.stack([hs[0, prompt_len + t, :] for hs in full_hidden]).to(torch.float16)
+            for t in step_boundary_indices
+        ]
+
+        del out_c, full_hidden, full_attentions
+        torch.cuda.empty_cache()
+
         return {
-            # Input features
             "input_last_token_hidden": input_last_token_hidden,
             "input_mean_pool_hidden": input_mean_pool_hidden,
             "input_per_head_activation": input_per_head_activation,
@@ -387,7 +383,6 @@ class FeatureExtractor:
             "input_attn_stats": input_attn_stats,
             "input_attn_value_norms": input_attn_value_norms,
             "input_seq_len": prompt_len,
-            # Generation features
             "gen_text": gen_text,
             "gen_last_token_hidden": gen_last_token_hidden,
             "gen_mean_pool_hidden": gen_mean_pool_hidden,
@@ -408,15 +403,12 @@ def save_split_features(results, out_dir, dataset, split, model_name):
     os.makedirs(split_dir, exist_ok=True)
     n = len(results["labels"])
 
-    # Fixed-shape tensors
     for field in ["input_last_token_hidden", "input_mean_pool_hidden",
                   "input_per_head_activation", "input_attn_stats",
                   "gen_last_token_hidden", "gen_mean_pool_hidden",
                   "gen_attn_stats_last"]:
-        torch.save(torch.stack(results[field]),
-                   os.path.join(split_dir, f"{field}.pt"))
+        torch.save(torch.stack(results[field]), os.path.join(split_dir, f"{field}.pt"))
 
-    # Variable-length: input_attn_value_norms — pad to max
     max_sl = max(t.shape[-1] for t in results["input_attn_value_norms"])
     padded = []
     for t in results["input_attn_value_norms"]:
@@ -426,7 +418,6 @@ def save_split_features(results, out_dir, dataset, split, model_name):
         padded.append(t)
     torch.save(torch.stack(padded), os.path.join(split_dir, "input_attn_value_norms.pt"))
 
-    # Variable-length: gen_per_token_hidden_last_layer — pad to max
     max_gl = max(t.shape[0] for t in results["gen_per_token_hidden_last_layer"])
     if max_gl > 0:
         padded_gen = []
@@ -435,27 +426,18 @@ def save_split_features(results, out_dir, dataset, split, model_name):
             if gl < max_gl:
                 t = torch.cat([t, torch.zeros(max_gl - gl, t.shape[-1], dtype=t.dtype)], dim=0)
             padded_gen.append(t)
-        torch.save(torch.stack(padded_gen),
-                   os.path.join(split_dir, "gen_per_token_hidden_last_layer.pt"))
+        torch.save(torch.stack(padded_gen), os.path.join(split_dir, "gen_per_token_hidden_last_layer.pt"))
 
-    # Ragged: gen_step_boundary_hidden — list of tensors
-    torch.save(results["gen_step_boundary_hidden"],
-               os.path.join(split_dir, "gen_step_boundary_hidden.pt"))
+    torch.save(results["gen_step_boundary_hidden"], os.path.join(split_dir, "gen_step_boundary_hidden.pt"))
 
-    # JSON
     with open(os.path.join(split_dir, "input_logit_stats.json"), "w") as f:
         json.dump(results["input_logit_stats"], f)
     with open(os.path.join(split_dir, "gen_logit_stats_eos.json"), "w") as f:
         json.dump(results["gen_logit_stats_eos"], f)
 
-    # Meta
     meta = {
-        "model": model_name,
-        "dataset": dataset,
-        "split": split,
-        "n_samples": n,
-        "labels": results["labels"],
-        "texts": results["texts"],
+        "model": model_name, "dataset": dataset, "split": split, "n_samples": n,
+        "labels": results["labels"], "texts": results["texts"],
         "gen_texts": results["gen_texts"],
         "input_seq_lens": results["input_seq_lens"],
         "gen_lens": results["gen_lens"],
@@ -464,10 +446,8 @@ def save_split_features(results, out_dir, dataset, split, model_name):
     with open(os.path.join(split_dir, "meta.json"), "w") as f:
         json.dump(meta, f, ensure_ascii=False)
 
-    total_mb = sum(
-        os.path.getsize(os.path.join(split_dir, f)) / 1024 / 1024
-        for f in os.listdir(split_dir)
-    )
+    total_mb = sum(os.path.getsize(os.path.join(split_dir, f)) / 1024 / 1024
+                   for f in os.listdir(split_dir))
     print(f"  Saved {split_dir}: {n} samples, {total_mb:.1f} MB")
 
 
@@ -497,7 +477,6 @@ def main():
 
     for (dataset, split), samples in groups.items():
         print(f"\nProcessing {dataset}/{split}: {len(samples)} samples")
-
         results = {k: [] for k in [
             "input_last_token_hidden", "input_mean_pool_hidden",
             "input_per_head_activation", "input_logit_stats",
@@ -512,9 +491,9 @@ def main():
         for i, sample in enumerate(tqdm(samples, desc=f"{dataset}/{split}")):
             features = extractor.extract(sample["text"])
             for k in results:
-                if k in ("labels",):
+                if k == "labels":
                     results[k].append(sample["label"])
-                elif k in ("texts",):
+                elif k == "texts":
                     results[k].append(sample["text"])
                 elif k == "gen_texts":
                     results[k].append(features["gen_text"])
