@@ -3,7 +3,7 @@ Offline feature extraction: 2-pass design.
   Pass 1: model.generate(prompt) — prefill hooks capture all prompt-side features.
           generate() only used for token ids; no gen_out.hidden_states/attentions used.
   Pass 2: model(prompt+gen_ids) — replay forward with hooks for all generation-side features.
-          output_attentions=False; attention captured via self_attn hook output[1].
+          Attention captured via self_attn hook output[1] (monkey-patched to always compute).
 
 Qwen2.5-7B-Instruct, 2 x A100, device_map='auto', attn_implementation='eager'.
 All hidden states from explicit hooks. Attention weights from self_attn hook.
@@ -11,9 +11,28 @@ All hidden states from explicit hooks. Attention weights from self_attn hook.
 
 import os
 import json
+import types
 import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+
+def patch_self_attn_for_hooks(model):
+    """Monkey-patch each self_attn to always compute attn_weights internally,
+    without enabling model-level attention collection. This way our hooks on
+    self_attn can read output[1] (attn_weights) while generate()/model() with
+    output_attentions=False won't retain any attention tensors upstream."""
+    for layer in model.model.layers:
+        attn = layer.self_attn
+        if hasattr(attn, "_orig_forward_for_hook"):
+            continue
+        attn._orig_forward_for_hook = attn.forward.__func__
+
+        def patched_forward(self, *args, **kwargs):
+            kwargs["output_attentions"] = True
+            return self._orig_forward_for_hook(self, *args, **kwargs)
+
+        attn.forward = types.MethodType(patched_forward, attn)
 
 # ============================================================
 # Config
@@ -161,6 +180,8 @@ class FeatureExtractor:
 
         print(f"Model: {self.n_layers}L, {self.n_heads}H, {self.n_kv_heads}KV, "
               f"dim={self.hidden_dim}, head={self.head_dim}, input_device={self.input_device}")
+
+        patch_self_attn_for_hooks(self.model)
 
         self._hooks = []
         self._clear_all()
@@ -329,8 +350,6 @@ class FeatureExtractor:
         self._mode = "generate"
         self._prompt_len = prompt_len
 
-        # Enable attention output so self_attn returns attn_weights (not None)
-        self.model.config.output_attentions = True
         sequences = self.model.generate(
             input_ids=input_ids, attention_mask=attention_mask,
             max_new_tokens=MAX_NEW_TOKENS, do_sample=False,
@@ -413,7 +432,7 @@ class FeatureExtractor:
         full_mask = torch.ones_like(full_ids, device=self.input_device)
         replay_out = self.model(
             input_ids=full_ids, attention_mask=full_mask,
-            use_cache=False, output_attentions=True, output_hidden_states=False,
+            use_cache=False, output_attentions=False, output_hidden_states=False,
         )
 
         replay_states = self._replay_states()
