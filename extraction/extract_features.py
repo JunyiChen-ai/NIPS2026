@@ -329,6 +329,8 @@ class FeatureExtractor:
         self._mode = "generate"
         self._prompt_len = prompt_len
 
+        # Enable attention output so self_attn returns attn_weights (not None)
+        self.model.config.output_attentions = True
         sequences = self.model.generate(
             input_ids=input_ids, attention_mask=attention_mask,
             max_new_tokens=MAX_NEW_TOKENS, do_sample=False,
@@ -411,7 +413,7 @@ class FeatureExtractor:
         full_mask = torch.ones_like(full_ids, device=self.input_device)
         replay_out = self.model(
             input_ids=full_ids, attention_mask=full_mask,
-            use_cache=False, output_attentions=False, output_hidden_states=False,
+            use_cache=False, output_attentions=True, output_hidden_states=False,
         )
 
         replay_states = self._replay_states()
