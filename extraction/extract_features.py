@@ -18,21 +18,23 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 def patch_self_attn_for_hooks(model):
-    """Monkey-patch each self_attn to always compute attn_weights internally,
-    without enabling model-level attention collection. This way our hooks on
-    self_attn can read output[1] (attn_weights) while generate()/model() with
-    output_attentions=False won't retain any attention tensors upstream."""
+    """Wrap each self_attn.forward to always pass output_attentions=True,
+    without enabling model-level attention collection. Preserves Accelerate's
+    device dispatch wrapper by wrapping rather than replacing forward."""
     for layer in model.model.layers:
         attn = layer.self_attn
-        if hasattr(attn, "_orig_forward_for_hook"):
+        if hasattr(attn, "_patched_for_hooks"):
             continue
-        attn._orig_forward_for_hook = attn.forward.__func__
+        orig_forward = attn.forward  # may be Accelerate's functools.partial
 
-        def patched_forward(self, *args, **kwargs):
-            kwargs["output_attentions"] = True
-            return self._orig_forward_for_hook(self, *args, **kwargs)
+        def make_wrapper(orig_fn):
+            def wrapper(*args, **kwargs):
+                kwargs["output_attentions"] = True
+                return orig_fn(*args, **kwargs)
+            return wrapper
 
-        attn.forward = types.MethodType(patched_forward, attn)
+        attn.forward = make_wrapper(orig_forward)
+        attn._patched_for_hooks = True
 
 # ============================================================
 # Config
