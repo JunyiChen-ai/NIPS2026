@@ -1,0 +1,72 @@
+/data/jehc223/miniconda3/envs/HateVideo/lib/python3.11/site-packages/sklearn/linear_model/_ridge.py:253: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.0946453699034464e-07.
+  dual_coef = linalg.solve(K, y, assume_a="pos", overwrite_a=False)
+/data/jehc223/miniconda3/envs/HateVideo/lib/python3.11/site-packages/sklearn/linear_model/_ridge.py:253: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 8.546113150487145e-08.
+  dual_coef = linalg.solve(K, y, assume_a="pos", overwrite_a=False)
+/data/jehc223/miniconda3/envs/HateVideo/lib/python3.11/site-packages/sklearn/linear_model/_ridge.py:253: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 3.624176514449573e-08.
+  dual_coef = linalg.solve(K, y, assume_a="pos", overwrite_a=False)
+/data/jehc223/miniconda3/envs/HateVideo/lib/python3.11/site-packages/sklearn/linear_model/_ridge.py:253: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 8.644976645655333e-08.
+  dual_coef = linalg.solve(K, y, assume_a="pos", overwrite_a=False)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)
+/data/jehc223/NIPS2026/reproduce/methods.py:228: RuntimeWarning: divide by zero encountered in log
+  lids = -1.0 / np.mean(np.log(lids), axis=1)

@@ -1,0 +1,150 @@
+
+============================================================
+Dataset: geometry_of_truth_cities (classification)
+============================================================
+  Train: 1196 samples
+  Test:  300 samples
+  Methods to run: ['coe', 'seakr', 'step']
+
+  --- coe ---
+    coe_mag: {'auroc': 0.6446718576195772, 'auroc_raw': 0.3553281423804227, 'auroc_flipped': 0.6446718576195772}
+    coe_ang: {'auroc': 0.5983092324805339, 'auroc_raw': 0.4016907675194661, 'auroc_flipped': 0.5983092324805339}
+    coe_r: {'auroc': 0.5926585094549499, 'auroc_raw': 0.5926585094549499, 'auroc_flipped': 0.40734149054505003}
+    coe_c: {'auroc': 0.6449833147942158, 'auroc_raw': 0.3550166852057842, 'auroc_flipped': 0.6449833147942158}
+
+  --- seakr ---
+    {'auroc': 0.6930367074527253, 'auroc_raw': 0.6930367074527253, 'auroc_flipped': 0.3069632925472747}
+
+  --- step ---
+    {'auroc': 0.9603114571746385, 'accuracy': 0.8866666666666667, 'f1': 0.8835616438356164}
+
+============================================================
+Dataset: easy2hard_amc (regression)
+============================================================
+  Train: 1000 samples
+  Test:  2975 samples
+  Methods to run: ['lr_probe', 'mm_probe', 'pca_lr', 'iti', 'kb_mlp', 'lid', 'attn_satisfies', 'llm_check', 'coe', 'seakr', 'step']
+
+  --- lr_probe ---
+    Best layer=22: {'spearman_r': 0.8106789963435103, 'spearman_p': 0.0, 'mse': 0.023761117328669184}
+
+  --- mm_probe ---
+    Skipped: MMProbe is classification-only
+
+  --- pca_lr ---
+    Best layer=23: {'spearman_r': 0.8725863107232434, 'spearman_p': 0.0, 'mse': 0.015048024644576299}
+
+  --- iti ---
+    Skipped: ITI is classification-only
+
+  --- kb_mlp ---
+    Skipped: KBNet is classification-only
+
+  --- lid ---
+    Best layer=26: {'spearman_r': -0.7029652185186924, 'spearman_p': 0.0, 'mse': 10.817569399289907}
+
+  --- attn_satisfies ---
+    Skipped: Attention Satisfies probe is classification-only
+
+  --- llm_check ---
+    {'spearman_r': 0.10899975009521477, 'spearman_p': 2.5146371353315655e-09, 'mse': 14010.7793467976}
+
+  --- coe ---
+    coe_mag: {'spearman_r': -0.18030988908715556, 'spearman_p': 3.693521095143047e-23, 'mse': 0.1230921558930244}
+    coe_ang: {'spearman_r': -0.19122162446792387, 'spearman_p': 6.78508612754537e-26, 'mse': 0.11669410668420387}
+    coe_r: {'spearman_r': -0.06684684773651581, 'spearman_p': 0.00026365866564747567, 'mse': 0.2609161455381456}
+    coe_c: {'spearman_r': -0.1858851441020885, 'spearman_p': 1.5513310359403553e-24, 'mse': 0.1250907302569546}
+
+  --- seakr ---
+    {'spearman_r': 0.1792006394661656, 'spearman_p': 6.856655081725959e-23, 'mse': 774.8003079804735}
+
+  --- step ---
+    Skipped: STEP is classification-only
+
+============================================================
+Dataset: metatool_task1 (classification)
+============================================================
+  Train: 832 samples
+  Test:  208 samples
+  Methods to run: ['lr_probe', 'mm_probe', 'pca_lr', 'iti', 'kb_mlp', 'lid', 'attn_satisfies', 'llm_check', 'coe', 'seakr', 'step']
+
+  --- lr_probe ---
+    Best layer=15: {'auroc': 0.9987980769230769, 'accuracy': 0.9903846153846154, 'f1': 0.9904761904761905}
+
+  --- mm_probe ---
+    Best layer=22: {'auroc': 0.9607988165680474, 'accuracy': 0.9615384615384616, 'f1': 0.9615384615384616}
+
+  --- pca_lr ---
+    Best layer=20: {'auroc': 0.9985207100591716, 'accuracy': 0.9759615384615384, 'f1': 0.9760765550239234}
+
+  --- iti ---
+    {'best_layer': 15, 'best_head': 26, 'best_auroc': 0.9964866863905326, 'best_accuracy': 0.9663461538461539}
+
+  --- kb_mlp ---
+    Best layer=15: {'auroc': 0.9991678994082841, 'accuracy': 0.9903846153846154, 'f1': 0.9903846153846154}
+
+  --- lid ---
+    Best layer=28: {'auroc': 0.9338942307692307, 'auroc_raw': 0.9338942307692307, 'auroc_flipped': 0.06610576923076925}
+
+  --- attn_satisfies ---
+    {'auroc': 0.9770710059171597, 'accuracy': 0.9471153846153846, 'f1': 0.9463414634146341}
+
+  --- llm_check ---
+    {'auroc': 0.5570451183431953, 'auroc_raw': 0.4429548816568047, 'auroc_flipped': 0.5570451183431953}
+
+  --- coe ---
+    coe_mag: {'auroc': 0.686667899408284, 'auroc_raw': 0.686667899408284, 'auroc_flipped': 0.313332100591716}
+    coe_ang: {'auroc': 0.5833025147928994, 'auroc_raw': 0.5833025147928994, 'auroc_flipped': 0.4166974852071006}
+    coe_r: {'auroc': 0.6230584319526626, 'auroc_raw': 0.6230584319526626, 'auroc_flipped': 0.37694156804733725}
+    coe_c: {'auroc': 0.6901812130177516, 'auroc_raw': 0.6901812130177516, 'auroc_flipped': 0.3098187869822485}
+
+  --- seakr ---
+    {'auroc': 0.5103088017751479, 'auroc_raw': 0.5103088017751479, 'auroc_flipped': 0.489691198224852}
+
+  --- step ---
+    {'auroc': 0.8689903846153846, 'accuracy': 0.8076923076923077, 'f1': 0.8130841121495327}
+
+============================================================
+Dataset: retrievalqa (classification)
+============================================================
+  Train: 2228 samples
+  Test:  557 samples
+  Methods to run: ['lr_probe', 'mm_probe', 'pca_lr', 'iti', 'kb_mlp', 'lid', 'attn_satisfies', 'llm_check', 'coe', 'seakr', 'step']
+
+  --- lr_probe ---
+    Best layer=15: {'auroc': 0.924274317195499, 'accuracy': 0.8420107719928187, 'f1': 0.8566775244299675}
+
+  --- mm_probe ---
+    Best layer=19: {'auroc': 0.8555196070788181, 'accuracy': 0.7378815080789947, 'f1': 0.7056451612903226}
+
+  --- pca_lr ---
+    Best layer=23: {'auroc': 0.9302123125698396, 'accuracy': 0.8545780969479354, 'f1': 0.863406408094435}
+
+  --- iti ---
+    {'best_layer': 20, 'best_head': 14, 'best_auroc': 0.9223512902471349, 'best_accuracy': 0.8473967684021544}
+
+  --- kb_mlp ---
+    Best layer=15: {'auroc': 0.9409448818897639, 'accuracy': 0.8563734290843806, 'f1': 0.8709677419354839}
+
+  --- lid ---
+    Best layer=8: {'auroc': 0.7257997453288636, 'auroc_raw': 0.7257997453288636, 'auroc_flipped': 0.2742002546711364}
+
+  --- attn_satisfies ---
+    {'auroc': 0.9068761206829344, 'accuracy': 0.8168761220825853, 'f1': 0.83}
+
+  --- llm_check ---
+    {'auroc': 0.5605103817468361, 'auroc_raw': 0.5605103817468361, 'auroc_flipped': 0.4394896182531639}
+
+  --- coe ---
+    coe_mag: {'auroc': 0.5756477222525402, 'auroc_raw': 0.5756477222525402, 'auroc_flipped': 0.42435227774745976}
+    coe_ang: {'auroc': 0.5143187547101167, 'auroc_raw': 0.5143187547101167, 'auroc_flipped': 0.4856812452898834}
+    coe_r: {'auroc': 0.5140069125022738, 'auroc_raw': 0.5140069125022738, 'auroc_flipped': 0.48599308749772613}
+    coe_c: {'auroc': 0.5766482160027027, 'auroc_raw': 0.5766482160027027, 'auroc_flipped': 0.42335178399729734}
+
+  --- seakr ---
+    {'auroc': 0.5482510849510148, 'auroc_raw': 0.45174891504898523, 'auroc_flipped': 0.5482510849510148}
+
+  --- step ---
+    {'auroc': 0.7652997583222889, 'accuracy': 0.6786355475763016, 'f1': 0.6797853309481217}
+
+All done! Results at /data/jehc223/NIPS2026/reproduce/results/all_results.json
