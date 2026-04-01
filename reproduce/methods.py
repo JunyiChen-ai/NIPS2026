@@ -308,26 +308,7 @@ def sep_probe(train_acts, train_labels, test_acts, test_labels):
     best_range = (0, 1)
     min_class_count = int(min(y_train.sum(), len(y_train) - y_train.sum()))
     if min_class_count < 2:
-        # Not enough samples for stratified CV; use single best layer instead
-        best_auroc = 0
-        for start in range(n_layers):
-            X_tr = train_acts[:, start:start+1, :].float().reshape(len(train_acts), -1).numpy()
-            X_te = test_acts[:, start:start+1, :].float().reshape(len(test_acts), -1).numpy()
-            clf = LogisticRegression(max_iter=1000)
-            clf.fit(X_tr, y_train)
-            probs = clf.predict_proba(X_te)[:, 1]
-            preds = clf.predict(X_te)
-            auroc = roc_auc_score(y_test, probs)
-            if auroc > best_auroc:
-                best_auroc = auroc
-                best_range = (start, start + 1)
-        X_tr = train_acts[:, best_range[0]:best_range[1], :].float().reshape(len(train_acts), -1).numpy()
-        X_te = test_acts[:, best_range[0]:best_range[1], :].float().reshape(len(test_acts), -1).numpy()
-        clf = LogisticRegression(max_iter=1000)
-        clf.fit(X_tr, y_train)
-        probs = clf.predict_proba(X_te)[:, 1]
-        preds = clf.predict(X_te)
-        return probs, preds, best_range
+        raise ValueError(f"SEP requires at least 2 samples per class in train set, got min={min_class_count}")
 
     n_folds = min(3, min_class_count)
     cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=42)
