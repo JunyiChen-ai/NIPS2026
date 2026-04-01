@@ -141,7 +141,18 @@ def run_lr_probe(train, val, test, is_reg):
 # --- 2. MM Probe (GoT) — original: fixed layer, we use val to select ---
 def run_mm_probe(train, val, test, is_reg):
     if is_reg:
-        return {"skipped": "MMProbe is classification-only"}
+        # MM Probe direction can be used for regression via correlation
+        def fn(tr_acts, tr_labels, ev_acts, ev_labels):
+            mean = tr_acts.float().mean(dim=0)
+            tr_c, ev_c = tr_acts.float() - mean, ev_acts.float() - mean
+            # Use median split to get pos/neg for direction, then project for regression
+            median = tr_labels.float().median()
+            binary = (tr_labels.float() >= median).long()
+            probe = MMProbe.from_data(tr_c, binary)
+            with torch.no_grad():
+                scores = probe(ev_c).numpy()
+            return eval_reg(ev_labels.numpy(), scores)
+        return select_layer_on_val(train, val, test, fn, is_reg)
     def fn(tr_acts, tr_labels, ev_acts, ev_labels):
         mean = tr_acts.float().mean(dim=0)
         tr_c, ev_c = tr_acts.float() - mean, ev_acts.float() - mean
@@ -177,7 +188,31 @@ def run_pca_lr(train, val, test, is_reg):
 # --- 4. ITI — original: val split selects heads, we use val ---
 def run_iti(train, val, test, is_reg):
     if is_reg:
-        return {"skipped": "ITI is classification-only"}
+        # Per-head Ridge regression, select best head on val
+        from sklearn.linear_model import LogisticRegression
+        tr_acts = train["input_per_head_activation"]
+        va_acts = val["input_per_head_activation"]
+        te_acts = test["input_per_head_activation"]
+        tr_labels = np.array(train["labels"])
+        va_labels = np.array(val["labels"])
+        te_labels = np.array(test["labels"])
+        n_layers, n_heads = tr_acts.shape[1], tr_acts.shape[2]
+        best_val = -1.0
+        best_li, best_hi = 0, 0
+        for li in range(n_layers):
+            for hi in range(n_heads):
+                clf = Ridge(alpha=1.0)
+                clf.fit(tr_acts[:, li, hi, :].numpy(), tr_labels)
+                preds = clf.predict(va_acts[:, li, hi, :].numpy())
+                m = abs(spearmanr(va_labels, preds)[0])
+                if m > best_val:
+                    best_val = m
+                    best_li, best_hi = li, hi
+        clf = Ridge(alpha=1.0)
+        clf.fit(tr_acts[:, best_li, best_hi, :].numpy(), tr_labels)
+        preds = clf.predict(te_acts[:, best_li, best_hi, :].numpy())
+        return {"best_layer": best_li, "best_head": best_hi,
+                "test_results": eval_reg(te_labels, preds)}
     tr_acts = train["input_per_head_activation"]
     va_acts = val["input_per_head_activation"]
     te_acts = test["input_per_head_activation"]
@@ -206,7 +241,16 @@ def run_iti(train, val, test, is_reg):
 # --- 5. KB MLP — original: fixed mid layer + dev selects epoch ---
 def run_kb_mlp(train, val, test, is_reg):
     if is_reg:
-        return {"skipped": "KBNet is classification-only"}
+        # Use mid layer + Ridge for regression
+        n_layers = train["input_last_token_hidden"].shape[1]
+        mid_layer = n_layers // 2
+        tr_acts = train["input_last_token_hidden"][:, mid_layer, :].float().numpy()
+        te_acts = test["input_last_token_hidden"][:, mid_layer, :].float().numpy()
+        tr_labels = np.array(train["labels"])
+        te_labels = np.array(test["labels"])
+        clf = Ridge(alpha=1.0)
+        clf.fit(tr_acts, tr_labels)
+        return {"layer": mid_layer, "test_results": eval_reg(te_labels, clf.predict(te_acts))}
     n_layers = train["input_last_token_hidden"].shape[1]
     mid_layer = n_layers // 2
 
@@ -275,7 +319,15 @@ def run_lid(train, val, test, is_reg):
 # --- 7. Attn Satisfies — original: all layers, no selection ---
 def run_attn_satisfies(train, val, test, is_reg):
     if is_reg:
-        return {"skipped": "Attention Satisfies is classification-only"}
+        # Use max-over-positions flattened features + Ridge
+        tr_feat = train["input_attn_value_norms"].float().max(dim=-1).values.reshape(len(train["labels"]), -1).numpy()
+        te_feat = test["input_attn_value_norms"].float().max(dim=-1).values.reshape(len(test["labels"]), -1).numpy()
+        sc = StandardScaler()
+        tr_feat = sc.fit_transform(tr_feat)
+        te_feat = sc.transform(te_feat)
+        clf = Ridge(alpha=1.0)
+        clf.fit(tr_feat, np.array(train["labels"]))
+        return {"test_results": eval_reg(np.array(test["labels"]), clf.predict(te_feat))}
     tr_labels = torch.tensor(train["labels"])
     te_labels = torch.tensor(test["labels"])
     probs, preds = attention_satisfies_probe(
@@ -383,7 +435,12 @@ def run_seakr(train, val, test, is_reg):
 # --- 12. STEP — original: fixed last layer + val-based early stopping ---
 def run_step(train, val, test, is_reg):
     if is_reg:
-        return {"skipped": "STEP is classification-only"}
+        # Use last decoder layer + Ridge for regression
+        tr_acts = train["gen_last_token_hidden"][:, -2, :].float().numpy()
+        te_acts = test["gen_last_token_hidden"][:, -2, :].float().numpy()
+        clf = Ridge(alpha=1.0)
+        clf.fit(tr_acts, np.array(train["labels"]))
+        return {"test_results": eval_reg(np.array(test["labels"]), clf.predict(te_acts))}
     tr_labels = torch.tensor(train["labels"])
     va_labels = torch.tensor(val["labels"])
     te_labels = torch.tensor(test["labels"])
