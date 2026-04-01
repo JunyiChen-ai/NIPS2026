@@ -463,7 +463,7 @@ class FeatureExtractor:
             gen_len = int(gen_part_full.shape[0])
             for t in range(gen_len):
                 if int(gen_part_full[t].item()) == eos_id:
-                    gen_len = t + 1  # include the EOS token
+                    gen_len = t  # exclude the EOS token
                     break
 
             raw_gen_ids = gen_part_full[:gen_len]
