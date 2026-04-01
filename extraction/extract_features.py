@@ -169,7 +169,7 @@ class FeatureExtractor:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
         self.model = AutoModelForCausalLM.from_pretrained(
-            model_name, torch_dtype=torch.float16, device_map="auto",
+            model_name, torch_dtype=torch.bfloat16, device_map="auto",
             attn_implementation="eager",
         )
         self.model.eval()
@@ -706,13 +706,14 @@ def main():
             try:
                 batch_features = extractor.extract_batch(batch_texts)
             except torch.cuda.OutOfMemoryError:
-                # OOM: halve batch size and retry this batch
                 torch.cuda.empty_cache()
                 extractor._clear_all()
                 old_bs = current_batch_size
-                current_batch_size = max(1, current_batch_size // 2)
+                if old_bs <= 1:
+                    raise RuntimeError(f"OOM even with batch_size=1 at sample {sample_idx}")
+                current_batch_size = max(1, old_bs // 2)
                 print(f"\n  OOM at batch_size={old_bs}, reducing to {current_batch_size}")
-                continue  # retry same sample_idx with smaller batch
+                continue
 
             for i, (sample, feat) in enumerate(zip(batch_samples, batch_features)):
                 results["labels"].append(sample["label"])
