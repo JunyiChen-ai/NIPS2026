@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/data/jehc223/NIPS2026/reproduce/run_all.py", line 436, in <module>
+    main()
+  File "/data/jehc223/NIPS2026/reproduce/run_all.py", line 406, in main
+    result = method_fn(train_data, test_data, is_regression=is_regression)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/jehc223/NIPS2026/reproduce/run_all.py", line 273, in run_lid
+    lids = compute_lid(ref_acts, test_acts, k=k)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: compute_lid() missing 1 required positional argument: 'hidden_dim'

@@ -1,0 +1,8 @@
+
+============================================================
+Dataset: geometry_of_truth_cities (classification)
+============================================================
+  Train: 1196 samples
+  Test:  300 samples
+
+  --- lr_probe ---

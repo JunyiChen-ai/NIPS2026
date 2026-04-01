@@ -1,0 +1,23 @@
+
+============================================================
+Dataset: geometry_of_truth_cities (classification)
+============================================================
+  Train: 1196 samples
+  Test:  300 samples
+
+  --- lr_probe ---
+    Best layer=16: {'auroc': 0.9998665183537263, 'accuracy': 0.9966666666666667, 'f1': 0.9965397923875432}
+
+  --- mm_probe ---
+    Best layer=21: {'auroc': 0.996551724137931, 'accuracy': 0.9966666666666667, 'f1': 0.9965397923875432}
+
+  --- pca_lr ---
+    Best layer=18: {'auroc': 0.9997330367074527, 'accuracy': 0.9966666666666667, 'f1': 0.9965397923875432}
+
+  --- iti ---
+    {'best_layer': 17, 'best_head': 8, 'best_auroc': 1.0, 'best_accuracy': 0.9833333333333333, 'all_results_shape': [28, 28, 2]}
+
+  --- kb_mlp ---
+    Best layer=18: {'auroc': 0.9996885428253615, 'accuracy': 0.9966666666666667, 'f1': 0.9965397923875432}
+
+  --- lid ---

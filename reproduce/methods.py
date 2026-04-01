@@ -72,7 +72,13 @@ class MMProbe(torch.nn.Module):
         direction = pos_mean - neg_mean
         centered_data = torch.cat([pos_acts - pos_mean, neg_acts - neg_mean], 0)
         covariance = centered_data.t() @ centered_data / acts.shape[0]
-        inv = torch.linalg.pinv(covariance, hermitian=True, atol=atol)
+        # Manual pseudoinverse with absolute threshold (matching torch atol semantics)
+        # torch.linalg.pinv(hermitian=True, atol=atol) crashes due to MKL bug
+        cov_np = covariance.numpy().astype(np.float64)  # double precision for stability
+        U, S, Vt = np.linalg.svd(cov_np, hermitian=True)
+        S_inv = np.where(S > atol, 1.0 / S, 0.0)
+        inv_np = (Vt.T * S_inv[None, :]) @ Vt
+        inv = torch.from_numpy(inv_np).to(acts.dtype)
         return MMProbe(direction, inv).to(device)
 
 

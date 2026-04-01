@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/data/jehc223/NIPS2026/reproduce/run_all.py", line 436, in <module>
+    main()
+  File "/data/jehc223/NIPS2026/reproduce/run_all.py", line 406, in main
+    result = method_fn(train_data, test_data, is_regression=is_regression)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/jehc223/NIPS2026/reproduce/run_all.py", line 183, in run_mm_probe
+    return eval_per_layer(train_data, test_data, method_fn)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/jehc223/NIPS2026/reproduce/run_all.py", line 126, in eval_per_layer
+    result = method_fn(train_acts, train_labels, test_acts, test_labels)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/jehc223/NIPS2026/reproduce/run_all.py", line 177, in method_fn
+    probe = MMProbe.from_data(train_c, train_labels)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/jehc223/NIPS2026/reproduce/methods.py", line 77, in from_data
+    inv = torch.linalg.pinv(covariance, hermitian=True, atol=atol)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: false INTERNAL ASSERT FAILED at "/pytorch/aten/src/ATen/native/BatchLinearAlgebra.cpp":1601, please report a bug to PyTorch. linalg.eigh: Argument 8 has illegal value. Most certainly there is a bug in the implementation calling the backend library.
