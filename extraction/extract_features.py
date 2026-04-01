@@ -200,19 +200,23 @@ class FeatureExtractor:
         self._mode = None
         self._forward_idx = -1
         self._phase = None
+        self._prompt_lens = []       # set before generate for attn hook
+        self._replay_lens = []       # set before replay for attn hook
         # Prefill buffers (batched)
         self._pf_embed = None       # (B, padded_prompt_len, dim)
         self._pf_layers = {}        # {layer: (B, padded_prompt_len, dim)}
         self._pf_norm = None        # (B, padded_prompt_len, dim)
         self._pf_oproj = {}         # {layer: (B, padded_prompt_len, n_heads*head_dim)}
         self._pf_vproj = {}         # {layer: (B, padded_prompt_len, n_kv_heads*head_dim)}
-        self._pf_attn = {}          # {layer: (B, n_heads, padded_prompt_len, padded_prompt_len)}
-        self._pf_logits = None      # (B, padded_prompt_len, vocab)
+        self._pf_attn_last_rows = {}   # {layer: list of (n_heads, prompt_len_b) per sample}
+        self._pf_attn_diag_logmean = {} # {layer: list of (n_heads,) per sample}
+        self._pf_logits = None      # (B, vocab) — only last position
         # Replay buffers (batched)
         self._rp_embed = None
         self._rp_layers = {}
         self._rp_norm = None
-        self._rp_attn = {}          # {layer: (B, n_heads, total_len, total_len)}
+        self._rp_attn_last_rows = {}   # {layer: list of (n_heads, total_len_b) per sample}
+        self._rp_attn_diag_logmean = {} # {layer: list of (n_heads,) per sample}
 
     def _clear_replay(self):
         self._forward_idx = -1
@@ -220,7 +224,8 @@ class FeatureExtractor:
         self._rp_embed = None
         self._rp_layers = {}
         self._rp_norm = None
-        self._rp_attn = {}
+        self._rp_attn_last_rows = {}
+        self._rp_attn_diag_logmean = {}
 
     # ----------------------------------------------------------
     # Hooks
@@ -255,7 +260,8 @@ class FeatureExtractor:
 
         def lm_head_hook(module, inputs, output):
             if self._phase == "prefill":
-                self._pf_logits = output.detach().float().cpu()
+                # Only keep last position logits per sample (B, vocab) to avoid storing full (B, seq, vocab)
+                self._pf_logits = output[:, -1, :].detach().float().cpu()
         self._hooks_handles.append(
             self.model.lm_head.register_forward_hook(lm_head_hook))
 
@@ -284,10 +290,37 @@ class FeatureExtractor:
                 attn_weights = output[1]  # (B, n_heads, seq, seq)
                 if attn_weights is None:
                     return
+                aw = attn_weights.detach().float()  # keep on device briefly
+                B_aw = aw.shape[0]
+                seq = aw.shape[-1]
                 if self._phase == "prefill":
-                    self._pf_attn[idx] = attn_weights.detach().float().cpu()
+                    rows_list = []
+                    diag_list = []
+                    padded = aw.shape[-1]
+                    for b in range(B_aw):
+                        pl = self._prompt_lens[b]
+                        start = padded - pl
+                        last = padded - 1
+                        row = aw[b, :, last, start:padded].cpu()  # (n_heads, pl)
+                        diag = aw[b, :, torch.arange(start, padded), torch.arange(start, padded)]
+                        diag_lm = safe_log(diag).mean(dim=-1).cpu()  # (n_heads,)
+                        rows_list.append(row)
+                        diag_list.append(diag_lm)
+                    self._pf_attn_last_rows[idx] = rows_list
+                    self._pf_attn_diag_logmean[idx] = diag_list
                 elif self._phase == "replay":
-                    self._rp_attn[idx] = attn_weights.detach().float().cpu()
+                    rows_list = []
+                    diag_list = []
+                    for b in range(B_aw):
+                        tl = self._replay_lens[b]
+                        row = aw[b, :, tl - 1, :tl].cpu()  # (n_heads, tl)
+                        diag = aw[b, :, torch.arange(tl), torch.arange(tl)]
+                        diag_lm = safe_log(diag).mean(dim=-1).cpu()
+                        rows_list.append(row)
+                        diag_list.append(diag_lm)
+                    self._rp_attn_last_rows[idx] = rows_list
+                    self._rp_attn_diag_logmean[idx] = diag_list
+                del aw
             self._hooks_handles.append(
                 layer.self_attn.register_forward_hook(attn_hook))
 
@@ -310,54 +343,6 @@ class FeatureExtractor:
         return s
 
     # ----------------------------------------------------------
-    # Extract single sample features from batched hook data
-    # ----------------------------------------------------------
-    def _extract_prompt_features_single(self, b, prompt_len, padded_prompt_len, pf_states):
-        """Extract prompt-side features for sample b from batched prefill data."""
-        # With left-padding, last prompt token is at position padded_prompt_len - 1
-        last_pos = padded_prompt_len - 1
-        start_pos = padded_prompt_len - prompt_len  # first real token
-
-        # 1. input_last_token_hidden
-        input_last_token_hidden = torch.stack(
-            [hs[b, last_pos, :] for hs in pf_states]
-        ).to(torch.float16)
-
-        # 2. input_mean_pool_hidden (mean over non-padded prompt tokens)
-        input_mean_pool_hidden = torch.stack(
-            [hs[b, start_pos:padded_prompt_len, :].float().mean(dim=0) for hs in pf_states]
-        ).to(torch.float16)
-
-        # 3. input_per_head_activation
-        input_per_head_activation = torch.empty(
-            self.n_layers, self.n_heads, self.head_dim, dtype=torch.float16)
-        for li in range(self.n_layers):
-            x = self._pf_oproj[li][b, last_pos, :]
-            input_per_head_activation[li] = x.view(self.n_heads, self.head_dim).to(torch.float16)
-
-        # 4. input_logit_stats (logits at last prompt position predict first gen token)
-        input_logit_stats = compute_logit_stats(self._pf_logits[b, last_pos, :])
-
-        # 5. input_attn_stats
-        input_attn_stats = torch.empty(self.n_layers, self.n_heads, 3, dtype=torch.float32)
-        for li in range(self.n_layers):
-            aw = self._pf_attn[li]  # (B, n_heads, padded, padded) — but stored as (n_heads, padded, padded) for sample batch
-            # Actually stored per-batch: self._pf_attn[li] has all B samples
-            # Wait — attn_hook stores attn_weights[0] which drops the batch dim if batch=1
-            # No — output[1] from self_attn with batch has shape (B, n_heads, seq, seq)
-            # And we do attn_weights[0] which takes first sample... NO!
-            # Fix: attn_hook should NOT index [0]. Let me check...
-            # Actually looking at the hook: self._pf_attn[idx] = attn_weights[0]
-            # attn_weights here is output[1] from self_attn forward
-            # For eager attention, output[1] shape is (batch, n_heads, seq, seq)
-            # So [0] takes the first sample. WRONG for batched!
-            # Need to store full batch.
-            pass
-
-        # This approach has a bug — need to fix attn_hook first
-        return None
-
-    # ----------------------------------------------------------
     # Batched extraction
     # ----------------------------------------------------------
     @torch.inference_mode()
@@ -368,29 +353,29 @@ class FeatureExtractor:
         # Tokenize with left-padding
         batch = self.tokenizer(
             texts, return_tensors="pt", truncation=True,
-            max_length=MAX_SEQ_LEN, padding=True,  # left-padding
+            max_length=MAX_SEQ_LEN, padding=True,
         )
         input_ids = batch["input_ids"].to(self.input_device)
         attention_mask = batch["attention_mask"].to(self.input_device)
         padded_prompt_len = int(input_ids.shape[1])
 
-        # Compute per-sample prompt lengths from attention mask
-        prompt_lens = attention_mask.sum(dim=1).cpu().tolist()  # list of int
+        # Per-sample prompt lengths from attention mask
+        prompt_lens = attention_mask.sum(dim=1).cpu().tolist()
 
         # ==============================================================
         # Pass 1: generate() — prefill hooks + token ids
         # ==============================================================
         self._clear_all()
         self._mode = "generate"
+        self._prompt_lens = [int(pl) for pl in prompt_lens]
 
         sequences = self.model.generate(
             input_ids=input_ids, attention_mask=attention_mask,
             max_new_tokens=MAX_NEW_TOKENS, do_sample=False,
             return_dict_in_generate=False,
         )
-        # sequences: (B, max_total_len) — left-padded prompt + generated + right-padded
 
-        pf_states = self._pf_states()  # each (B, padded_prompt_len, dim)
+        pf_states = self._pf_states()
         max_total_len = int(sequences.shape[1])
 
         # Per-sample: extract prompt features + gen token ids
@@ -402,8 +387,6 @@ class FeatureExtractor:
             pl = int(prompt_lens[b])
             last_pos = padded_prompt_len - 1
             start_pos = padded_prompt_len - pl
-
-            # Prompt-side features
             feat = {}
 
             # 1. input_last_token_hidden
@@ -423,52 +406,69 @@ class FeatureExtractor:
                 pha[li] = x.view(self.n_heads, self.head_dim).to(torch.float16)
             feat["input_per_head_activation"] = pha
 
-            # 4. input_logit_stats
-            feat["input_logit_stats"] = compute_logit_stats(self._pf_logits[b, last_pos, :])
+            # 4. input_logit_stats (pf_logits is now (B, vocab))
+            feat["input_logit_stats"] = compute_logit_stats(self._pf_logits[b, :])
 
-            # 5. input_attn_stats
+            # 5. input_attn_stats (from pre-computed last rows + diag)
             ias = torch.empty(self.n_layers, self.n_heads, 3, dtype=torch.float32)
             for li in range(self.n_layers):
-                aw_full = self._pf_attn[li]  # (B, n_heads, padded, padded)
+                row = self._pf_attn_last_rows[li][b]  # (n_heads, pl)
+                dlm = self._pf_attn_diag_logmean[li][b]  # (n_heads,)
                 for hi in range(self.n_heads):
-                    row = aw_full[b, hi, last_pos, start_pos:padded_prompt_len]
-                    ias[li, hi, 0] = row_skewness(row)
-                    ias[li, hi, 1] = row_entropy(row)
-                diag_vals = aw_full[b, :, torch.arange(start_pos, padded_prompt_len),
-                                    torch.arange(start_pos, padded_prompt_len)]  # (n_heads, pl)
-                for hi in range(self.n_heads):
-                    ias[li, hi, 2] = safe_log(diag_vals[hi]).mean().item()
+                    ias[li, hi, 0] = row_skewness(row[hi])
+                    ias[li, hi, 1] = row_entropy(row[hi])
+                    ias[li, hi, 2] = float(dlm[hi].item())
             feat["input_attn_stats"] = ias
 
             # 6. input_attn_value_norms
             iavn = torch.empty(self.n_layers, self.n_heads, pl, dtype=torch.float16)
             for li in range(self.n_layers):
-                aw_full = self._pf_attn[li]
+                attn_row = self._pf_attn_last_rows[li][b]  # (n_heads, pl)
                 v = self._pf_vproj[li][b, start_pos:padded_prompt_len, :]
                 v = v.view(pl, self.n_kv_heads, self.head_dim).permute(1, 0, 2).float()
                 for hi in range(self.n_heads):
                     kv_hi = hi // self.kv_group_size
-                    aw_row = aw_full[b, hi, last_pos, start_pos:padded_prompt_len].unsqueeze(-1)
-                    iavn[li, hi] = (aw_row * v[kv_hi]).norm(dim=-1).to(torch.float16)
+                    aw = attn_row[hi].unsqueeze(-1)  # (pl, 1)
+                    iavn[li, hi] = (aw * v[kv_hi]).norm(dim=-1).to(torch.float16)
             feat["input_attn_value_norms"] = iavn
             feat["input_seq_len"] = pl
 
-            # Gen token ids for this sample
-            # Find where generated tokens end (first pad after prompt)
-            full_seq = sequences[b]  # (max_total_len,)
-            gen_part = full_seq[padded_prompt_len:]  # after padded prompt
-            # Find actual gen length (exclude trailing pad tokens)
-            non_pad = (gen_part != self.pad_token_id).long()
-            if non_pad.sum() == 0:
-                gen_len = 0
-            else:
-                # Last non-pad position + 1
-                gen_len = int(non_pad.flip(0).argmax().item())
-                gen_len = int(gen_part.shape[0]) - gen_len
-            raw_gen_ids = gen_part[:gen_len]
+            # Gen token ids: use generate() output length tracking
+            # sequences[b] = [left_pad... prompt... gen_tokens... right_pad...]
+            # gen tokens start at padded_prompt_len
+            # gen_len = total non-pad length after prompt
+            # Fix for EOS==PAD: count from padded_prompt_len to the end of the sequence
+            # generate() pads shorter sequences with pad_token_id on the right
+            # The actual generated tokens are everything from padded_prompt_len
+            # up to (but not including) trailing padding.
+            # Since EOS may equal PAD, we use the fact that generate() right-pads
+            # AFTER the sequence ends. If a token equals pad_token_id but is followed
+            # by a non-pad token, it's a real EOS, not padding.
+            gen_part = sequences[b, padded_prompt_len:].cpu()
+            gen_len = int(gen_part.shape[0])
+            # Strip only TRAILING pad tokens (from the right)
+            while gen_len > 0 and int(gen_part[gen_len - 1].item()) == self.pad_token_id:
+                gen_len -= 1
+            # But if the last real token IS EOS (== pad), we stripped one too many.
+            # Check: if gen_len < original and gen_part[gen_len] == pad, was gen_len+1 the EOS?
+            # Heuristic: if the original gen_part had ANY non-pad token, the sequence
+            # generated at least one token. If gen_len==0 but there were tokens, add back.
+            # Safer approach: use sequences length info. generate() with greedy returns
+            # all sequences of same length (no per-sequence EOS stopping by default).
+            # Actually: Qwen2.5 with do_sample=False still stops at EOS per sequence.
+            # The safest way: all tokens up to and including the first EOS are real.
+            # Everything after the first EOS is padding.
+            gen_part_full = sequences[b, padded_prompt_len:].cpu()
+            eos_id = self.tokenizer.eos_token_id
+            gen_len = int(gen_part_full.shape[0])
+            for t in range(gen_len):
+                if int(gen_part_full[t].item()) == eos_id:
+                    gen_len = t + 1  # include the EOS token
+                    break
+
+            raw_gen_ids = gen_part_full[:gen_len]
             gen_text = self.tokenizer.decode(raw_gen_ids, skip_special_tokens=True,
                                              clean_up_tokenization_spaces=False)
-
             feat["gen_text"] = gen_text
             feat["gen_len"] = gen_len
             all_features.append(feat)
@@ -478,14 +478,10 @@ class FeatureExtractor:
         # ==============================================================
         # Pass 2: replay forward on full sequences
         # ==============================================================
-        # Build batched full sequences: for each sample, prompt (unpadded) + gen
-        # Re-tokenize is wasteful; instead construct from original ids
-        # But samples have different total lengths — need to pad for batch forward
         max_gen_len = max(all_gen_lens) if all_gen_lens else 0
+        n_hs = self.n_layers + 2
 
         if max_gen_len == 0:
-            # No generation for any sample — fill gen features with zeros
-            n_hs = self.n_layers + 2
             for b in range(B):
                 all_features[b]["gen_last_token_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
                 all_features[b]["gen_mean_pool_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
@@ -496,10 +492,8 @@ class FeatureExtractor:
                 all_features[b]["gen_step_boundary_indices"] = []
             return all_features
 
-        # Build replay batch: each sample is unpadded_prompt + gen_ids, right-padded to max_total
-        replay_lens = []  # actual length per sample
-        for b in range(B):
-            replay_lens.append(int(prompt_lens[b]) + all_gen_lens[b])
+        # Build replay: unpadded_prompt + gen_ids, right-padded
+        replay_lens = [int(prompt_lens[b]) + all_gen_lens[b] for b in range(B)]
         max_replay_len = max(replay_lens)
 
         replay_ids = torch.full((B, max_replay_len), self.pad_token_id, dtype=torch.long)
@@ -508,11 +502,10 @@ class FeatureExtractor:
             pl = int(prompt_lens[b])
             gl = all_gen_lens[b]
             tl = pl + gl
-            # Unpadded prompt tokens
             start_pos = padded_prompt_len - pl
-            prompt_tokens = sequences[b, start_pos:padded_prompt_len]
-            gen_tokens = all_gen_ids[b]
-            replay_ids[b, :tl] = torch.cat([prompt_tokens.cpu(), gen_tokens.cpu()])
+            prompt_tokens = sequences[b, start_pos:padded_prompt_len].cpu()
+            gen_tokens = all_gen_ids[b].cpu()
+            replay_ids[b, :tl] = torch.cat([prompt_tokens, gen_tokens])
             replay_mask[b, :tl] = 1
 
         replay_ids = replay_ids.to(self.input_device)
@@ -520,19 +513,30 @@ class FeatureExtractor:
 
         self._clear_replay()
         self._mode = "replay"
+        self._replay_lens = replay_lens
 
         replay_out = self.model(
             input_ids=replay_ids, attention_mask=replay_mask,
             use_cache=False, output_attentions=False, output_hidden_states=False,
         )
 
-        rp_states = self._rp_states()  # each (B, max_replay_len, dim)
+        rp_states = self._rp_states()
 
         for b in range(B):
             pl = int(prompt_lens[b])
             gl = all_gen_lens[b]
             tl = pl + gl
             feat = all_features[b]
+
+            if gl == 0:
+                feat["gen_last_token_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
+                feat["gen_mean_pool_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
+                feat["gen_per_token_hidden_last_layer"] = torch.zeros(0, self.hidden_dim, dtype=torch.float16)
+                feat["gen_logit_stats_eos"] = {}
+                feat["gen_attn_stats_last"] = torch.zeros(self.n_layers, self.n_heads, 3, dtype=torch.float32)
+                feat["gen_step_boundary_hidden"] = []
+                feat["gen_step_boundary_indices"] = []
+                continue
 
             # 8. gen_last_token_hidden
             feat["gen_last_token_hidden"] = torch.stack(
@@ -550,20 +554,17 @@ class FeatureExtractor:
             ].to(torch.float16)
 
             # 11. gen_logit_stats_eos
-            feat["gen_logit_stats_eos"] = compute_logit_stats(
-                replay_out.logits[b, tl - 1, :])
+            feat["gen_logit_stats_eos"] = compute_logit_stats(replay_out.logits[b, tl - 1, :])
 
-            # 12. gen_attn_stats_last
+            # 12. gen_attn_stats_last (from pre-computed last rows + diag)
             gas = torch.empty(self.n_layers, self.n_heads, 3, dtype=torch.float32)
             for li in range(self.n_layers):
-                aw_full = self._rp_attn[li]  # (B, n_heads, max_replay_len, max_replay_len)
+                row = self._rp_attn_last_rows[li][b]  # (n_heads, tl)
+                dlm = self._rp_attn_diag_logmean[li][b]  # (n_heads,)
                 for hi in range(self.n_heads):
-                    row = aw_full[b, hi, tl - 1, :tl]
-                    gas[li, hi, 0] = row_skewness(row)
-                    gas[li, hi, 1] = row_entropy(row)
-                diag_vals = aw_full[b, :, torch.arange(tl), torch.arange(tl)]
-                for hi in range(self.n_heads):
-                    gas[li, hi, 2] = safe_log(diag_vals[hi]).mean().item()
+                    gas[li, hi, 0] = row_skewness(row[hi])
+                    gas[li, hi, 1] = row_entropy(row[hi])
+                    gas[li, hi, 2] = float(dlm[hi].item())
             feat["gen_attn_stats_last"] = gas
 
             # 13. gen_step_boundary_hidden
