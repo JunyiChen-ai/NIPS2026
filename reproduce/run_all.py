@@ -310,11 +310,12 @@ def run_llm_check(train_data, test_data, is_regression=False):
 
 
 def run_sep(train_data, test_data, is_regression=False):
-    """SEP — LR on generation hidden states."""
+    """SEP — LR on generation hidden states with layer range selection."""
     train_labels = torch.tensor(train_data["labels"])
     test_labels = torch.tensor(test_data["labels"])
 
     if is_regression:
+        # SEP is classification-only in the original; fall back to per-layer Ridge
         from sklearn.linear_model import Ridge
         best_r = -1
         best_layer = 0
@@ -332,20 +333,11 @@ def run_sep(train_data, test_data, is_regression=False):
                 best_results = metrics
         return {"best_layer": best_layer, "best_results": best_results}
     else:
-        best_auroc = 0
-        best_layer = 0
-        best_results = {}
-        for layer in range(train_data["gen_last_token_hidden"].shape[1]):
-            probs, preds = sep_probe(
-                train_data["gen_last_token_hidden"], train_labels,
-                test_data["gen_last_token_hidden"], test_labels,
-                layer=layer)
-            metrics = eval_classification(test_labels.numpy(), probs, preds)
-            if metrics["auroc"] > best_auroc:
-                best_auroc = metrics["auroc"]
-                best_layer = layer
-                best_results = metrics
-        return {"best_layer": best_layer, "best_results": best_results}
+        probs, preds, best_range = sep_probe(
+            train_data["gen_last_token_hidden"], train_labels,
+            test_data["gen_last_token_hidden"], test_labels)
+        metrics = eval_classification(test_labels.numpy(), probs, preds)
+        return {"best_range": best_range, "best_results": metrics}
 
 
 def run_coe(train_data, test_data, is_regression=False):
