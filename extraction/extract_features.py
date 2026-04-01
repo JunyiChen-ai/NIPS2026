@@ -23,7 +23,7 @@ OUTPUT_DIR = "/data/jehc223/NIPS2026/extraction/features"
 DATASETS_BASE = "/data/jehc223/NIPS2026/datasets"
 MAX_SEQ_LEN = 2048
 MAX_NEW_TOKENS = 512
-BATCH_SIZE = 8  # start conservative; increase after monitoring GPU memory
+BATCH_SIZE = 256  # will auto-reduce on OOM
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -683,7 +683,8 @@ def main():
             print(f"\nSkipping {dataset}/{split} (already done)")
             continue
 
-        print(f"\nProcessing {dataset}/{split}: {len(samples)} samples (batch_size={BATCH_SIZE})")
+        current_batch_size = BATCH_SIZE
+        print(f"\nProcessing {dataset}/{split}: {len(samples)} samples (initial batch_size={current_batch_size})")
         results = {k: [] for k in [
             "input_last_token_hidden", "input_mean_pool_hidden",
             "input_per_head_activation", "input_logit_stats",
@@ -695,14 +696,23 @@ def main():
             "labels", "texts", "gen_texts", "input_seq_lens", "gen_lens",
         ]}
 
-        n_batches = (len(samples) + BATCH_SIZE - 1) // BATCH_SIZE
-        for batch_idx in tqdm(range(n_batches), desc=f"{dataset}/{split}"):
-            batch_start = batch_idx * BATCH_SIZE
-            batch_end = min(batch_start + BATCH_SIZE, len(samples))
-            batch_samples = samples[batch_start:batch_end]
-
+        sample_idx = 0
+        pbar = tqdm(total=len(samples), desc=f"{dataset}/{split}")
+        while sample_idx < len(samples):
+            batch_end = min(sample_idx + current_batch_size, len(samples))
+            batch_samples = samples[sample_idx:batch_end]
             batch_texts = [s["text"] for s in batch_samples]
-            batch_features = extractor.extract_batch(batch_texts)
+
+            try:
+                batch_features = extractor.extract_batch(batch_texts)
+            except torch.cuda.OutOfMemoryError:
+                # OOM: halve batch size and retry this batch
+                torch.cuda.empty_cache()
+                extractor._clear_all()
+                old_bs = current_batch_size
+                current_batch_size = max(1, current_batch_size // 2)
+                print(f"\n  OOM at batch_size={old_bs}, reducing to {current_batch_size}")
+                continue  # retry same sample_idx with smaller batch
 
             for i, (sample, feat) in enumerate(zip(batch_samples, batch_features)):
                 results["labels"].append(sample["label"])
@@ -719,6 +729,10 @@ def main():
                            "gen_attn_stats_last", "gen_step_boundary_hidden"]:
                     results[k].append(feat[k])
 
+            pbar.update(len(batch_samples))
+            sample_idx = batch_end
+
+        pbar.close()
         save_split_features(results, OUTPUT_DIR, dataset, split, MODEL_NAME)
 
     print("\nAll done!")
