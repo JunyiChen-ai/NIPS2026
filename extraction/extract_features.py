@@ -23,7 +23,7 @@ OUTPUT_DIR = "/data/jehc223/NIPS2026/extraction/features"
 DATASETS_BASE = "/data/jehc223/NIPS2026/datasets"
 MAX_SEQ_LEN = 2048
 MAX_NEW_TOKENS = 512
-BATCH_SIZE = 8  # adjust based on GPU memory monitoring
+BATCH_SIZE = 64  # adjust based on GPU memory monitoring
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -482,12 +482,15 @@ class FeatureExtractor:
         n_hs = self.n_layers + 2
 
         if max_gen_len == 0:
+            # All samples had immediate EOS or no generation.
+            # For gen_logit_stats_eos, reuse input_logit_stats (the distribution that selected EOS).
+            # For gen_last_token_hidden, reuse input_last_token_hidden (last prompt token).
             for b in range(B):
-                all_features[b]["gen_last_token_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
+                all_features[b]["gen_last_token_hidden"] = all_features[b]["input_last_token_hidden"].clone()
                 all_features[b]["gen_mean_pool_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
                 all_features[b]["gen_per_token_hidden_last_layer"] = torch.zeros(0, self.hidden_dim, dtype=torch.float16)
-                all_features[b]["gen_logit_stats_eos"] = {}
-                all_features[b]["gen_attn_stats_last"] = torch.zeros(self.n_layers, self.n_heads, 3, dtype=torch.float32)
+                all_features[b]["gen_logit_stats_eos"] = all_features[b]["input_logit_stats"].copy()
+                all_features[b]["gen_attn_stats_last"] = all_features[b]["input_attn_stats"].clone()
                 all_features[b]["gen_step_boundary_hidden"] = []
                 all_features[b]["gen_step_boundary_indices"] = []
             return all_features
@@ -529,11 +532,12 @@ class FeatureExtractor:
             feat = all_features[b]
 
             if gl == 0:
-                feat["gen_last_token_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
+                # Immediate EOS: reuse prompt features for gen fields
+                feat["gen_last_token_hidden"] = feat["input_last_token_hidden"].clone()
                 feat["gen_mean_pool_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
                 feat["gen_per_token_hidden_last_layer"] = torch.zeros(0, self.hidden_dim, dtype=torch.float16)
-                feat["gen_logit_stats_eos"] = {}
-                feat["gen_attn_stats_last"] = torch.zeros(self.n_layers, self.n_heads, 3, dtype=torch.float32)
+                feat["gen_logit_stats_eos"] = feat["input_logit_stats"].copy()
+                feat["gen_attn_stats_last"] = feat["input_attn_stats"].clone()
                 feat["gen_step_boundary_hidden"] = []
                 feat["gen_step_boundary_indices"] = []
                 continue
