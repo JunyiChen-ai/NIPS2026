@@ -322,7 +322,10 @@ def run_lid(train, val, test, is_reg):
         if is_reg:
             m = abs(eval_reg(va_labels, lids)["spearman_r"])
         else:
-            m = eval_scoring(va_labels, -lids)["auroc"]
+            # Use val AUROC (best of both directions) for layer selection
+            auroc_pos = roc_auc_score(va_labels, lids)
+            auroc_neg = roc_auc_score(va_labels, -lids)
+            m = max(auroc_pos, auroc_neg)
 
         if m > best_val_metric:
             best_val_metric = m
@@ -380,7 +383,9 @@ def run_llm_check(train, val, test, is_reg):
         if is_reg:
             m = abs(eval_reg(va_labels, scores)["spearman_r"])
         else:
-            m = eval_scoring(va_labels, scores)["auroc"]
+            auroc_pos = roc_auc_score(va_labels, scores)
+            auroc_neg = roc_auc_score(va_labels, -scores)
+            m = max(auroc_pos, auroc_neg)
         if m > best_val_metric:
             best_val_metric = m
             best_layer = layer
