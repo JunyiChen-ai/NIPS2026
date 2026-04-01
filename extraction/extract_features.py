@@ -1,12 +1,11 @@
 """
-Offline feature extraction: 2-pass design.
-  Pass 1: model.generate(prompt) — prefill hooks capture all prompt-side features.
-          generate() only used for token ids; no gen_out.hidden_states/attentions used.
-  Pass 2: model(prompt+gen_ids) — replay forward with hooks for all generation-side features.
-          Attention captured via self_attn hook output[1] (monkey-patched to always compute).
+Offline feature extraction: 2-pass design with batching and checkpointing.
+  Pass 1: model.generate(batch) — prefill hooks capture prompt-side features.
+  Pass 2: model(batch of prompt+gen) — replay forward for generation-side features.
 
 Qwen2.5-7B-Instruct, 2 x A100, device_map='auto', attn_implementation='eager'.
-All hidden states from explicit hooks. Attention weights from self_attn hook.
+self_attn.forward monkey-patched to always return attn_weights to hooks,
+without model-level attention collection (no OOM from retained attention).
 """
 
 import os
@@ -16,16 +15,31 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+# ============================================================
+# Config
+# ============================================================
+MODEL_NAME = "Qwen/Qwen2.5-7B-Instruct"
+OUTPUT_DIR = "/data/jehc223/NIPS2026/extraction/features"
+DATASETS_BASE = "/data/jehc223/NIPS2026/datasets"
+MAX_SEQ_LEN = 2048
+MAX_NEW_TOKENS = 512
+BATCH_SIZE = 8  # adjust based on GPU memory monitoring
 
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+
+# ============================================================
+# Monkey-patch
+# ============================================================
 def patch_self_attn_for_hooks(model):
-    """Wrap each self_attn.forward to always pass output_attentions=True,
-    without enabling model-level attention collection. Preserves Accelerate's
-    device dispatch wrapper by wrapping rather than replacing forward."""
+    """Wrap each self_attn.forward to force output_attentions=True locally.
+    Upper layers (DecoderLayer, Model) keep output_attentions=False so they
+    don't collect/retain attention tensors. Preserves Accelerate dispatch."""
     for layer in model.model.layers:
         attn = layer.self_attn
         if hasattr(attn, "_patched_for_hooks"):
             continue
-        orig_forward = attn.forward  # may be Accelerate's functools.partial
+        orig_forward = attn.forward
 
         def make_wrapper(orig_fn):
             def wrapper(*args, **kwargs):
@@ -35,17 +49,6 @@ def patch_self_attn_for_hooks(model):
 
         attn.forward = make_wrapper(orig_forward)
         attn._patched_for_hooks = True
-
-# ============================================================
-# Config
-# ============================================================
-MODEL_NAME = "Qwen/Qwen2.5-7B-Instruct"
-OUTPUT_DIR = "/data/jehc223/NIPS2026/extraction/features"
-DATASETS_BASE = "/data/jehc223/NIPS2026/datasets"
-MAX_SEQ_LEN = 2048
-MAX_NEW_TOKENS = 512
-
-os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
 # ============================================================
@@ -179,58 +182,50 @@ class FeatureExtractor:
         self.head_dim = getattr(cfg, "head_dim", self.hidden_dim // self.n_heads)
         self.kv_group_size = self.n_heads // self.n_kv_heads
         self.input_device = self.model.get_input_embeddings().weight.device
+        self.pad_token_id = self.tokenizer.pad_token_id
 
         print(f"Model: {self.n_layers}L, {self.n_heads}H, {self.n_kv_heads}KV, "
               f"dim={self.hidden_dim}, head={self.head_dim}, input_device={self.input_device}")
 
         patch_self_attn_for_hooks(self.model)
 
-        self._hooks = []
+        self._hooks_handles = []
         self._clear_all()
         self._register_hooks()
 
     # ----------------------------------------------------------
-    # State management
+    # State
     # ----------------------------------------------------------
     def _clear_all(self):
-        self._mode = None          # "generate" or "replay"
-        self._forward_idx = -1     # counts model.model forward calls
-        self._phase = None         # "prefill", "decode", or "replay"
-        self._prompt_len = 0
-        self._full_len = 0
-
-        # Prompt-side buffers (filled during generate prefill)
-        self._prompt_embed = None
-        self._prompt_layers = {}
-        self._prompt_norm = None
-        self._prompt_oproj = {}
-        self._prompt_vproj = {}
-        self._prompt_attn_last_rows = {}   # {layer: (n_heads, prompt_len)}
-        self._prompt_attn_diag_logmean = {}  # {layer: (n_heads,)}
-        self._prefill_logits = None
-
-        # Replay buffers (filled during full-sequence forward)
-        self._replay_embed = None
-        self._replay_layers = {}
-        self._replay_norm = None
-        self._replay_attn_last_rows = {}
-        self._replay_attn_diag_logmean = {}
-
-    def _clear_replay_only(self):
+        self._mode = None
         self._forward_idx = -1
         self._phase = None
-        self._full_len = 0
-        self._replay_embed = None
-        self._replay_layers = {}
-        self._replay_norm = None
-        self._replay_attn_last_rows = {}
-        self._replay_attn_diag_logmean = {}
+        # Prefill buffers (batched)
+        self._pf_embed = None       # (B, padded_prompt_len, dim)
+        self._pf_layers = {}        # {layer: (B, padded_prompt_len, dim)}
+        self._pf_norm = None        # (B, padded_prompt_len, dim)
+        self._pf_oproj = {}         # {layer: (B, padded_prompt_len, n_heads*head_dim)}
+        self._pf_vproj = {}         # {layer: (B, padded_prompt_len, n_kv_heads*head_dim)}
+        self._pf_attn = {}          # {layer: (B, n_heads, padded_prompt_len, padded_prompt_len)}
+        self._pf_logits = None      # (B, padded_prompt_len, vocab)
+        # Replay buffers (batched)
+        self._rp_embed = None
+        self._rp_layers = {}
+        self._rp_norm = None
+        self._rp_attn = {}          # {layer: (B, n_heads, total_len, total_len)}
+
+    def _clear_replay(self):
+        self._forward_idx = -1
+        self._phase = None
+        self._rp_embed = None
+        self._rp_layers = {}
+        self._rp_norm = None
+        self._rp_attn = {}
 
     # ----------------------------------------------------------
     # Hooks
     # ----------------------------------------------------------
     def _register_hooks(self):
-        # Pre-hook on model backbone to count forwards and set phase
         def model_pre_hook(module, args, kwargs):
             self._forward_idx += 1
             if self._mode == "generate":
@@ -239,261 +234,355 @@ class FeatureExtractor:
                 self._phase = "replay"
             else:
                 self._phase = None
-        self._hooks.append(
-            self.model.model.register_forward_pre_hook(model_pre_hook, with_kwargs=True)
-        )
+        self._hooks_handles.append(
+            self.model.model.register_forward_pre_hook(model_pre_hook, with_kwargs=True))
 
-        # Embedding hook
         def embed_hook(module, inputs, output):
             if self._phase == "prefill":
-                self._prompt_embed = output.detach().cpu()
+                self._pf_embed = output.detach().cpu()
             elif self._phase == "replay":
-                self._replay_embed = output.detach().cpu()
-        self._hooks.append(self.model.model.embed_tokens.register_forward_hook(embed_hook))
+                self._rp_embed = output.detach().cpu()
+        self._hooks_handles.append(
+            self.model.model.embed_tokens.register_forward_hook(embed_hook))
 
-        # Final norm hook
         def norm_hook(module, inputs, output):
             if self._phase == "prefill":
-                self._prompt_norm = output.detach().cpu()
+                self._pf_norm = output.detach().cpu()
             elif self._phase == "replay":
-                self._replay_norm = output.detach().cpu()
-        self._hooks.append(self.model.model.norm.register_forward_hook(norm_hook))
+                self._rp_norm = output.detach().cpu()
+        self._hooks_handles.append(
+            self.model.model.norm.register_forward_hook(norm_hook))
 
-        # LM head hook (for input_logit_stats from prefill)
         def lm_head_hook(module, inputs, output):
             if self._phase == "prefill":
-                self._prefill_logits = output[0, -1, :].detach().float().cpu()
-        self._hooks.append(self.model.lm_head.register_forward_hook(lm_head_hook))
+                self._pf_logits = output.detach().float().cpu()
+        self._hooks_handles.append(
+            self.model.lm_head.register_forward_hook(lm_head_hook))
 
-        # Per-layer hooks
         for li, layer in enumerate(self.model.model.layers):
-            # Decoder layer output: hidden states
             def layer_hook(module, inputs, output, idx=li):
                 hidden = output if torch.is_tensor(output) else output[0]
                 if self._phase == "prefill":
-                    self._prompt_layers[idx] = hidden.detach().cpu()
+                    self._pf_layers[idx] = hidden.detach().cpu()
                 elif self._phase == "replay":
-                    self._replay_layers[idx] = hidden.detach().cpu()
-            self._hooks.append(layer.register_forward_hook(layer_hook))
+                    self._rp_layers[idx] = hidden.detach().cpu()
+            self._hooks_handles.append(layer.register_forward_hook(layer_hook))
 
-            # o_proj input (before projection, per-head activations) — prefill only
             def oproj_hook(module, inputs, output, idx=li):
                 if self._phase == "prefill":
-                    self._prompt_oproj[idx] = inputs[0].detach().cpu()
-            self._hooks.append(layer.self_attn.o_proj.register_forward_hook(oproj_hook))
+                    self._pf_oproj[idx] = inputs[0].detach().cpu()
+            self._hooks_handles.append(
+                layer.self_attn.o_proj.register_forward_hook(oproj_hook))
 
-            # v_proj output (value states for attn_value_norms) — prefill only
             def vproj_hook(module, inputs, output, idx=li):
                 if self._phase == "prefill":
-                    self._prompt_vproj[idx] = output.detach().cpu()
-            self._hooks.append(layer.self_attn.v_proj.register_forward_hook(vproj_hook))
+                    self._pf_vproj[idx] = output.detach().cpu()
+            self._hooks_handles.append(
+                layer.self_attn.v_proj.register_forward_hook(vproj_hook))
 
-            # self_attn hook: capture attention weights from output[1]
-            # Qwen2 eager attention returns (attn_output, attn_weights, past_kv)
             def attn_hook(module, inputs, output, idx=li):
-                attn_weights = output[1]
+                attn_weights = output[1]  # (B, n_heads, seq, seq)
                 if attn_weights is None:
                     return
                 if self._phase == "prefill":
-                    aw = attn_weights[0].detach().float().cpu()  # (n_heads, prompt_len, prompt_len)
-                    p = self._prompt_len
-                    self._prompt_attn_last_rows[idx] = aw[:, p - 1, :p].contiguous()
-                    diag = aw[:, torch.arange(p), torch.arange(p)]
-                    self._prompt_attn_diag_logmean[idx] = safe_log(diag).mean(dim=-1).cpu()
+                    self._pf_attn[idx] = attn_weights.detach().float().cpu()
                 elif self._phase == "replay":
-                    aw = attn_weights[0].detach().float().cpu()  # (n_heads, total_len, total_len)
-                    t = self._full_len
-                    self._replay_attn_last_rows[idx] = aw[:, t - 1, :t].contiguous()
-                    diag = aw[:, torch.arange(t), torch.arange(t)]
-                    self._replay_attn_diag_logmean[idx] = safe_log(diag).mean(dim=-1).cpu()
-            self._hooks.append(layer.self_attn.register_forward_hook(attn_hook))
+                    self._rp_attn[idx] = attn_weights.detach().float().cpu()
+            self._hooks_handles.append(
+                layer.self_attn.register_forward_hook(attn_hook))
 
     # ----------------------------------------------------------
-    # State assembly
+    # Batched states assembly
     # ----------------------------------------------------------
-    def _prompt_states(self):
-        """[embed, layer_0, ..., layer_{n-1}, norm] — length n_layers+2."""
-        states = [self._prompt_embed]
+    def _pf_states(self):
+        """[embed, layer_0, ..., layer_{n-1}, norm] each (B, seq, dim)."""
+        s = [self._pf_embed]
         for i in range(self.n_layers):
-            assert i in self._prompt_layers, f"Missing prompt layer {i}"
-            states.append(self._prompt_layers[i])
-        assert self._prompt_norm is not None, "Missing prompt norm"
-        states.append(self._prompt_norm)
-        return states
+            s.append(self._pf_layers[i])
+        s.append(self._pf_norm)
+        return s
 
-    def _replay_states(self):
-        states = [self._replay_embed]
+    def _rp_states(self):
+        s = [self._rp_embed]
         for i in range(self.n_layers):
-            assert i in self._replay_layers, f"Missing replay layer {i}"
-            states.append(self._replay_layers[i])
-        assert self._replay_norm is not None, "Missing replay norm"
-        states.append(self._replay_norm)
-        return states
-
-    def _to_input_device(self, batch):
-        return (batch["input_ids"].to(self.input_device, non_blocking=True),
-                batch["attention_mask"].to(self.input_device, non_blocking=True))
+            s.append(self._rp_layers[i])
+        s.append(self._rp_norm)
+        return s
 
     # ----------------------------------------------------------
-    # Main extraction
+    # Extract single sample features from batched hook data
+    # ----------------------------------------------------------
+    def _extract_prompt_features_single(self, b, prompt_len, padded_prompt_len, pf_states):
+        """Extract prompt-side features for sample b from batched prefill data."""
+        # With left-padding, last prompt token is at position padded_prompt_len - 1
+        last_pos = padded_prompt_len - 1
+        start_pos = padded_prompt_len - prompt_len  # first real token
+
+        # 1. input_last_token_hidden
+        input_last_token_hidden = torch.stack(
+            [hs[b, last_pos, :] for hs in pf_states]
+        ).to(torch.float16)
+
+        # 2. input_mean_pool_hidden (mean over non-padded prompt tokens)
+        input_mean_pool_hidden = torch.stack(
+            [hs[b, start_pos:padded_prompt_len, :].float().mean(dim=0) for hs in pf_states]
+        ).to(torch.float16)
+
+        # 3. input_per_head_activation
+        input_per_head_activation = torch.empty(
+            self.n_layers, self.n_heads, self.head_dim, dtype=torch.float16)
+        for li in range(self.n_layers):
+            x = self._pf_oproj[li][b, last_pos, :]
+            input_per_head_activation[li] = x.view(self.n_heads, self.head_dim).to(torch.float16)
+
+        # 4. input_logit_stats (logits at last prompt position predict first gen token)
+        input_logit_stats = compute_logit_stats(self._pf_logits[b, last_pos, :])
+
+        # 5. input_attn_stats
+        input_attn_stats = torch.empty(self.n_layers, self.n_heads, 3, dtype=torch.float32)
+        for li in range(self.n_layers):
+            aw = self._pf_attn[li]  # (B, n_heads, padded, padded) — but stored as (n_heads, padded, padded) for sample batch
+            # Actually stored per-batch: self._pf_attn[li] has all B samples
+            # Wait — attn_hook stores attn_weights[0] which drops the batch dim if batch=1
+            # No — output[1] from self_attn with batch has shape (B, n_heads, seq, seq)
+            # And we do attn_weights[0] which takes first sample... NO!
+            # Fix: attn_hook should NOT index [0]. Let me check...
+            # Actually looking at the hook: self._pf_attn[idx] = attn_weights[0]
+            # attn_weights here is output[1] from self_attn forward
+            # For eager attention, output[1] shape is (batch, n_heads, seq, seq)
+            # So [0] takes the first sample. WRONG for batched!
+            # Need to store full batch.
+            pass
+
+        # This approach has a bug — need to fix attn_hook first
+        return None
+
+    # ----------------------------------------------------------
+    # Batched extraction
     # ----------------------------------------------------------
     @torch.inference_mode()
-    def extract(self, text):
-        batch = self.tokenizer(text, return_tensors="pt", truncation=True,
-                               max_length=MAX_SEQ_LEN, padding=False)
-        input_ids, attention_mask = self._to_input_device(batch)
-        prompt_len = int(input_ids.shape[1])
+    def extract_batch(self, texts):
+        """Extract features for a batch of texts."""
+        B = len(texts)
+
+        # Tokenize with left-padding
+        batch = self.tokenizer(
+            texts, return_tensors="pt", truncation=True,
+            max_length=MAX_SEQ_LEN, padding=True,  # left-padding
+        )
+        input_ids = batch["input_ids"].to(self.input_device)
+        attention_mask = batch["attention_mask"].to(self.input_device)
+        padded_prompt_len = int(input_ids.shape[1])
+
+        # Compute per-sample prompt lengths from attention mask
+        prompt_lens = attention_mask.sum(dim=1).cpu().tolist()  # list of int
 
         # ==============================================================
-        # Pass 1: generate() — prefill hooks capture prompt features,
-        #         generate gives us token ids
+        # Pass 1: generate() — prefill hooks + token ids
         # ==============================================================
         self._clear_all()
         self._mode = "generate"
-        self._prompt_len = prompt_len
 
         sequences = self.model.generate(
             input_ids=input_ids, attention_mask=attention_mask,
             max_new_tokens=MAX_NEW_TOKENS, do_sample=False,
             return_dict_in_generate=False,
         )
+        # sequences: (B, max_total_len) — left-padded prompt + generated + right-padded
 
-        full_ids = sequences.to(self.input_device)
-        raw_gen_ids = full_ids[0, prompt_len:]
-        n_gen = int(raw_gen_ids.shape[0])
-        gen_text = self.tokenizer.decode(raw_gen_ids, skip_special_tokens=True,
-                                         clean_up_tokenization_spaces=False)
+        pf_states = self._pf_states()  # each (B, padded_prompt_len, dim)
+        max_total_len = int(sequences.shape[1])
 
-        # --- Extract prompt-side features from hooks ---
-        prompt_states = self._prompt_states()
+        # Per-sample: extract prompt features + gen token ids
+        all_features = []
+        all_gen_ids = []
+        all_gen_lens = []
 
-        input_last_token_hidden = torch.stack(
-            [hs[0, prompt_len - 1, :] for hs in prompt_states]
-        ).to(torch.float16)
+        for b in range(B):
+            pl = int(prompt_lens[b])
+            last_pos = padded_prompt_len - 1
+            start_pos = padded_prompt_len - pl
 
-        input_mean_pool_hidden = torch.stack(
-            [hs[0, :prompt_len, :].float().mean(dim=0) for hs in prompt_states]
-        ).to(torch.float16)
+            # Prompt-side features
+            feat = {}
 
-        input_per_head_activation = torch.empty(
-            self.n_layers, self.n_heads, self.head_dim, dtype=torch.float16)
-        for li in range(self.n_layers):
-            x = self._prompt_oproj[li][0, prompt_len - 1, :]
-            input_per_head_activation[li] = x.view(self.n_heads, self.head_dim).to(torch.float16)
+            # 1. input_last_token_hidden
+            feat["input_last_token_hidden"] = torch.stack(
+                [hs[b, last_pos, :] for hs in pf_states]
+            ).to(torch.float16)
 
-        input_logit_stats = compute_logit_stats(self._prefill_logits)
+            # 2. input_mean_pool_hidden
+            feat["input_mean_pool_hidden"] = torch.stack(
+                [hs[b, start_pos:padded_prompt_len, :].float().mean(dim=0) for hs in pf_states]
+            ).to(torch.float16)
 
-        input_attn_stats = torch.empty(self.n_layers, self.n_heads, 3, dtype=torch.float32)
-        for li in range(self.n_layers):
-            for hi in range(self.n_heads):
-                row = self._prompt_attn_last_rows[li][hi]
-                input_attn_stats[li, hi, 0] = row_skewness(row)
-                input_attn_stats[li, hi, 1] = row_entropy(row)
-                input_attn_stats[li, hi, 2] = self._prompt_attn_diag_logmean[li][hi]
+            # 3. input_per_head_activation
+            pha = torch.empty(self.n_layers, self.n_heads, self.head_dim, dtype=torch.float16)
+            for li in range(self.n_layers):
+                x = self._pf_oproj[li][b, last_pos, :]
+                pha[li] = x.view(self.n_heads, self.head_dim).to(torch.float16)
+            feat["input_per_head_activation"] = pha
 
-        input_attn_value_norms = torch.empty(
-            self.n_layers, self.n_heads, prompt_len, dtype=torch.float16)
-        for li in range(self.n_layers):
-            v = self._prompt_vproj[li][0, :prompt_len, :]
-            v = v.view(prompt_len, self.n_kv_heads, self.head_dim).permute(1, 0, 2).float()
-            for hi in range(self.n_heads):
-                kv_hi = hi // self.kv_group_size
-                aw = self._prompt_attn_last_rows[li][hi].unsqueeze(-1)
-                input_attn_value_norms[li, hi] = (aw * v[kv_hi]).norm(dim=-1).to(torch.float16)
+            # 4. input_logit_stats
+            feat["input_logit_stats"] = compute_logit_stats(self._pf_logits[b, last_pos, :])
 
-        # --- Early return if no generation ---
-        n_hs = self.n_layers + 2
-        if n_gen == 0:
-            return {
-                "input_last_token_hidden": input_last_token_hidden,
-                "input_mean_pool_hidden": input_mean_pool_hidden,
-                "input_per_head_activation": input_per_head_activation,
-                "input_logit_stats": input_logit_stats,
-                "input_attn_stats": input_attn_stats,
-                "input_attn_value_norms": input_attn_value_norms,
-                "input_seq_len": prompt_len,
-                "gen_text": gen_text,
-                "gen_last_token_hidden": torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16),
-                "gen_mean_pool_hidden": torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16),
-                "gen_per_token_hidden_last_layer": torch.zeros(0, self.hidden_dim, dtype=torch.float16),
-                "gen_logit_stats_eos": {},
-                "gen_attn_stats_last": torch.zeros(self.n_layers, self.n_heads, 3, dtype=torch.float32),
-                "gen_step_boundary_hidden": [],
-                "gen_step_boundary_indices": [],
-                "gen_len": 0,
-            }
+            # 5. input_attn_stats
+            ias = torch.empty(self.n_layers, self.n_heads, 3, dtype=torch.float32)
+            for li in range(self.n_layers):
+                aw_full = self._pf_attn[li]  # (B, n_heads, padded, padded)
+                for hi in range(self.n_heads):
+                    row = aw_full[b, hi, last_pos, start_pos:padded_prompt_len]
+                    ias[li, hi, 0] = row_skewness(row)
+                    ias[li, hi, 1] = row_entropy(row)
+                diag_vals = aw_full[b, :, torch.arange(start_pos, padded_prompt_len),
+                                    torch.arange(start_pos, padded_prompt_len)]  # (n_heads, pl)
+                for hi in range(self.n_heads):
+                    ias[li, hi, 2] = safe_log(diag_vals[hi]).mean().item()
+            feat["input_attn_stats"] = ias
+
+            # 6. input_attn_value_norms
+            iavn = torch.empty(self.n_layers, self.n_heads, pl, dtype=torch.float16)
+            for li in range(self.n_layers):
+                aw_full = self._pf_attn[li]
+                v = self._pf_vproj[li][b, start_pos:padded_prompt_len, :]
+                v = v.view(pl, self.n_kv_heads, self.head_dim).permute(1, 0, 2).float()
+                for hi in range(self.n_heads):
+                    kv_hi = hi // self.kv_group_size
+                    aw_row = aw_full[b, hi, last_pos, start_pos:padded_prompt_len].unsqueeze(-1)
+                    iavn[li, hi] = (aw_row * v[kv_hi]).norm(dim=-1).to(torch.float16)
+            feat["input_attn_value_norms"] = iavn
+            feat["input_seq_len"] = pl
+
+            # Gen token ids for this sample
+            # Find where generated tokens end (first pad after prompt)
+            full_seq = sequences[b]  # (max_total_len,)
+            gen_part = full_seq[padded_prompt_len:]  # after padded prompt
+            # Find actual gen length (exclude trailing pad tokens)
+            non_pad = (gen_part != self.pad_token_id).long()
+            if non_pad.sum() == 0:
+                gen_len = 0
+            else:
+                # Last non-pad position + 1
+                gen_len = int(non_pad.flip(0).argmax().item())
+                gen_len = int(gen_part.shape[0]) - gen_len
+            raw_gen_ids = gen_part[:gen_len]
+            gen_text = self.tokenizer.decode(raw_gen_ids, skip_special_tokens=True,
+                                             clean_up_tokenization_spaces=False)
+
+            feat["gen_text"] = gen_text
+            feat["gen_len"] = gen_len
+            all_features.append(feat)
+            all_gen_ids.append(raw_gen_ids)
+            all_gen_lens.append(gen_len)
 
         # ==============================================================
-        # Pass 2: model(prompt+gen_ids) — replay for generation features
-        #         output_attentions=False; attn from self_attn hook
+        # Pass 2: replay forward on full sequences
         # ==============================================================
-        self._clear_replay_only()
+        # Build batched full sequences: for each sample, prompt (unpadded) + gen
+        # Re-tokenize is wasteful; instead construct from original ids
+        # But samples have different total lengths — need to pad for batch forward
+        max_gen_len = max(all_gen_lens) if all_gen_lens else 0
+
+        if max_gen_len == 0:
+            # No generation for any sample — fill gen features with zeros
+            n_hs = self.n_layers + 2
+            for b in range(B):
+                all_features[b]["gen_last_token_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
+                all_features[b]["gen_mean_pool_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
+                all_features[b]["gen_per_token_hidden_last_layer"] = torch.zeros(0, self.hidden_dim, dtype=torch.float16)
+                all_features[b]["gen_logit_stats_eos"] = {}
+                all_features[b]["gen_attn_stats_last"] = torch.zeros(self.n_layers, self.n_heads, 3, dtype=torch.float32)
+                all_features[b]["gen_step_boundary_hidden"] = []
+                all_features[b]["gen_step_boundary_indices"] = []
+            return all_features
+
+        # Build replay batch: each sample is unpadded_prompt + gen_ids, right-padded to max_total
+        replay_lens = []  # actual length per sample
+        for b in range(B):
+            replay_lens.append(int(prompt_lens[b]) + all_gen_lens[b])
+        max_replay_len = max(replay_lens)
+
+        replay_ids = torch.full((B, max_replay_len), self.pad_token_id, dtype=torch.long)
+        replay_mask = torch.zeros(B, max_replay_len, dtype=torch.long)
+        for b in range(B):
+            pl = int(prompt_lens[b])
+            gl = all_gen_lens[b]
+            tl = pl + gl
+            # Unpadded prompt tokens
+            start_pos = padded_prompt_len - pl
+            prompt_tokens = sequences[b, start_pos:padded_prompt_len]
+            gen_tokens = all_gen_ids[b]
+            replay_ids[b, :tl] = torch.cat([prompt_tokens.cpu(), gen_tokens.cpu()])
+            replay_mask[b, :tl] = 1
+
+        replay_ids = replay_ids.to(self.input_device)
+        replay_mask = replay_mask.to(self.input_device)
+
+        self._clear_replay()
         self._mode = "replay"
-        self._full_len = int(full_ids.shape[1])
 
-        full_mask = torch.ones_like(full_ids, device=self.input_device)
         replay_out = self.model(
-            input_ids=full_ids, attention_mask=full_mask,
+            input_ids=replay_ids, attention_mask=replay_mask,
             use_cache=False, output_attentions=False, output_hidden_states=False,
         )
 
-        replay_states = self._replay_states()
-        total_len = int(full_ids.shape[1])
+        rp_states = self._rp_states()  # each (B, max_replay_len, dim)
 
-        gen_last_token_hidden = torch.stack(
-            [hs[0, total_len - 1, :] for hs in replay_states]
-        ).to(torch.float16)
+        for b in range(B):
+            pl = int(prompt_lens[b])
+            gl = all_gen_lens[b]
+            tl = pl + gl
+            feat = all_features[b]
 
-        gen_mean_pool_hidden = torch.stack(
-            [hs[0, prompt_len:total_len, :].float().mean(dim=0) for hs in replay_states]
-        ).to(torch.float16)
+            # 8. gen_last_token_hidden
+            feat["gen_last_token_hidden"] = torch.stack(
+                [hs[b, tl - 1, :] for hs in rp_states]
+            ).to(torch.float16)
 
-        gen_per_token_hidden_last_layer = self._replay_layers[self.n_layers - 1][
-            0, prompt_len:total_len, :
-        ].to(torch.float16)
+            # 9. gen_mean_pool_hidden
+            feat["gen_mean_pool_hidden"] = torch.stack(
+                [hs[b, pl:tl, :].float().mean(dim=0) for hs in rp_states]
+            ).to(torch.float16)
 
-        gen_logit_stats_eos = compute_logit_stats(replay_out.logits[0, total_len - 1, :])
+            # 10. gen_per_token_hidden_last_layer
+            feat["gen_per_token_hidden_last_layer"] = self._rp_layers[self.n_layers - 1][
+                b, pl:tl, :
+            ].to(torch.float16)
 
-        gen_attn_stats_last = torch.empty(self.n_layers, self.n_heads, 3, dtype=torch.float32)
-        for li in range(self.n_layers):
-            for hi in range(self.n_heads):
-                row = self._replay_attn_last_rows[li][hi]
-                gen_attn_stats_last[li, hi, 0] = row_skewness(row)
-                gen_attn_stats_last[li, hi, 1] = row_entropy(row)
-                gen_attn_stats_last[li, hi, 2] = self._replay_attn_diag_logmean[li][hi]
+            # 11. gen_logit_stats_eos
+            feat["gen_logit_stats_eos"] = compute_logit_stats(
+                replay_out.logits[b, tl - 1, :])
 
-        step_boundary_indices = []
-        for t in range(n_gen):
-            partial = self.tokenizer.decode(raw_gen_ids[:t + 1], skip_special_tokens=False,
-                                            clean_up_tokenization_spaces=False)
-            if partial.endswith("\n\n"):
-                step_boundary_indices.append(t)
+            # 12. gen_attn_stats_last
+            gas = torch.empty(self.n_layers, self.n_heads, 3, dtype=torch.float32)
+            for li in range(self.n_layers):
+                aw_full = self._rp_attn[li]  # (B, n_heads, max_replay_len, max_replay_len)
+                for hi in range(self.n_heads):
+                    row = aw_full[b, hi, tl - 1, :tl]
+                    gas[li, hi, 0] = row_skewness(row)
+                    gas[li, hi, 1] = row_entropy(row)
+                diag_vals = aw_full[b, :, torch.arange(tl), torch.arange(tl)]
+                for hi in range(self.n_heads):
+                    gas[li, hi, 2] = safe_log(diag_vals[hi]).mean().item()
+            feat["gen_attn_stats_last"] = gas
 
-        gen_step_boundary_hidden = [
-            torch.stack([hs[0, prompt_len + t, :] for hs in replay_states]).to(torch.float16)
-            for t in step_boundary_indices
-        ]
+            # 13. gen_step_boundary_hidden
+            raw_gen = all_gen_ids[b]
+            step_indices = []
+            for t in range(gl):
+                partial = self.tokenizer.decode(raw_gen[:t + 1], skip_special_tokens=False,
+                                                clean_up_tokenization_spaces=False)
+                if partial.endswith("\n\n"):
+                    step_indices.append(t)
+            feat["gen_step_boundary_indices"] = step_indices
+            feat["gen_step_boundary_hidden"] = [
+                torch.stack([hs[b, pl + t, :] for hs in rp_states]).to(torch.float16)
+                for t in step_indices
+            ]
 
         self._mode = None
-
-        return {
-            "input_last_token_hidden": input_last_token_hidden,
-            "input_mean_pool_hidden": input_mean_pool_hidden,
-            "input_per_head_activation": input_per_head_activation,
-            "input_logit_stats": input_logit_stats,
-            "input_attn_stats": input_attn_stats,
-            "input_attn_value_norms": input_attn_value_norms,
-            "input_seq_len": prompt_len,
-            "gen_text": gen_text,
-            "gen_last_token_hidden": gen_last_token_hidden,
-            "gen_mean_pool_hidden": gen_mean_pool_hidden,
-            "gen_per_token_hidden_last_layer": gen_per_token_hidden_last_layer,
-            "gen_logit_stats_eos": gen_logit_stats_eos,
-            "gen_attn_stats_last": gen_attn_stats_last,
-            "gen_step_boundary_hidden": gen_step_boundary_hidden,
-            "gen_step_boundary_indices": step_boundary_indices,
-            "gen_len": n_gen,
-        }
+        del replay_out
+        return all_features
 
 
 # ============================================================
@@ -510,6 +599,7 @@ def save_split_features(results, out_dir, dataset, split, model_name):
                   "gen_attn_stats_last"]:
         torch.save(torch.stack(results[field]), os.path.join(split_dir, f"{field}.pt"))
 
+    # Variable-length: input_attn_value_norms
     max_sl = max(t.shape[-1] for t in results["input_attn_value_norms"])
     padded = []
     for t in results["input_attn_value_norms"]:
@@ -519,6 +609,7 @@ def save_split_features(results, out_dir, dataset, split, model_name):
         padded.append(t)
     torch.save(torch.stack(padded), os.path.join(split_dir, "input_attn_value_norms.pt"))
 
+    # Variable-length: gen_per_token_hidden_last_layer
     max_gl = max(t.shape[0] for t in results["gen_per_token_hidden_last_layer"])
     if max_gl > 0:
         padded_gen = []
@@ -552,6 +643,13 @@ def save_split_features(results, out_dir, dataset, split, model_name):
     print(f"  Saved {split_dir}: {n} samples, {total_mb:.1f} MB")
 
 
+def is_split_done(out_dir, dataset, split):
+    """Checkpoint: check if this split is already extracted."""
+    split_dir = os.path.join(out_dir, dataset, split)
+    meta_path = os.path.join(split_dir, "meta.json")
+    return os.path.exists(meta_path)
+
+
 # ============================================================
 # Main
 # ============================================================
@@ -577,7 +675,11 @@ def main():
         groups.setdefault(key, []).append(s)
 
     for (dataset, split), samples in groups.items():
-        print(f"\nProcessing {dataset}/{split}: {len(samples)} samples")
+        if is_split_done(OUTPUT_DIR, dataset, split):
+            print(f"\nSkipping {dataset}/{split} (already done)")
+            continue
+
+        print(f"\nProcessing {dataset}/{split}: {len(samples)} samples (batch_size={BATCH_SIZE})")
         results = {k: [] for k in [
             "input_last_token_hidden", "input_mean_pool_hidden",
             "input_per_head_activation", "input_logit_stats",
@@ -589,23 +691,29 @@ def main():
             "labels", "texts", "gen_texts", "input_seq_lens", "gen_lens",
         ]}
 
-        for i, sample in enumerate(tqdm(samples, desc=f"{dataset}/{split}")):
-            features = extractor.extract(sample["text"])
-            for k in results:
-                if k == "labels":
-                    results[k].append(sample["label"])
-                elif k == "texts":
-                    results[k].append(sample["text"])
-                elif k == "gen_texts":
-                    results[k].append(features["gen_text"])
-                elif k == "input_seq_lens":
-                    results[k].append(features["input_seq_len"])
-                elif k == "gen_lens":
-                    results[k].append(features["gen_len"])
-                elif k == "gen_step_boundary_indices":
-                    results[k].append(features["gen_step_boundary_indices"])
-                else:
-                    results[k].append(features[k])
+        n_batches = (len(samples) + BATCH_SIZE - 1) // BATCH_SIZE
+        for batch_idx in tqdm(range(n_batches), desc=f"{dataset}/{split}"):
+            batch_start = batch_idx * BATCH_SIZE
+            batch_end = min(batch_start + BATCH_SIZE, len(samples))
+            batch_samples = samples[batch_start:batch_end]
+
+            batch_texts = [s["text"] for s in batch_samples]
+            batch_features = extractor.extract_batch(batch_texts)
+
+            for i, (sample, feat) in enumerate(zip(batch_samples, batch_features)):
+                results["labels"].append(sample["label"])
+                results["texts"].append(sample["text"])
+                results["gen_texts"].append(feat["gen_text"])
+                results["input_seq_lens"].append(feat["input_seq_len"])
+                results["gen_lens"].append(feat["gen_len"])
+                results["gen_step_boundary_indices"].append(feat["gen_step_boundary_indices"])
+                for k in ["input_last_token_hidden", "input_mean_pool_hidden",
+                           "input_per_head_activation", "input_logit_stats",
+                           "input_attn_stats", "input_attn_value_norms",
+                           "gen_last_token_hidden", "gen_mean_pool_hidden",
+                           "gen_per_token_hidden_last_layer", "gen_logit_stats_eos",
+                           "gen_attn_stats_last", "gen_step_boundary_hidden"]:
+                    results[k].append(feat[k])
 
         save_split_features(results, OUTPUT_DIR, dataset, split, MODEL_NAME)
 
