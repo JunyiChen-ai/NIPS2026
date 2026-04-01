@@ -298,7 +298,7 @@ def sep_probe(train_acts, train_labels, test_acts, test_labels):
     then concatenate and train final LR.
     Range selection uses TRAIN data only (no test leakage).
     """
-    from sklearn.model_selection import cross_val_score
+    from sklearn.model_selection import StratifiedKFold, cross_val_score
 
     n_layers = train_acts.shape[1]
     y_train = train_labels.numpy()
@@ -306,15 +306,17 @@ def sep_probe(train_acts, train_labels, test_acts, test_labels):
 
     best_cv_auroc = 0
     best_range = (0, 1)
+    n_folds = min(3, int(min(y_train.sum(), (1 - y_train).sum())))
+    n_folds = max(n_folds, 2)  # at least 2 folds
+    cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=42)
 
     # Search over consecutive ranges using cross-validation on train set
     for start in range(n_layers):
         for end in range(start + 1, n_layers + 1):
             X_train = train_acts[:, start:end, :].float().reshape(len(train_acts), -1).numpy()
-            # 3-fold CV on train set for range selection (no test leakage)
             cv_scores = cross_val_score(
                 LogisticRegression(max_iter=1000), X_train, y_train,
-                cv=min(3, len(y_train)), scoring='roc_auc'
+                cv=cv, scoring='roc_auc'
             )
             cv_auroc = cv_scores.mean()
 

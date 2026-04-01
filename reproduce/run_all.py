@@ -109,7 +109,7 @@ def eval_per_layer(train_data, test_data, method_fn, is_regression=False):
     train_labels = torch.tensor(train_data["labels"])
     test_labels = torch.tensor(test_data["labels"])
 
-    best_metric = -float('inf')
+    best_metric = -1.0
     best_layer = 0
     best_results = {}
 
@@ -117,8 +117,8 @@ def eval_per_layer(train_data, test_data, method_fn, is_regression=False):
         train_acts = train_data["input_last_token_hidden"][:, layer, :]
         test_acts = test_data["input_last_token_hidden"][:, layer, :]
         result = method_fn(train_acts, train_labels, test_acts, test_labels)
-        metric_val = result.get("spearman_r", result.get("auroc", 0))
-        if abs(metric_val) > abs(best_metric):
+        metric_val = abs(result.get("spearman_r", result.get("auroc", 0)))
+        if metric_val > best_metric:
             best_metric = metric_val
             best_layer = layer
             best_results = result
