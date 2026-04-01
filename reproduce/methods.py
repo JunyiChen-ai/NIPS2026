@@ -169,12 +169,13 @@ class KBNet(torch.nn.Module):
         )
 
     def forward(self, x):
-        return torch.nn.functional.softmax(self.net(x), dim=-1)
+        return self.net(x)  # raw logits; CrossEntropyLoss expects logits, not softmax
 
     @staticmethod
     def train_and_eval(train_acts, train_labels, test_acts, test_labels,
+                       val_acts=None, val_labels=None,
                        lr=5e-5, epochs=30, batch_size=16, device='cpu'):
-        """Original: engine.py, main.py default epochs=30"""
+        """Original: engine.py, main.py default epochs=30. Val set selects best epoch."""
         d_in = train_acts.shape[-1]
         model = KBNet(d_in).to(device)
         opt = torch.optim.Adam(model.parameters(), lr=lr)
@@ -183,8 +184,11 @@ class KBNet(torch.nn.Module):
         train_acts_d = train_acts.float().to(device)
         train_labels_d = train_labels.long().to(device)
 
-        model.train()
+        best_state = None
+        best_val_auroc = -1.0
+
         for epoch in range(epochs):
+            model.train()
             perm = torch.randperm(len(train_acts_d))
             for i in range(0, len(train_acts_d), batch_size):
                 idx = perm[i:i + batch_size]
@@ -194,9 +198,24 @@ class KBNet(torch.nn.Module):
                 loss.backward()
                 opt.step()
 
+            # Val-based epoch selection (original: engine.py dev eval)
+            if val_acts is not None:
+                model.eval()
+                with torch.no_grad():
+                    val_logits = model(val_acts.float().to(device))
+                    val_probs = torch.nn.functional.softmax(val_logits, dim=-1)[:, 1].cpu().numpy()
+                val_auroc = roc_auc_score(val_labels.numpy(), val_probs)
+                if val_auroc > best_val_auroc:
+                    best_val_auroc = val_auroc
+                    best_state = {k: v.clone() for k, v in model.state_dict().items()}
+
+        if best_state is not None:
+            model.load_state_dict(best_state)
+
         model.eval()
         with torch.no_grad():
-            probs = model(test_acts.float().to(device))[:, 1].cpu().numpy()
+            logits = model(test_acts.float().to(device))
+            probs = torch.nn.functional.softmax(logits, dim=-1)[:, 1].cpu().numpy()
             preds = (probs > 0.5).astype(int)
         return probs, preds
 
@@ -433,6 +452,7 @@ class STEPScorer(torch.nn.Module):
 
     @staticmethod
     def train_and_eval(train_acts, train_labels, test_acts, test_labels,
+                       val_acts=None, val_labels=None,
                        lr=1e-4, weight_decay=1e-5, epochs=100,
                        batch_size=128, patience=5, device='cpu'):
         d_in = train_acts.shape[-1]
@@ -447,11 +467,14 @@ class STEPScorer(torch.nn.Module):
         train_acts_d = train_acts.float().to(device)
         train_labels_d = train_labels.float().to(device)
 
-        best_loss = float('inf')
+        best_val_auroc = -1.0
+        best_train_loss = float('inf')
         patience_counter = 0
+        best_state = None
+        use_val = val_acts is not None and val_labels is not None
 
-        model.train()
         for epoch in range(epochs):
+            model.train()
             perm = torch.randperm(len(train_acts_d))
             epoch_loss = 0.0
             for i in range(0, len(train_acts_d), batch_size):
@@ -463,13 +486,31 @@ class STEPScorer(torch.nn.Module):
                 opt.step()
                 epoch_loss += loss.item()
 
-            if epoch_loss < best_loss:
-                best_loss = epoch_loss
+            # Early stopping on val AUROC if val provided, else train loss
+            if use_val:
+                model.eval()
+                with torch.no_grad():
+                    val_logits = model(val_acts.float().to(device)).cpu()
+                    val_probs = torch.sigmoid(val_logits).numpy()
+                val_auroc = roc_auc_score(val_labels.numpy(), val_probs)
+                improved = val_auroc > best_val_auroc
+                if improved:
+                    best_val_auroc = val_auroc
+            else:
+                improved = epoch_loss < best_train_loss
+                if improved:
+                    best_train_loss = epoch_loss
+
+            if improved:
+                best_state = {k: v.clone() for k, v in model.state_dict().items()}
                 patience_counter = 0
             else:
                 patience_counter += 1
                 if patience_counter >= patience:
                     break
+
+        if best_state is not None:
+            model.load_state_dict(best_state)
 
         model.eval()
         with torch.no_grad():

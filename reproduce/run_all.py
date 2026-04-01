@@ -207,15 +207,18 @@ def run_iti(train, val, test, is_reg):
 def run_kb_mlp(train, val, test, is_reg):
     if is_reg:
         return {"skipped": "KBNet is classification-only"}
-    # Original uses fixed 'mid' layer
     n_layers = train["input_last_token_hidden"].shape[1]
-    mid_layer = n_layers // 2  # mid = 15 for 30 layers
+    mid_layer = n_layers // 2
 
     tr_acts = train["input_last_token_hidden"][:, mid_layer, :]
+    va_acts = val["input_last_token_hidden"][:, mid_layer, :]
     te_acts = test["input_last_token_hidden"][:, mid_layer, :]
     tr_labels = torch.tensor(train["labels"])
+    va_labels = torch.tensor(val["labels"])
     te_labels = torch.tensor(test["labels"])
-    probs, preds = KBNet.train_and_eval(tr_acts, tr_labels, te_acts, te_labels)
+    # Train with val for epoch selection, evaluate on test
+    probs, preds = KBNet.train_and_eval(tr_acts, tr_labels, te_acts, te_labels,
+                                         val_acts=va_acts, val_labels=va_labels)
     return {"layer": mid_layer, "test_results": eval_cls(te_labels.numpy(), probs, preds)}
 
 
@@ -366,15 +369,19 @@ def run_seakr(train, val, test, is_reg):
     return {"test_results": eval_reg(te_labels, scores) if is_reg else eval_scoring(te_labels, scores)}
 
 
-# --- 12. STEP — original: fixed last layer + train/val early stopping ---
+# --- 12. STEP — original: fixed last layer + val-based early stopping ---
 def run_step(train, val, test, is_reg):
     if is_reg:
         return {"skipped": "STEP is classification-only"}
     tr_labels = torch.tensor(train["labels"])
+    va_labels = torch.tensor(val["labels"])
     te_labels = torch.tensor(test["labels"])
     tr_acts = train["gen_last_token_hidden"][:, -2, :]  # last decoder layer
+    va_acts = val["gen_last_token_hidden"][:, -2, :]
     te_acts = test["gen_last_token_hidden"][:, -2, :]
-    probs, preds = STEPScorer.train_and_eval(tr_acts, tr_labels, te_acts, te_labels)
+    probs, preds = STEPScorer.train_and_eval(
+        tr_acts, tr_labels, te_acts, te_labels,
+        val_acts=va_acts, val_labels=va_labels)
     return {"test_results": eval_cls(te_labels.numpy(), probs, preds)}
 
 

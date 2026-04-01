@@ -58,11 +58,13 @@ def save_split(data, indices, dataset, split_name):
         if name in data:
             torch.save(data[name][idx], os.path.join(split_dir, f"{name}.pt"))
 
-    # gen_step_boundary_hidden: list of variable-size tensors
+    # gen_step_boundary_hidden: list of variable-size tensors or tensor
     if "gen_step_boundary_hidden" in data:
         orig = data["gen_step_boundary_hidden"]
         if isinstance(orig, list):
             torch.save([orig[i] for i in idx], os.path.join(split_dir, "gen_step_boundary_hidden.pt"))
+        elif isinstance(orig, torch.Tensor) and orig.shape[0] == len(data["meta"]["labels"]):
+            torch.save(orig[idx], os.path.join(split_dir, "gen_step_boundary_hidden.pt"))
         else:
             torch.save(orig, os.path.join(split_dir, "gen_step_boundary_hidden.pt"))
 
