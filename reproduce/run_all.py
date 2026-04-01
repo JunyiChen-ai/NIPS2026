@@ -80,12 +80,40 @@ def eval_reg(y_true, scores):
             "mse": float(mean_squared_error(y_true, scores))}
 
 
-def eval_scoring(y_true, scores):
-    y_true = np.array(y_true)
-    scores = np.array(scores)
-    auroc = roc_auc_score(y_true, scores)
-    auroc_flip = roc_auc_score(y_true, -scores)
-    return {"auroc": max(auroc, auroc_flip), "auroc_raw": auroc, "auroc_flipped": auroc_flip}
+def select_direction_and_threshold(val_labels, val_scores):
+    """Use val set to determine score direction and optimal threshold (max-F1)."""
+    val_labels = np.array(val_labels)
+    val_scores = np.array(val_scores)
+    auroc_pos = roc_auc_score(val_labels, val_scores)
+    auroc_neg = roc_auc_score(val_labels, -val_scores)
+    flip = auroc_neg > auroc_pos
+    oriented = -val_scores if flip else val_scores
+
+    # Sweep thresholds on val to find max-F1
+    thresholds = np.unique(oriented)
+    if len(thresholds) > 200:
+        thresholds = np.percentile(oriented, np.linspace(0, 100, 200))
+    best_f1, best_thr = 0, float(np.median(oriented))
+    for thr in thresholds:
+        preds = (oriented >= thr).astype(int)
+        f = f1_score(val_labels, preds, zero_division=0)
+        if f > best_f1:
+            best_f1 = f
+            best_thr = float(thr)
+    return flip, best_thr
+
+
+def eval_scoring_with_val(val_labels, val_scores, test_labels, test_scores):
+    """Direction + threshold on val, evaluate on test."""
+    flip, thr = select_direction_and_threshold(val_labels, val_scores)
+    test_labels = np.array(test_labels)
+    test_scores = np.array(test_scores)
+    oriented = -test_scores if flip else test_scores
+    preds = (oriented >= thr).astype(int)
+    return {"auroc": roc_auc_score(test_labels, oriented),
+            "accuracy": accuracy_score(test_labels, preds),
+            "f1": f1_score(test_labels, preds, zero_division=0),
+            "threshold": thr, "flipped": flip}
 
 
 # ============================================================
@@ -300,19 +328,21 @@ def run_lid(train, val, test, is_reg):
             best_val_metric = m
             best_layer = layer
 
-    # Final eval on test
+    # Final eval on test with val-determined direction + threshold
     tr_acts = train["input_last_token_hidden"][:, best_layer, :]
+    va_acts = val["input_last_token_hidden"][:, best_layer, :]
     te_acts = test["input_last_token_hidden"][:, best_layer, :]
     if is_reg:
         ref_acts = tr_acts
     else:
         ref_acts = tr_acts[tr_labels == 1]
     k = len(ref_acts) - 1
-    lids = compute_lid(ref_acts, te_acts, k=k, hidden_dim=HIDDEN_DIM)
+    va_lids = compute_lid(ref_acts, va_acts, k=k, hidden_dim=HIDDEN_DIM)
+    te_lids = compute_lid(ref_acts, te_acts, k=k, hidden_dim=HIDDEN_DIM)
     if is_reg:
-        test_result = eval_reg(te_labels, lids)
+        test_result = eval_reg(te_labels, te_lids)
     else:
-        test_result = eval_scoring(te_labels, -lids)
+        test_result = eval_scoring_with_val(va_labels, va_lids, te_labels, te_lids)
     return {"best_layer": best_layer, "test_results": test_result}
 
 
@@ -355,11 +385,12 @@ def run_llm_check(train, val, test, is_reg):
             best_val_metric = m
             best_layer = layer
 
-    scores = llm_check_score(test["input_attn_stats"], layer_num=best_layer)
+    va_scores = llm_check_score(val["input_attn_stats"], layer_num=best_layer)
+    te_scores = llm_check_score(test["input_attn_stats"], layer_num=best_layer)
     if is_reg:
-        test_result = eval_reg(te_labels, scores)
+        test_result = eval_reg(te_labels, te_scores)
     else:
-        test_result = eval_scoring(te_labels, scores)
+        test_result = eval_scoring_with_val(va_labels, va_scores, te_labels, te_scores)
     return {"best_layer": best_layer, "test_results": test_result}
 
 
@@ -417,19 +448,29 @@ def run_sep(train, val, test, is_reg):
 
 # --- 10. CoE — original: all layers, no training, no selection ---
 def run_coe(train, val, test, is_reg):
+    va_labels = np.array(val["labels"])
     te_labels = np.array(test["labels"])
-    scores = compute_coe_scores(test["gen_mean_pool_hidden"])
+    va_scores = compute_coe_scores(val["gen_mean_pool_hidden"])
+    te_scores = compute_coe_scores(test["gen_mean_pool_hidden"])
     results = {}
-    for k, v in scores.items():
-        results[k] = eval_reg(te_labels, v) if is_reg else eval_scoring(te_labels, v)
+    for k in te_scores:
+        if is_reg:
+            results[k] = eval_reg(te_labels, te_scores[k])
+        else:
+            results[k] = eval_scoring_with_val(va_labels, va_scores[k], te_labels, te_scores[k])
     return results
 
 
 # --- 11. SeaKR — original: fixed layer 15, no selection ---
 def run_seakr(train, val, test, is_reg):
+    va_labels = np.array(val["labels"])
     te_labels = np.array(test["labels"])
-    scores = seakr_energy_score(test["gen_logit_stats_last"])
-    return {"test_results": eval_reg(te_labels, scores) if is_reg else eval_scoring(te_labels, scores)}
+    va_scores = seakr_energy_score(val["gen_logit_stats_last"])
+    te_scores = seakr_energy_score(test["gen_logit_stats_last"])
+    if is_reg:
+        return {"test_results": eval_reg(te_labels, te_scores)}
+    else:
+        return {"test_results": eval_scoring_with_val(va_labels, va_scores, te_labels, te_scores)}
 
 
 # --- 12. STEP — original: fixed last layer + val-based early stopping ---
