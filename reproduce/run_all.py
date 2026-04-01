@@ -337,12 +337,23 @@ def run_sep(train, val, test, is_reg):
         return {"best_layer": best_layer,
                 "test_results": eval_reg(te_labels.numpy(), clf.predict(X_te))}
     else:
-        # Select range on val
-        probs_val, _, best_range = sep_probe(
-            train["gen_last_token_hidden"], tr_labels,
-            val["gen_last_token_hidden"], va_labels)
-        # Evaluate on test with that range
+        # Select range on val (train on train_sub, eval on val, pick best range)
         from sklearn.linear_model import LogisticRegression
+        n_layers = train["gen_last_token_hidden"].shape[1]
+        best_val_auroc = 0
+        best_range = (0, 1)
+        for start in range(n_layers):
+            for end in range(start + 1, min(start + 6, n_layers + 1)):
+                X_tr = train["gen_last_token_hidden"][:, start:end, :].float().reshape(len(tr_labels), -1).numpy()
+                X_va = val["gen_last_token_hidden"][:, start:end, :].float().reshape(len(va_labels), -1).numpy()
+                clf = LogisticRegression(max_iter=1000)
+                clf.fit(X_tr, tr_labels.numpy())
+                va_probs = clf.predict_proba(X_va)[:, 1]
+                va_auroc = roc_auc_score(va_labels.numpy(), va_probs)
+                if va_auroc > best_val_auroc:
+                    best_val_auroc = va_auroc
+                    best_range = (start, end)
+        # Final eval on test
         X_tr = train["gen_last_token_hidden"][:, best_range[0]:best_range[1], :].float().reshape(len(tr_labels), -1).numpy()
         X_te = test["gen_last_token_hidden"][:, best_range[0]:best_range[1], :].float().reshape(len(te_labels), -1).numpy()
         clf = LogisticRegression(max_iter=1000)
