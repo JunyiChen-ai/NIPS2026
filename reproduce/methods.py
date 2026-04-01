@@ -167,7 +167,7 @@ class KBNet(torch.nn.Module):
 
     @staticmethod
     def train_and_eval(train_acts, train_labels, test_acts, test_labels,
-                       lr=5e-5, epochs=30, batch_size=64, device='cpu'):
+                       lr=5e-5, epochs=30, batch_size=16, device='cpu'):
         """Original: engine.py, main.py default epochs=30"""
         d_in = train_acts.shape[-1]
         model = KBNet(d_in).to(device)
@@ -222,10 +222,12 @@ def compute_lid(train_acts, test_acts, k, hidden_dim):
     lids = -1.0 / np.mean(np.log(lids), axis=1)
 
     # Original: lids.py lines 37-38
-    lids[np.isinf(lids)] = hidden_dim
-    # Note: original filters nan and averages across k_list runs.
-    # We do a single k, so just replace nan with hidden_dim too.
-    lids[np.isnan(lids)] = hidden_dim
+    lids[np.isinf(lids)] = hidden_dim  # inf -> feature dimension
+    # Original filters nan (lids.py line 38): lids = lids[~np.isnan(lids)]
+    # We return full array but mark nan positions; caller must handle.
+    # For scoring we keep nan as hidden_dim to preserve array length.
+    nan_mask = np.isnan(lids)
+    lids[nan_mask] = hidden_dim
 
     return lids
 
@@ -286,31 +288,35 @@ def llm_check_score(attn_stats, layer_num=15):
 def sep_probe(train_acts, train_labels, test_acts, test_labels):
     """
     train_acts: (N, n_layers+2, hidden_dim)
-    Original: concatenate best consecutive layer range, train LR
+    Original: select best consecutive layer range via per-layer train-set CV,
+    then concatenate and train final LR.
+    Range selection uses TRAIN data only (no test leakage).
     """
+    from sklearn.model_selection import cross_val_score
+
     n_layers = train_acts.shape[1]
     y_train = train_labels.numpy()
     y_test = test_labels.numpy()
 
-    best_auroc = 0
+    best_cv_auroc = 0
     best_range = (0, 1)
 
-    # Search over consecutive ranges (original: notebook cell 32)
+    # Search over consecutive ranges using cross-validation on train set
     for start in range(n_layers):
-        for end in range(start + 1, min(start + 6, n_layers + 1)):  # max range width 5
+        for end in range(start + 1, n_layers + 1):
             X_train = train_acts[:, start:end, :].float().reshape(len(train_acts), -1).numpy()
-            X_test = test_acts[:, start:end, :].float().reshape(len(test_acts), -1).numpy()
+            # 3-fold CV on train set for range selection (no test leakage)
+            cv_scores = cross_val_score(
+                LogisticRegression(max_iter=1000), X_train, y_train,
+                cv=min(3, len(y_train)), scoring='roc_auc'
+            )
+            cv_auroc = cv_scores.mean()
 
-            clf = LogisticRegression(max_iter=1000)
-            clf.fit(X_train, y_train)
-            probs = clf.predict_proba(X_test)[:, 1]
-            auroc = roc_auc_score(y_test, probs)
-
-            if auroc > best_auroc:
-                best_auroc = auroc
+            if cv_auroc > best_cv_auroc:
+                best_cv_auroc = cv_auroc
                 best_range = (start, end)
 
-    # Final eval with best range
+    # Final train + eval with best range
     X_train = train_acts[:, best_range[0]:best_range[1], :].float().reshape(len(train_acts), -1).numpy()
     X_test = test_acts[:, best_range[0]:best_range[1], :].float().reshape(len(test_acts), -1).numpy()
     clf = LogisticRegression(max_iter=1000)
