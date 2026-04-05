@@ -488,7 +488,7 @@ class FeatureExtractor:
                 all_features[b]["gen_last_token_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
                 all_features[b]["gen_mean_pool_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
                 all_features[b]["gen_per_token_hidden_last_layer"] = torch.zeros(0, self.hidden_dim, dtype=torch.float16)
-                all_features[b]["gen_logit_stats_eos"] = {}
+                all_features[b]["gen_logit_stats_last"] = {}
                 all_features[b]["gen_attn_stats_last"] = torch.zeros(self.n_layers, self.n_heads, 3, dtype=torch.float32)
                 all_features[b]["gen_step_boundary_hidden"] = []
                 all_features[b]["gen_step_boundary_indices"] = []
@@ -535,7 +535,7 @@ class FeatureExtractor:
                 feat["gen_last_token_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
                 feat["gen_mean_pool_hidden"] = torch.zeros(n_hs, self.hidden_dim, dtype=torch.float16)
                 feat["gen_per_token_hidden_last_layer"] = torch.zeros(0, self.hidden_dim, dtype=torch.float16)
-                feat["gen_logit_stats_eos"] = {}
+                feat["gen_logit_stats_last"] = {}
                 feat["gen_attn_stats_last"] = torch.zeros(self.n_layers, self.n_heads, 3, dtype=torch.float32)
                 feat["gen_step_boundary_hidden"] = []
                 feat["gen_step_boundary_indices"] = []
@@ -556,8 +556,8 @@ class FeatureExtractor:
                 b, pl:tl, :
             ].to(torch.float16)
 
-            # 11. gen_logit_stats_eos
-            feat["gen_logit_stats_eos"] = compute_logit_stats(replay_out.logits[b, tl - 1, :])
+            # 11. gen_logit_stats_last
+            feat["gen_logit_stats_last"] = compute_logit_stats(replay_out.logits[b, tl - 1, :])
 
             # 12. gen_attn_stats_last (from pre-computed last rows + diag)
             gas = torch.empty(self.n_layers, self.n_heads, 3, dtype=torch.float32)
@@ -628,8 +628,8 @@ def save_split_features(results, out_dir, dataset, split, model_name):
 
     with open(os.path.join(split_dir, "input_logit_stats.json"), "w") as f:
         json.dump(results["input_logit_stats"], f)
-    with open(os.path.join(split_dir, "gen_logit_stats_eos.json"), "w") as f:
-        json.dump(results["gen_logit_stats_eos"], f)
+    with open(os.path.join(split_dir, "gen_logit_stats_last.json"), "w") as f:
+        json.dump(results["gen_logit_stats_last"], f)
 
     meta = {
         "model": model_name, "dataset": dataset, "split": split, "n_samples": n,
@@ -690,7 +690,7 @@ def main():
             "input_per_head_activation", "input_logit_stats",
             "input_attn_stats", "input_attn_value_norms",
             "gen_last_token_hidden", "gen_mean_pool_hidden",
-            "gen_per_token_hidden_last_layer", "gen_logit_stats_eos",
+            "gen_per_token_hidden_last_layer", "gen_logit_stats_last",
             "gen_attn_stats_last", "gen_step_boundary_hidden",
             "gen_step_boundary_indices",
             "labels", "texts", "gen_texts", "input_seq_lens", "gen_lens",
@@ -726,7 +726,7 @@ def main():
                            "input_per_head_activation", "input_logit_stats",
                            "input_attn_stats", "input_attn_value_norms",
                            "gen_last_token_hidden", "gen_mean_pool_hidden",
-                           "gen_per_token_hidden_last_layer", "gen_logit_stats_eos",
+                           "gen_per_token_hidden_last_layer", "gen_logit_stats_last",
                            "gen_attn_stats_last", "gen_step_boundary_hidden"]:
                     results[k].append(feat[k])
 

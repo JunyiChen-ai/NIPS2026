@@ -1,0 +1,28 @@
+# Data & features (stored on B2)
+datasets/
+reproduce/processed_features/
+reproduce/logs/
+extraction/logs/
+extraction/__pycache__/
+reproduce/__pycache__/
+
+# Large baseline repos (cloned separately)
+baseline/
+
+# Binary / cache
+*.pyc
+__pycache__/
+*.pt
+*.pkl
+*.bin
+*.h5
+*.xlsx
+
+# SLURM / run scripts
+*.slurm
+run_*.sh
+
+# Logs
+*.err
+*.out
+reproduce/__pycache__/
