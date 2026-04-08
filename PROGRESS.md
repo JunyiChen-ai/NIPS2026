@@ -280,15 +280,118 @@ Massive complementarity confirmed.
 - `fusion/results/best_variant_analysis.json` — method simplification
 - `AUTO_REVIEW.md` — full review loop log
 
+### 11. Multi-View Internal State Fusion (2026-04-08)
+
+Redesigned the fusion method to utilize ALL 13 extracted feature types (previously only 5 used), organized into 11 semantically meaningful "computational views."
+
+#### Method: MVISF-v2 (Direct Multi-View Stacking)
+
+**View taxonomy** (defined by computational role, not post-hoc):
+
+| Category | View | Feature | Dims | Previously Used? |
+|----------|------|---------|------|:----------------:|
+| Representation | repr_input_last | input_last_token_hidden | (30, 3584) | Yes |
+| Representation | repr_input_mean | input_mean_pool_hidden | (30, 3584) | **No** |
+| Representation | repr_gen_last | gen_last_token_hidden | (30, 3584) | Yes |
+| Representation | repr_gen_mean | gen_mean_pool_hidden | (30, 3584) | **No** |
+| Attention | attn_head_act | input_per_head_activation | (28, 28, 128) | Yes |
+| Attention | attn_input_stats | input_attn_stats | (28, 28, 3) | Yes |
+| Attention | attn_input_vnorms | input_attn_value_norms | (28, 28, var) | Yes |
+| Attention | attn_gen_stats | gen_attn_stats_last | (28, 28, 3) | **No** |
+| Confidence | conf_input | input_logit_stats | 3 scalars | **No** |
+| Confidence | conf_gen | gen_logit_stats_last | 3 scalars | **No** |
+| Probe | probe_methods | 7 reproduced methods | var | Yes (partial) |
+
+**Pipeline**: Per-layer LR probes with PCA+C tuning → ALL per-layer OOF logits from ALL views concatenated directly → single meta-LR. No view-level bottleneck.
+
+#### Results: MVISF-v2 (9 classification datasets)
+
+| Dataset | Best Single | MVISF-v2 | Delta | 95% CI | Sig? |
+|---------|-----------|----------|-------|--------|------|
+| GoT Cities | 1.000 | 0.9993 | -0.07% | [0.998, 1.000] | saturated |
+| MetaTool | 0.998 | 0.9957 | -0.25% | [0.989, 1.000] | saturated |
+| RetrievalQA | 0.939 | **0.9456** | **+0.66%** | [0.929, 0.963] | |
+| common_claim | 0.758 | **0.7764** | **+1.88%** | [0.753, 0.800] | |
+| E2H 3c | 0.893 | **0.9140** | **+2.06%** | [0.907, 0.921] | *** |
+| E2H 5c | 0.875 | **0.8980** | **+2.28%** | [0.891, 0.904] | *** |
+| **When2Call** | 0.874 | **0.9382** | **+6.41%** | [0.925, 0.952] | *** |
+| FAVA | 0.986 | **0.9907** | **+0.51%** | [0.986, 0.995] | |
+| RAGTruth | 0.881 | **0.8850** | **+0.42%** | [0.864, 0.906] | |
+
+**Win/Loss: 7/2** (losses only on saturated GoT/MetaTool)
+**Wilcoxon signed-rank: p = 0.0098** (significant at 1%)
+
+#### Improvement over old method (Layerwise v3)
+
+| Dataset | Old Fusion | MVISF-v2 | Improvement |
+|---------|-----------|----------|-------------|
+| When2Call | +3.21% | **+6.41%** | **doubled** |
+| E2H 5c | +1.94% | +2.28% | +0.34% |
+| FAVA | +0.41% | +0.51% | +0.10% |
+| RAGTruth | +0.89%* | +0.42% | -0.47% |
+| RetrievalQA | +0.43% | +0.66% | +0.23% |
+
+*Old RAGTruth with fixed 7-probe pipeline
+
+#### Per-View Contribution Analysis (avg across datasets)
+
+**Per-view AUROC ranking**:
+1. repr_input_last (0.921) — last-token hidden states
+2. attn_head_act (0.919) — per-head activations
+3. **repr_input_mean (0.907)** — mean-pooled prompt hidden states (**NEW, previously unused**)
+4. attn_input_stats (0.892) — attention statistics
+5. probe_methods (0.891) — reproduced probe outputs
+6. attn_input_vnorms (0.872) — attention value norms
+7. repr_gen_mean (0.868) — mean-pooled gen hidden states (**NEW**)
+8. attn_gen_stats (0.794) — gen attention stats (**NEW**)
+9. repr_gen_last (0.732) — last gen token hidden states
+10. conf_input (0.683) — input logit stats (**NEW**)
+11. conf_gen (0.558) — gen logit stats (**NEW**)
+
+**Leave-one-view-out contribution**:
+1. **repr_input_mean: +0.0030** — strongest complementary signal, drives +2.26% on When2Call
+2. probe_methods: +0.0020
+3. repr_input_last: +0.0007
+4. repr_gen_mean: +0.0005
+5. attn_head_act: +0.0004
+
+**Key scientific findings**:
+- **Mean-pooled prompt representations are the strongest complementary signal** — underexplored in probing literature
+- On When2Call (tool routing), repr_input_mean AUROC=0.933 vs repr_input_last=0.904 (+2.9%)
+- View contribution is task-dependent: routing → repr_input_mean, hallucination → probe_methods + attn_head_act
+- Confidence views (logit stats) have low standalone AUROC but provide marginal complementary signal
+
+#### GPT-5.4 Review Score Progression
+
+| Round | Score | Key Change |
+|-------|-------|-----------|
+| 1 | 4/10 | Initial review |
+| 2 | 5.5/10 | Full coverage, CIs, ablations |
+| 3 | 6.5/10 | RAGTruth fixed, oracle, simplified |
+| 4 | 7/10 | Wilcoxon, frozen pipeline, framing |
+| 5 | 7.5/10 | Multi-view v1, When2Call +6.41% |
+| **6** | **8/10** | **MVISF-v2, 7/7 non-saturated wins, p=0.0098** |
+
+Verdict: "Novel enough and impactful enough for acceptance" — accept-leaning.
+
+#### Code & Results
+- `fusion/multiview_v2.py` — **final method (MVISF-v2)**
+- `fusion/multiview_fusion.py` — v1 (two-stage, with view-level bottleneck)
+- `fusion/results/multiview_v2_results.json` — final results
+- `fusion/results/multiview_results.json` — v1 results
+- `AUTO_REVIEW.md` — complete 6-round review loop log
+
 ## What's Not Done / Next Steps
 
 - [x] Run confidence intervals (bootstrap) on all datasets
 - [x] Extend to all classification datasets
 - [x] Ablation studies (per-source contribution, trajectory vs direct logits)
 - [x] Compute oracle upper bound
+- [x] Multi-view fusion with all 13 features
+- [x] Per-view contribution analysis
 - [ ] Write paper (NeurIPS 2026 deadline ~May)
 - [ ] (Optional) Regression / multi-label fusion
-- [ ] (Optional) Second model for external validity
+- [ ] (Optional) Second model for external validity (strongest remaining improvement)
 
 ## File Structure
 ```
@@ -324,13 +427,18 @@ Massive complementarity confirmed.
 │   ├── results/                 # all_results_v2.json, all_results_v3.json
 │   └── processed_features/      # 7.3 GB per-method processed features
 ├── fusion/
-│   ├── layerwise_v3.py          # Winning method: layerwise probe-bank stacking
+│   ├── multiview_v2.py          # FINAL METHOD: MVISF-v2 (direct multi-view stacking)
+│   ├── multiview_fusion.py      # MVISF v1 (two-stage with view-level bottleneck)
+│   ├── layerwise_v3.py          # Previous method: layerwise probe-bank stacking
+│   ├── minimal_ablation.py      # Ablation studies with caching
+│   ├── comprehensive_analysis.py # Full dataset coverage analysis
+│   ├── round2_fixes.py          # Oracle, failure analysis, paired CIs
 │   ├── unified_fast.py          # Score-level baseline (PCA+C tuning+stacking)
 │   ├── layerwise_fusion.py      # v1: subsampled + trajectory
 │   ├── layerwise_v2.py          # v2: all layers + direct logits
 │   ├── neural_fusion.py         # Neural approach (failed)
 │   ├── anchor_fusion.py         # Anchor-residual fusion variants
-│   └── results/                 # All result JSONs
+│   └── results/                 # All result JSONs (15+ files)
 ├── extraction_plan.md
 ├── selected_datasets.md
 ├── NEW_DATASETS_PIPELINE.md     # Pipeline I/O specification
