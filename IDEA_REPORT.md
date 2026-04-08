@@ -221,6 +221,7 @@ Win/Loss: **7/2** (losses only on saturated datasets) | Wilcoxon p = **0.0098**
 - [x] Extend to all classification datasets (9 datasets)
 - [x] Ablation studies (13 configs × 4 datasets)
 - [x] Multi-view fusion with all 13 features
+- [ ] **Baseline-feature-only fusion** — 限定input为baseline方法后处理的feature vectors（不使用LLM raw states），验证仅靠已有probing方法输出融合的效果，作为pure probe-fusion baseline与完整MVISF-v2对比
 - [ ] Write paper (NeurIPS 2026 deadline ~May)
 - [ ] Second model for external validity (needs GPU)
 
