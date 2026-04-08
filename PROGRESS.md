@@ -389,7 +389,7 @@ Verdict: "Novel enough and impactful enough for acceptance" — accept-leaning.
 - [x] Compute oracle upper bound
 - [x] Multi-view fusion with all 13 features
 - [x] Per-view contribution analysis
-- [ ] **Fusion using ONLY baseline processed features as input** — 限定input为12个baseline方法后处理的feature vectors（不使用LLM raw internal states），验证仅靠已有probing方法的输出能否通过融合获得提升。目前可用的processed features: 7个方法(multi-class) / 12个方法(binary)，每个方法的特征维度从1维(scalar score)到14336维(SEP的多层hidden)不等。每个方法feature经过 StandardScaler → PCA(256) → C-tuned LR → OOF概率后，只贡献K个meta-features（K=类别数）。这可以作为一个pure probe-fusion baseline，与使用raw features的完整MVISF-v2对比。
+- [ ] **Fusion using ONLY baseline processed features as input** — 限定input为12个baseline方法后处理的feature vectors（不使用LLM raw internal states），验证仅靠已有probing方法的输出能否通过融合获得提升。目前可用的processed features: 7个方法(multi-class) / 12个方法(binary)，每个方法的特征维度从1维(scalar score)到14336维(SEP的多层hidden)不等。每个方法feature经过 StandardScaler → PCA(256) → C-tuned LR → OOF概率后，只贡献K个meta-features（K=类别数）。
 - [ ] Write paper (NeurIPS 2026 deadline ~May)
 - [ ] (Optional) Regression / multi-label fusion
 - [ ] (Optional) Second model for external validity (strongest remaining improvement)
