@@ -1,9 +1,12 @@
 # Data & features (stored on B2)
 datasets/
-reproduce/processed_features/
-reproduce/logs/
+extraction/data/
+extraction/features/
 extraction/logs/
 extraction/__pycache__/
+reproduce/processed_features/
+reproduce/data/
+reproduce/logs/
 reproduce/__pycache__/
 
 # Large baseline repos (cloned separately)

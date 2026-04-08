@@ -1,0 +1,92 @@
+{
+  "geometry_of_truth_cities": {
+    "auroc": 0.9998665183537263,
+    "auroc_ci_lo": 0.9994526546250684,
+    "auroc_ci_hi": 1.0,
+    "accuracy": 0.9966666666666667,
+    "f1_macro": 0.996662179151971,
+    "delta": -0.00013348164627369208,
+    "baseline_auroc": 1.0,
+    "baseline_method": "attn_satisfies"
+  },
+  "metatool_task1": {
+    "auroc": 0.9945451183431953,
+    "auroc_ci_lo": 0.9854423292273237,
+    "auroc_ci_hi": 0.9999999999999999,
+    "accuracy": 0.9807692307692307,
+    "f1_macro": 0.9807692307692307,
+    "delta": -0.0036548816568047204,
+    "baseline_auroc": 0.9982,
+    "baseline_method": "kb_mlp"
+  },
+  "retrievalqa": {
+    "auroc": 0.9433356721498922,
+    "auroc_ci_lo": 0.9247166123778502,
+    "auroc_ci_hi": 0.9604916593503073,
+    "accuracy": 0.8689407540394973,
+    "f1_macro": 0.8676024785665211,
+    "delta": 0.004335672149892278,
+    "baseline_auroc": 0.939,
+    "baseline_method": "kb_mlp"
+  },
+  "common_claim_3class": {
+    "auroc": 0.7763648070618047,
+    "auroc_ci_lo": 0.7514458842411834,
+    "auroc_ci_hi": 0.7999253531502103,
+    "accuracy": 0.667,
+    "f1_macro": 0.5142365969618777,
+    "delta": 0.01876480706180461,
+    "baseline_auroc": 0.7576,
+    "baseline_method": "pca_lr"
+  },
+  "e2h_amc_3class": {
+    "auroc": 0.9147767174985036,
+    "auroc_ci_lo": 0.9074321479438462,
+    "auroc_ci_hi": 0.9218867344606823,
+    "accuracy": 0.7727731092436975,
+    "f1_macro": 0.731476467335383,
+    "delta": 0.021376717498503672,
+    "baseline_auroc": 0.8934,
+    "baseline_method": "pca_lr"
+  },
+  "e2h_amc_5class": {
+    "auroc": 0.8945639348248319,
+    "auroc_ci_lo": 0.888341947590062,
+    "auroc_ci_hi": 0.9014513578349324,
+    "accuracy": 0.6225210084033613,
+    "f1_macro": 0.5692705805830321,
+    "delta": 0.019363934824831897,
+    "baseline_auroc": 0.8752,
+    "baseline_method": "kb_mlp"
+  },
+  "when2call_3class": {
+    "auroc": 0.9061529302040164,
+    "auroc_ci_lo": 0.8894503789921049,
+    "auroc_ci_hi": 0.922703967094756,
+    "accuracy": 0.774281805745554,
+    "f1_macro": 0.7671041987924657,
+    "delta": 0.03205293020401645,
+    "baseline_auroc": 0.8741,
+    "baseline_method": "lr_probe"
+  },
+  "fava_binary": {
+    "auroc": 0.989699741140605,
+    "auroc_ci_lo": 0.9840397188554609,
+    "auroc_ci_hi": 0.9944912941854837,
+    "accuracy": 0.967,
+    "f1_macro": 0.9263312281923692,
+    "delta": 0.004099741140604962,
+    "baseline_auroc": 0.9856,
+    "baseline_method": "iti"
+  },
+  "ragtruth_binary": {
+    "auroc": 0.8628889211660263,
+    "auroc_ci_lo": 0.836985294117647,
+    "auroc_ci_hi": 0.8879077540106952,
+    "accuracy": 0.8,
+    "f1_macro": 0.7556577449164594,
+    "delta": -0.017911078833973693,
+    "baseline_auroc": 0.8808,
+    "baseline_method": "iti"
+  }
+}

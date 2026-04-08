@@ -1,0 +1,78 @@
+{
+  "common_claim_3class": {
+    "oracle_auroc": 0.9792145382137397,
+    "oracle_accuracy": 0.824,
+    "best_single_auroc": 0.7711775896236243,
+    "best_single_method": "lr_probe",
+    "headroom": 0.20803694859011546,
+    "n_probes": 7,
+    "per_probe_auroc": {
+      "lr_probe": 0.7711775896236243,
+      "pca_lr": 0.7603565233313572,
+      "kb_mlp": 0.749932737139122,
+      "iti": 0.7153488500889845,
+      "attn_satisfies": 0.7057746501619726,
+      "step": 0.526399649341669,
+      "sep": 0.5158378144150463
+    }
+  },
+  "when2call_3class": {
+    "oracle_auroc": 0.9901647760026848,
+    "oracle_accuracy": 0.9302325581395349,
+    "best_single_auroc": 0.8640145960508816,
+    "best_single_method": "lr_probe",
+    "headroom": 0.12615017995180322,
+    "n_probes": 7,
+    "per_probe_auroc": {
+      "lr_probe": 0.8640145960508816,
+      "kb_mlp": 0.849398971832727,
+      "iti": 0.8405147380439812,
+      "attn_satisfies": 0.8079421200691194,
+      "pca_lr": 0.7977204218849003,
+      "step": 0.5567637898444774,
+      "sep": 0.5451186786827752
+    }
+  },
+  "fava_binary": {
+    "oracle_auroc": 1.0,
+    "oracle_accuracy": 0.996,
+    "best_single_auroc": 0.9846127481487494,
+    "best_single_method": "iti",
+    "headroom": 0.01538725185125056,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "iti": 0.9846127481487494,
+      "mm_probe": 0.983584526161034,
+      "lr_probe": 0.9835664871787934,
+      "pca_lr": 0.9813567118543173,
+      "kb_mlp": 0.9632275347024922,
+      "attn_satisfies": 0.9599264009524582,
+      "lid": 0.8840544416484023,
+      "step": 0.6609573287875099,
+      "sep": 0.6589730407410415,
+      "llm_check": 0.6190437535514246,
+      "seakr": 0.530134119832959
+    }
+  },
+  "ragtruth_binary": {
+    "oracle_auroc": 0.9996963014802002,
+    "oracle_accuracy": 0.974,
+    "best_single_auroc": 0.8804154067579522,
+    "best_single_method": "iti",
+    "headroom": 0.11928089472224801,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "iti": 0.8804154067579522,
+      "mm_probe": 0.8576072077782032,
+      "lr_probe": 0.8576028063503801,
+      "pca_lr": 0.835529645817103,
+      "kb_mlp": 0.8240155106316488,
+      "attn_satisfies": 0.7969115180964705,
+      "llm_check": 0.7218671737111519,
+      "lid": 0.6962816737749726,
+      "sep": 0.6950756825514197,
+      "step": 0.6899656248487009,
+      "seakr": 0.5527225031800316
+    }
+  }
+}

@@ -1,0 +1,270 @@
+{
+  "common_claim_3class": {
+    "full": {
+      "auroc": 0.7763648070618047,
+      "n_features": 381,
+      "meta_C": 0.0003
+    },
+    "no_trajectory": {
+      "auroc": 0.777415232672659,
+      "n_features": 216,
+      "meta_C": 0.001
+    },
+    "no_probes": {
+      "auroc": 0.7743560700799348,
+      "n_features": 360,
+      "meta_C": 0.0003
+    },
+    "no_direct": {
+      "auroc": 0.7743431565495077,
+      "n_features": 186,
+      "meta_C": 0.001
+    },
+    "probes_only": {
+      "auroc": 0.7768589103998372,
+      "n_features": 21,
+      "meta_C": 0.003
+    },
+    "traj_only": {
+      "auroc": 0.7715520164222546,
+      "n_features": 165,
+      "meta_C": 0.001
+    },
+    "direct_only": {
+      "auroc": 0.7752926086776287,
+      "n_features": 195,
+      "meta_C": 0.001
+    },
+    "drop_input_hidden": {
+      "auroc": 0.7678945166147374,
+      "n_features": 303,
+      "meta_C": 0.0003
+    },
+    "drop_gen_hidden": {
+      "auroc": 0.7770953220805312,
+      "n_features": 303,
+      "meta_C": 0.0003
+    },
+    "drop_head_act": {
+      "auroc": 0.7793802767450652,
+      "n_features": 327,
+      "meta_C": 0.0003
+    },
+    "drop_attn": {
+      "auroc": 0.7760531210809596,
+      "n_features": 231,
+      "meta_C": 0.0003
+    },
+    "input_hidden_only": {
+      "auroc": 0.7820714351453604,
+      "n_features": 78,
+      "meta_C": 0.001
+    },
+    "gen_hidden_only": {
+      "auroc": 0.5270663797750771,
+      "n_features": 78,
+      "meta_C": 0.0001
+    }
+  },
+  "e2h_amc_3class": {
+    "full": {
+      "auroc": 0.9147767174985036,
+      "n_features": 381,
+      "meta_C": 0.001
+    },
+    "no_trajectory": {
+      "auroc": 0.9140032776355284,
+      "n_features": 216,
+      "meta_C": 0.003
+    },
+    "no_probes": {
+      "auroc": 0.9145364908808729,
+      "n_features": 360,
+      "meta_C": 0.001
+    },
+    "no_direct": {
+      "auroc": 0.9141295792771501,
+      "n_features": 186,
+      "meta_C": 0.001
+    },
+    "probes_only": {
+      "auroc": 0.9081137542583971,
+      "n_features": 21,
+      "meta_C": 0.01
+    },
+    "traj_only": {
+      "auroc": 0.9136225481048736,
+      "n_features": 165,
+      "meta_C": 0.001
+    },
+    "direct_only": {
+      "auroc": 0.9139143198190042,
+      "n_features": 195,
+      "meta_C": 0.003
+    },
+    "drop_input_hidden": {
+      "auroc": 0.9118045793305641,
+      "n_features": 303,
+      "meta_C": 0.001
+    },
+    "drop_gen_hidden": {
+      "auroc": 0.9149170653248841,
+      "n_features": 303,
+      "meta_C": 0.001
+    },
+    "drop_head_act": {
+      "auroc": 0.9110352997917369,
+      "n_features": 327,
+      "meta_C": 0.001
+    },
+    "drop_attn": {
+      "auroc": 0.915407320578922,
+      "n_features": 231,
+      "meta_C": 0.003
+    },
+    "input_hidden_only": {
+      "auroc": 0.9110314983729987,
+      "n_features": 78,
+      "meta_C": 0.01
+    },
+    "gen_hidden_only": {
+      "auroc": 0.721235135045522,
+      "n_features": 78,
+      "meta_C": 0.0001
+    }
+  },
+  "e2h_amc_5class": {
+    "full": {
+      "auroc": 0.8945639348248319,
+      "n_features": 635,
+      "meta_C": 0.003
+    },
+    "no_trajectory": {
+      "auroc": 0.8965268184201924,
+      "n_features": 360,
+      "meta_C": 0.003
+    },
+    "no_probes": {
+      "auroc": 0.894205698673096,
+      "n_features": 600,
+      "meta_C": 0.003
+    },
+    "no_direct": {
+      "auroc": 0.8905596235922941,
+      "n_features": 310,
+      "meta_C": 0.01
+    },
+    "probes_only": {
+      "auroc": 0.8890649617369621,
+      "n_features": 35,
+      "meta_C": 0.01
+    },
+    "traj_only": {
+      "auroc": 0.8903288143991027,
+      "n_features": 275,
+      "meta_C": 0.01
+    },
+    "direct_only": {
+      "auroc": 0.896081988190987,
+      "n_features": 325,
+      "meta_C": 0.003
+    },
+    "drop_input_hidden": {
+      "auroc": 0.8918634269238414,
+      "n_features": 505,
+      "meta_C": 0.003
+    },
+    "drop_gen_hidden": {
+      "auroc": 0.8878913933808853,
+      "n_features": 505,
+      "meta_C": 0.01
+    },
+    "drop_head_act": {
+      "auroc": 0.8927653862299607,
+      "n_features": 545,
+      "meta_C": 0.003
+    },
+    "drop_attn": {
+      "auroc": 0.896950122576915,
+      "n_features": 385,
+      "meta_C": 0.003
+    },
+    "input_hidden_only": {
+      "auroc": 0.8939955836423772,
+      "n_features": 130,
+      "meta_C": 0.01
+    },
+    "gen_hidden_only": {
+      "auroc": 0.6950566703912908,
+      "n_features": 130,
+      "meta_C": 0.003
+    }
+  },
+  "when2call_3class": {
+    "full": {
+      "auroc": 0.9061529302040164,
+      "n_features": 381,
+      "meta_C": 0.003
+    },
+    "no_trajectory": {
+      "auroc": 0.9072563338497929,
+      "n_features": 216,
+      "meta_C": 0.003
+    },
+    "no_probes": {
+      "auroc": 0.9050157564719513,
+      "n_features": 360,
+      "meta_C": 0.003
+    },
+    "no_direct": {
+      "auroc": 0.9069095823989594,
+      "n_features": 186,
+      "meta_C": 0.01
+    },
+    "probes_only": {
+      "auroc": 0.8747295832817438,
+      "n_features": 21,
+      "meta_C": 0.001
+    },
+    "traj_only": {
+      "auroc": 0.9051398788209483,
+      "n_features": 165,
+      "meta_C": 0.01
+    },
+    "direct_only": {
+      "auroc": 0.9063182858539746,
+      "n_features": 195,
+      "meta_C": 0.003
+    },
+    "drop_input_hidden": {
+      "auroc": 0.9009519528736526,
+      "n_features": 303,
+      "meta_C": 0.003
+    },
+    "drop_gen_hidden": {
+      "auroc": 0.9053315797467146,
+      "n_features": 303,
+      "meta_C": 0.003
+    },
+    "drop_head_act": {
+      "auroc": 0.8968903511157033,
+      "n_features": 327,
+      "meta_C": 0.003
+    },
+    "drop_attn": {
+      "auroc": 0.911516050033596,
+      "n_features": 231,
+      "meta_C": 0.003
+    },
+    "input_hidden_only": {
+      "auroc": 0.9035641036118477,
+      "n_features": 78,
+      "meta_C": 0.01
+    },
+    "gen_hidden_only": {
+      "auroc": 0.5906762532747255,
+      "n_features": 78,
+      "meta_C": 0.003
+    }
+  }
+}

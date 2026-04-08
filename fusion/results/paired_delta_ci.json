@@ -1,0 +1,83 @@
+{
+  "common_claim_3class": {
+    "our_auroc": 0.7763648070618047,
+    "baseline_auroc": 0.7576,
+    "observed_delta": 0.01876480706180461,
+    "delta_ci_lo": -0.006154115758816636,
+    "delta_ci_hi": 0.04232535315021024,
+    "significant_at_005": false,
+    "direction": "positive"
+  },
+  "e2h_amc_3class": {
+    "our_auroc": 0.9147767174985036,
+    "baseline_auroc": 0.8934,
+    "observed_delta": 0.021376717498503672,
+    "delta_ci_lo": 0.014032147943846218,
+    "delta_ci_hi": 0.028486734460682284,
+    "significant_at_005": true,
+    "direction": "positive"
+  },
+  "e2h_amc_5class": {
+    "our_auroc": 0.8945639348248319,
+    "baseline_auroc": 0.8752,
+    "observed_delta": 0.019363934824831897,
+    "delta_ci_lo": 0.013141947590062042,
+    "delta_ci_hi": 0.026251357834932376,
+    "significant_at_005": true,
+    "direction": "positive"
+  },
+  "when2call_3class": {
+    "our_auroc": 0.9061529302040164,
+    "baseline_auroc": 0.8741,
+    "observed_delta": 0.03205293020401645,
+    "delta_ci_lo": 0.015350378992104896,
+    "delta_ci_hi": 0.048603967094756007,
+    "significant_at_005": true,
+    "direction": "positive"
+  },
+  "fava_binary": {
+    "our_auroc": 0.989699741140605,
+    "baseline_auroc": 0.9856,
+    "observed_delta": 0.004099741140604962,
+    "delta_ci_lo": -0.0015602811445390996,
+    "delta_ci_hi": 0.008891294185483622,
+    "significant_at_005": false,
+    "direction": "positive"
+  },
+  "ragtruth_binary": {
+    "our_auroc": 0.8628889211660263,
+    "baseline_auroc": 0.8808,
+    "observed_delta": -0.017911078833973693,
+    "delta_ci_lo": -0.04381470588235303,
+    "delta_ci_hi": 0.007107754010695189,
+    "significant_at_005": false,
+    "direction": "negative"
+  },
+  "geometry_of_truth_cities": {
+    "our_auroc": 0.9998665183537263,
+    "baseline_auroc": 1.0,
+    "observed_delta": -0.00013348164627369208,
+    "delta_ci_lo": -0.0005473453749316182,
+    "delta_ci_hi": 0.0,
+    "significant_at_005": false,
+    "direction": "negative"
+  },
+  "metatool_task1": {
+    "our_auroc": 0.9945451183431953,
+    "baseline_auroc": 0.9982,
+    "observed_delta": -0.0036548816568047204,
+    "delta_ci_lo": -0.01275767077267631,
+    "delta_ci_hi": 0.0017999999999999128,
+    "significant_at_005": false,
+    "direction": "negative"
+  },
+  "retrievalqa": {
+    "our_auroc": 0.9433356721498922,
+    "baseline_auroc": 0.939,
+    "observed_delta": 0.004335672149892278,
+    "delta_ci_lo": -0.014283387622149757,
+    "delta_ci_hi": 0.02149165935030739,
+    "significant_at_005": false,
+    "direction": "positive"
+  }
+}

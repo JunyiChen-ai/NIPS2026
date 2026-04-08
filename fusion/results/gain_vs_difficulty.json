@@ -1,0 +1,70 @@
+{
+  "datasets": [
+    {
+      "dataset": "geometry_of_truth_cities",
+      "baseline_auroc": 1.0,
+      "difficulty": 0.0,
+      "fusion_auroc": 0.9998665183537263,
+      "gain": -0.00013348164627369208
+    },
+    {
+      "dataset": "metatool_task1",
+      "baseline_auroc": 0.9982,
+      "difficulty": 0.0018000000000000238,
+      "fusion_auroc": 0.9945451183431953,
+      "gain": -0.0036548816568047204
+    },
+    {
+      "dataset": "retrievalqa",
+      "baseline_auroc": 0.939,
+      "difficulty": 0.061000000000000054,
+      "fusion_auroc": 0.9433356721498922,
+      "gain": 0.004335672149892278
+    },
+    {
+      "dataset": "common_claim_3class",
+      "baseline_auroc": 0.7576,
+      "difficulty": 0.24239999999999995,
+      "fusion_auroc": 0.7763648070618047,
+      "gain": 0.01876480706180461
+    },
+    {
+      "dataset": "e2h_amc_3class",
+      "baseline_auroc": 0.8934,
+      "difficulty": 0.10660000000000003,
+      "fusion_auroc": 0.9147767174985036,
+      "gain": 0.021376717498503672
+    },
+    {
+      "dataset": "e2h_amc_5class",
+      "baseline_auroc": 0.8752,
+      "difficulty": 0.12480000000000002,
+      "fusion_auroc": 0.8945639348248319,
+      "gain": 0.019363934824831897
+    },
+    {
+      "dataset": "when2call_3class",
+      "baseline_auroc": 0.8741,
+      "difficulty": 0.1259,
+      "fusion_auroc": 0.9061529302040164,
+      "gain": 0.03205293020401645
+    },
+    {
+      "dataset": "fava_binary",
+      "baseline_auroc": 0.9856,
+      "difficulty": 0.014399999999999968,
+      "fusion_auroc": 0.989699741140605,
+      "gain": 0.004099741140604962
+    },
+    {
+      "dataset": "ragtruth_binary",
+      "baseline_auroc": 0.8808,
+      "difficulty": 0.11919999999999997,
+      "fusion_auroc": 0.8628889211660263,
+      "gain": -0.017911078833973693
+    }
+  ],
+  "spearman_r": 0.5833333333333334,
+  "spearman_p": 0.09918581647988323,
+  "interpretation": "Positive correlation means fusion helps more on harder datasets"
+}

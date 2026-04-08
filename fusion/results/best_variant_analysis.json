@@ -1,0 +1,67 @@
+{
+  "full": {
+    "avg_auroc": 0.8729645973972892,
+    "avg_rank": 4.5,
+    "n_wins": 0
+  },
+  "no_trajectory": {
+    "avg_auroc": 0.8738004156445432,
+    "avg_rank": 3.25,
+    "n_wins": 0
+  },
+  "no_probes": {
+    "avg_auroc": 0.8720285040264637,
+    "avg_rank": 6.5,
+    "n_wins": 0
+  },
+  "no_direct": {
+    "avg_auroc": 0.8714854854544779,
+    "avg_rank": 6.75,
+    "n_wins": 0
+  },
+  "probes_only": {
+    "avg_auroc": 0.8621918024192351,
+    "avg_rank": 10.0,
+    "n_wins": 0
+  },
+  "traj_only": {
+    "avg_auroc": 0.8701608144367947,
+    "avg_rank": 9.0,
+    "n_wins": 0
+  },
+  "direct_only": {
+    "avg_auroc": 0.8729018006353986,
+    "avg_rank": 5.5,
+    "n_wins": 0
+  },
+  "drop_input_hidden": {
+    "avg_auroc": 0.8681286189356988,
+    "avg_rank": 9.75,
+    "n_wins": 0
+  },
+  "drop_gen_hidden": {
+    "avg_auroc": 0.8713088401332538,
+    "avg_rank": 6.0,
+    "n_wins": 0
+  },
+  "drop_head_act": {
+    "avg_auroc": 0.8700178284706165,
+    "avg_rank": 7.5,
+    "n_wins": 0
+  },
+  "drop_attn": {
+    "avg_auroc": 0.8749816535675982,
+    "avg_rank": 2.5,
+    "n_wins": 3
+  },
+  "input_hidden_only": {
+    "avg_auroc": 0.8726656551931461,
+    "avg_rank": 6.75,
+    "n_wins": 1
+  },
+  "gen_hidden_only": {
+    "avg_auroc": 0.6335086096216539,
+    "avg_rank": 13.0,
+    "n_wins": 0
+  }
+}

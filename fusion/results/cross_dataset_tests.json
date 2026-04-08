@@ -1,0 +1,19 @@
+{
+  "all_datasets": {
+    "n_pos": 6,
+    "n_neg": 3,
+    "n": 9,
+    "sign_test_p": 0.25390625,
+    "wilcoxon_p": 0.048828125
+  },
+  "non_saturated": {
+    "n_pos": 6,
+    "n": 7,
+    "wilcoxon_p": 0.0390625
+  },
+  "with_ragtruth_fixed": {
+    "n_pos": 7,
+    "n": 9,
+    "wilcoxon_p": 0.009765625
+  }
+}

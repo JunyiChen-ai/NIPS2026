@@ -193,14 +193,102 @@ Study how LLM internal states (hidden states, attention, logits) can be used to 
 - **Generation-side methods (SEP, STEP) still underperform input-side** — consistent with original findings
 - **Unsupervised methods (CoE, SeaKR) remain near-random** — internal states fundamentally outperform output-based signals
 
+### 9. Fusion Method Development (2026-04-07 ~ 2026-04-08)
+
+Developed and evaluated 6 fusion approaches to combine heterogeneous probe outputs into a unified framework.
+
+#### Winning Method: Layerwise Probe-Bank Stacking
+
+**Pipeline** (unified, same code for all datasets):
+1. **Per-layer LR probes**: For each raw feature source (input_hidden 30L×3584, gen_hidden 30L×3584, head_act 28L×3584, attn_stats 28L×84, attn_vnorms 28L×varies), extract per-layer features, PCA(512) if >512d, tune C via holdout, train 5-fold CV LR → OOF logits
+2. **Depth trajectory features**: Gaussian RBF basis (5-7 bases) + mean/max/std/argmax per class per source
+3. **Old probe features**: 7 processed probe methods with PCA(256) + C-tuned LR → OOF logits
+4. **Meta-classifier**: Combine all features → StandardScaler → ridge LR with CV-tuned C
+
+#### Results (unified method v3, all 4 hard multi-class datasets)
+
+| Dataset | Best Single Probe | Layerwise Fusion | Delta |
+|---------|------------------|-----------------|-------|
+| common_claim_3class | PCA+LR 0.7576 | **0.7764** | **+1.9%** |
+| e2h_amc_3class | PCA+LR 0.8934 | **0.9148** | **+2.1%** |
+| e2h_amc_5class | KB MLP 0.8752 | **0.8946** | **+1.9%** |
+| when2call_3class | LR Probe 0.8741 | **0.9062** | **+3.2%** |
+
+#### Methods Tried and Eliminated
+
+| Method | Result | Reason |
+|--------|--------|--------|
+| Score-level LR stacking (PCA+C tuning) | +0.3% to +1.8% | Probability compression ceiling |
+| Feature concat + LR/MLP | Negative | Curse of dimensionality |
+| Neural hierarchical fusion (493K params) | -2% to -9% | Overfitting on 800-3500 samples |
+| Anchor-residual blend / DRO | +0.3% to +1.8% | Same ceiling as score-level |
+
+#### Key Findings
+- Multi-layer information is the biggest gain source — using all layers vs "best layer"
+- Per-probe C tuning is critical — default C=1.0 is suboptimal for high-dim features
+- Neural networks fail on this data scale (800-3500 samples)
+- Signal complementarity varies by dataset — when2call has highest gain (+3-4%)
+
+Code: `fusion/layerwise_v3.py` (unified), `fusion/unified_fast.py` (score-level baseline)
+Results: `fusion/results/*.json`
+
+### 10. Auto-Review Loop & Final Analyses (2026-04-08)
+
+GPT-5.4 review loop: 4 rounds, score improved from 4/10 → 5.5 → 6.5 → **7/10 (submission-ready)**.
+
+#### Full Classification Coverage (9 datasets)
+
+| Dataset | Best Single | Fusion | Delta | 95% CI | Sig? |
+|---------|-----------|--------|-------|--------|------|
+| GoT Cities | 1.000 | 0.9999 | -0.01% | [0.999, 1.000] | n.s. |
+| MetaTool | 0.998 | 0.9945 | -0.37% | [0.985, 1.000] | n.s. |
+| RetrievalQA | 0.939 | 0.9433 | +0.43% | [0.925, 0.960] | n.s. |
+| common_claim | 0.758 | 0.7764 | +1.88% | [0.751, 0.800] | n.s. |
+| E2H 3c | 0.893 | **0.9148** | **+2.14%** | [0.907, 0.922] | *** |
+| E2H 5c | 0.875 | **0.8946** | **+1.94%** | [0.888, 0.901] | *** |
+| When2Call | 0.874 | **0.9062** | **+3.21%** | [0.890, 0.923] | *** |
+| FAVA | 0.986 | 0.9897 | +0.41% | [0.984, 0.994] | n.s. |
+| RAGTruth | 0.881 | 0.8897 | +0.89% | — | — |
+
+Win/Loss: **7/2** (losses only on saturated GoT/MetaTool). Wilcoxon p=0.049.
+
+#### Ablation Studies (13 configs × 4 datasets)
+- Best variant: `drop_attn` (avg rank 2.5/13)
+- Input hidden states are dominant source
+- Generation hidden states alone near-random
+- Trajectory features marginally redundant
+- Method robust to component removal
+
+#### Per-Example Oracle Upper Bound
+| Dataset | Best Single | Oracle | Headroom |
+|---------|-----------|--------|----------|
+| common_claim | 0.771 | 0.979 | +20.8% |
+| when2call | 0.864 | 0.990 | +12.6% |
+| ragtruth | 0.880 | 1.000 | +11.9% |
+| fava | 0.985 | 1.000 | +1.5% |
+
+Massive complementarity confirmed.
+
+#### Results files
+- `fusion/results/comprehensive_results.json` — all 9 datasets
+- `fusion/results/ablation_results.json` — 13 ablations × 4 datasets
+- `fusion/results/per_example_oracle.json` — oracle upper bounds
+- `fusion/results/ragtruth_failure_analysis.json` — RAGTruth debug
+- `fusion/results/paired_delta_ci.json` — statistical tests
+- `fusion/results/cross_dataset_tests.json` — Wilcoxon/sign tests
+- `fusion/results/gain_vs_difficulty.json` — gain vs difficulty
+- `fusion/results/best_variant_analysis.json` — method simplification
+- `AUTO_REVIEW.md` — full review loop log
+
 ## What's Not Done / Next Steps
 
-### Research Directions
-- Gap identified: no dataset simultaneously labels retrieval + thinking + tool use needs
-- Hidden state probing is strong → can we design a unified probe across tasks?
-- Generation-side features (STEP, SEP) underperform input-side → why?
-- Unsupervised methods fail → are internal states fundamentally better than output-based signals?
-- ITI's strong multi-label performance → per-head specialization for different error types?
+- [x] Run confidence intervals (bootstrap) on all datasets
+- [x] Extend to all classification datasets
+- [x] Ablation studies (per-source contribution, trajectory vs direct logits)
+- [x] Compute oracle upper bound
+- [ ] Write paper (NeurIPS 2026 deadline ~May)
+- [ ] (Optional) Regression / multi-label fusion
+- [ ] (Optional) Second model for external validity
 
 ## File Structure
 ```
@@ -235,9 +323,20 @@ Study how LLM internal states (hidden states, attention, logits) can be used to 
 │   ├── create_val_split.py
 │   ├── results/                 # all_results_v2.json, all_results_v3.json
 │   └── processed_features/      # 7.3 GB per-method processed features
+├── fusion/
+│   ├── layerwise_v3.py          # Winning method: layerwise probe-bank stacking
+│   ├── unified_fast.py          # Score-level baseline (PCA+C tuning+stacking)
+│   ├── layerwise_fusion.py      # v1: subsampled + trajectory
+│   ├── layerwise_v2.py          # v2: all layers + direct logits
+│   ├── neural_fusion.py         # Neural approach (failed)
+│   ├── anchor_fusion.py         # Anchor-residual fusion variants
+│   └── results/                 # All result JSONs
 ├── extraction_plan.md
 ├── selected_datasets.md
 ├── NEW_DATASETS_PIPELINE.md     # Pipeline I/O specification
+├── IDEA_REPORT.md               # Idea discovery + experimental results
+├── TARGET_LOOP.md               # Target-driven loop log
+├── TARGET_LOOP_STATE.json       # Loop state
 └── PROGRESS.md                  # This file
 ```
 
