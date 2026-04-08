@@ -168,50 +168,61 @@ Available processed features (per sample):
 
 ## Experimental Results (2026-04-08)
 
-### Winning Method: Layerwise Probe-Bank Stacking (v3)
+### Evolution: Layerwise v3 → Multi-View Fusion v2
 
-**Pipeline** (unified, same code for all datasets):
-1. Per-layer LR probes on raw features (input_hidden, gen_hidden, head_act, attn_stats, attn_vnorms)
-2. PCA(512) for high-dim layers, C tuned via holdout
-3. 5-fold CV → OOF logits per layer
-4. Depth trajectory features (Gaussian RBF + summary stats)
-5. Old 7-probe method OOF logits appended
-6. Meta-LR with CV-tuned C
+**Layerwise v3** (initial winning method, 5 raw sources):
+- Used only 5 of 13 extracted features (input_last_token_hidden, gen_last_token_hidden, input_per_head_activation, input_attn_stats, input_attn_value_norms)
+- Results: +1.9% to +3.2% on 4 multi-class datasets
 
-**Results (unified method, v3)**:
+**Multi-View v2 (MVISF-v2)** (final method, ALL 13 features organized into 11 views):
+- Added 5 previously unused feature types: input_mean_pool_hidden, gen_mean_pool_hidden, gen_attn_stats_last, input_logit_stats, gen_logit_stats_last
+- Removed view-level bottleneck: all per-layer OOF logits go directly to meta-LR
+- Results: dramatically improved, especially on When2Call (+6.41%)
 
-| Dataset | Best Single Probe | Our Fusion | Delta |
-|---------|------------------|-----------|-------|
-| common_claim_3class | PCA+LR 0.7576 | **0.7764** | **+1.9%** |
-| e2h_amc_3class | PCA+LR 0.8934 | **0.9148** | **+2.1%** |
-| e2h_amc_5class | KB MLP 0.8752 | **0.8946** | **+1.9%** |
-| when2call_3class | LR Probe 0.8741 | **0.9062** | **+3.2%** |
+### Final Results (MVISF-v2, 9 classification datasets)
+
+| Dataset | Best Single Probe | MVISF-v2 | Delta |
+|---------|------------------|----------|-------|
+| GoT Cities | attn_sat 1.000 | 0.9993 | -0.07% (saturated) |
+| MetaTool | kb_mlp 0.998 | 0.9957 | -0.25% (saturated) |
+| RetrievalQA | kb_mlp 0.939 | **0.9456** | **+0.66%** |
+| common_claim_3class | PCA+LR 0.758 | **0.7764** | **+1.88%** |
+| e2h_amc_3class | PCA+LR 0.893 | **0.9140** | **+2.06%** |
+| e2h_amc_5class | KB MLP 0.875 | **0.8980** | **+2.28%** |
+| when2call_3class | LR Probe 0.874 | **0.9382** | **+6.41%** |
+| fava_binary | iti 0.986 | **0.9907** | **+0.51%** |
+| ragtruth_binary | iti 0.881 | **0.8850** | **+0.42%** |
+
+Win/Loss: **7/2** (losses only on saturated datasets) | Wilcoxon p = **0.0098**
 
 ### Methods Tried and Eliminated
 
 | Method | Best Result | Why Eliminated |
 |--------|-----------|---------------|
-| Score-level LR stacking | +0.3% to +1.8% | Probability compression loses information |
+| Score-level LR stacking | +0.3% to +1.8% | Probability compression ceiling |
 | Feature concat + LR/MLP | All negative | Curse of dimensionality |
-| Neural hierarchical fusion (493K params) | -2% to -9% | Overfitting on 800-3500 samples |
-| Anchor-residual blend | +0.3% to +1.8% | Same ceiling as score-level |
-| Fold-DRO simplex weights | +0.4% to +1.1% | DRO doesn't help when signal is absent |
+| Neural hierarchical fusion (493K) | -2% to -9% | Overfitting on 800-3500 samples |
+| Anchor-residual blend / DRO | +0.3% to +1.8% | Same ceiling as score-level |
+| Layerwise v3 (5 sources) | +1.9% to +3.2% | Superseded by MVISF-v2 |
+| Multi-view v1 (view bottleneck) | Mixed | Bottleneck hurts some datasets |
 
 ### Key Findings
 
-1. **Score-level fusion ceiling is ~+2%** — probability outputs lose too much information
-2. **Multi-layer information is the key gain source** — using all layers instead of "best layer" provides depth structure that single-layer probes miss
-3. **Neural networks fail** — 800-3500 samples is too small for learned fusion
-4. **Linear stacking of per-layer LR logits is the sweet spot** — supervised compression per layer, shallow fusion across layers
-5. **Complementary signal varies by dataset** — when2call shows +3-4% (high complementarity), cc_3c/e2h show +2% (lower complementarity)
+1. **Mean-pooled prompt hidden states are the strongest complementary signal** — underexplored in probing literature; +2.9% over last-token on When2Call routing task
+2. **Multi-layer information is the key gain source** — using all layers instead of "best layer"
+3. **Neural networks fail** — 800-3500 samples too small; linear stacking is optimal
+4. **View contribution is task-dependent** — routing: mean-pool; hallucination: probes+attention; difficulty: hidden+heads
+5. **Per-example oracle headroom is 12-21%** — probes make genuinely different errors
 
 ## Next Steps
 
-- [ ] Run confidence intervals (bootstrap/DeLong) on all datasets
-- [ ] Compute oracle upper bound on validation
-- [ ] Extend to remaining datasets (retrievalqa, easy2hard_amc, binary datasets)
-- [ ] Ablation studies (per-source contribution, trajectory vs direct logits)
-- [ ] Write paper
+- [x] Run confidence intervals (bootstrap) on all datasets
+- [x] Compute oracle upper bound
+- [x] Extend to all classification datasets (9 datasets)
+- [x] Ablation studies (13 configs × 4 datasets)
+- [x] Multi-view fusion with all 13 features
+- [ ] Write paper (NeurIPS 2026 deadline ~May)
+- [ ] Second model for external validity (needs GPU)
 
 ## References
 

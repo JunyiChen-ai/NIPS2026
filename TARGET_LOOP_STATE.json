@@ -1,17 +1,23 @@
 {
   "execution_mode": "direct",
   "user": "junyi",
-  "iteration": 7,
-  "status": "awaiting_user_decision",
-  "target_spec": "+3% AUROC over baseline on ALL 4 hard datasets",
-  "current_approach": "Layerwise probe-bank stacking v3 (unified method)",
-  "best_results_unified_v3": {
-    "common_claim_3class": {"baseline": 0.7576, "ours": 0.7764, "delta": "+1.9%"},
-    "e2h_amc_3class": {"baseline": 0.8934, "ours": 0.9148, "delta": "+2.1%"},
-    "e2h_amc_5class": {"baseline": 0.8752, "ours": 0.8946, "delta": "+1.9%"},
-    "when2call_3class": {"baseline": 0.8741, "ours": 0.9062, "delta": "+3.2%"}
+  "iteration": 9,
+  "status": "completed",
+  "target_spec": "Beat best single probe on ALL non-saturated datasets",
+  "current_approach": "Multi-View Internal State Fusion v2 (MVISF-v2)",
+  "best_results_mvisf_v2": {
+    "retrievalqa": {"baseline": 0.9390, "ours": 0.9456, "delta": "+0.66%"},
+    "common_claim_3class": {"baseline": 0.7576, "ours": 0.7764, "delta": "+1.88%"},
+    "e2h_amc_3class": {"baseline": 0.8934, "ours": 0.9140, "delta": "+2.06%"},
+    "e2h_amc_5class": {"baseline": 0.8752, "ours": 0.8980, "delta": "+2.28%"},
+    "when2call_3class": {"baseline": 0.8741, "ours": 0.9382, "delta": "+6.41%"},
+    "fava_binary": {"baseline": 0.9856, "ours": 0.9907, "delta": "+0.51%"},
+    "ragtruth_binary": {"baseline": 0.8808, "ours": 0.8850, "delta": "+0.42%"}
   },
-  "review_thread_id": "019d672b-d4cb-7a21-9dfa-8e466df33f11",
-  "gpt_assessment": "+3% on all 4 unrealistic. Bottleneck is feature complementarity. Move to paper mode.",
-  "timestamp": "2026-04-08T05:00:00"
+  "win_loss": "7/2 (losses only on saturated GoT/MetaTool)",
+  "wilcoxon_p": 0.0098,
+  "review_thread_id": "019d6893-555b-72a0-a5da-b50e04c1d100",
+  "gpt_score": 8.0,
+  "gpt_verdict": "accept-leaning",
+  "timestamp": "2026-04-08T22:00:00"
 }

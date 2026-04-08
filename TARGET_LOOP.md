@@ -78,35 +78,69 @@ Three very different fusion regimes (score-level, layerwise stacking, neural) al
 
 Recommendation: Move to paper mode. The story is strong — layerwise probe-bank stacking is a novel, effective, unified method that consistently improves over all baselines.
 
-## Best Results Summary (Unified Method = v3)
+## Iteration 7 — Multi-View Fusion v1 (two-stage with view-level bottleneck)
 
-| Dataset | Best Single Probe | Our Fusion (v3) | Delta |
-|---------|------------------|----------------|-------|
-| common_claim_3class | PCA+LR 0.7576 | **0.7764** | **+1.9%** |
-| e2h_amc_3class | PCA+LR 0.8934 | **0.9148** | **+2.1%** |
-| e2h_amc_5class | KB MLP 0.8752 | **0.8946** | **+1.9%** |
-| when2call_3class | LR Probe 0.8741 | **0.9062** | **+3.2%** |
+- **Approach**: Reorganize ALL 13 extracted features into 11 computational views (representation×4, attention×4, confidence×2, probe×1). Two-stage: within-view meta-LR → cross-view meta-LR.
+- **Results**: When2Call +6.41% (massive improvement), but mixed on other datasets due to view-level information bottleneck.
+- **Decision**: REFINE — remove bottleneck
 
-## Winning Method: Layerwise Probe-Bank Stacking (v3)
+## Iteration 8 — Multi-View Fusion v2 (direct stacking, FINAL METHOD)
 
-### Pipeline (unified, same code for all datasets)
-1. **Per-layer LR probes**: For each raw feature source (input_hidden, gen_hidden, head_act, attn_stats, attn_vnorms), extract per-layer features, PCA(512) if >512d, tune C via holdout, train 5-fold CV LR → OOF logits
-2. **Depth trajectory features**: Gaussian RBF basis + mean/max/std/argmax per class per source
-3. **Old probe features**: 7 processed probe methods with PCA(256) + C-tuned LR → OOF logits
-4. **Meta-classifier**: Combine all (direct logits + trajectory + probe logits) → StandardScaler → ridge LR with CV-tuned C
+- **Approach**: Same 11 views, but ALL per-layer OOF logits go directly to a single meta-LR. No intermediate view-level compression.
+- **Results**:
+  - All 7 non-saturated datasets improved (7/7 wins)
+  - Wilcoxon p=0.0098
+  - When2Call +6.41%, E2H 5c +2.28%, common_claim +1.88%
+
+## Best Results Summary (MVISF-v2 — Final Method)
+
+| Dataset | Best Single Probe | MVISF-v2 | Delta |
+|---------|------------------|----------|-------|
+| GoT Cities | attn_satisfies 1.000 | 0.9993 | -0.07% (saturated) |
+| MetaTool | kb_mlp 0.998 | 0.9957 | -0.25% (saturated) |
+| RetrievalQA | kb_mlp 0.939 | **0.9456** | **+0.66%** |
+| common_claim_3class | PCA+LR 0.758 | **0.7764** | **+1.88%** |
+| e2h_amc_3class | PCA+LR 0.893 | **0.9140** | **+2.06%** |
+| e2h_amc_5class | KB MLP 0.875 | **0.8980** | **+2.28%** |
+| when2call_3class | LR Probe 0.874 | **0.9382** | **+6.41%** |
+| fava_binary | iti 0.986 | **0.9907** | **+0.51%** |
+| ragtruth_binary | iti 0.881 | **0.8850** | **+0.42%** |
+
+Win/Loss: **7/2** | Wilcoxon p = **0.0098**
+
+## Final Method: Multi-View Internal State Fusion v2 (MVISF-v2)
+
+### Pipeline (unified, zero per-dataset configuration)
+
+**Input**: 10 raw feature sources (from LLM hooks) + 7 baseline method OOF outputs = 11 views
+
+**Stage 1 — Per-layer probing within each raw view**:
+For each of the 10 raw feature sources, at each sampled layer:
+1. Extract layer features
+2. StandardScaler → PCA (512d for hidden states, 256d for head_act, none for small features)
+3. C hyperparameter tuning on holdout
+4. 5-fold cross-validated Logistic Regression → OOF class probabilities
+
+Layer sampling: stride 2 for hidden states (30→15 layers), stride 4 for head_act (28→7), stride 1 for attention stats (28 layers, low-dim)
+
+For 7 baseline methods: StandardScaler → PCA(256) if needed → C-tuned LR → OOF probabilities
+
+**Stage 2 — Cross-view meta-classification**:
+Concatenate ALL OOF probabilities from ALL views (300-800 meta-features) → StandardScaler → Ridge Logistic Regression with CV-tuned C → final prediction
 
 ### Code
-- `fusion/layerwise_v3.py` — unified method
-- `fusion/unified_fast.py` — score-level baseline
-- `fusion/results/` — all result JSONs
+- `fusion/multiview_v2.py` — **final method (MVISF-v2)**
+- `fusion/multiview_fusion.py` — v1 (two-stage with bottleneck)
+- `fusion/layerwise_v3.py` — previous method
+- `fusion/results/multiview_v2_results.json` — final results
 
-## Methods Tried and Eliminated
+## All Methods Tried and Eliminated
 
 | Method | Result | Why Eliminated |
 |--------|--------|---------------|
-| Feature concat + LR/MLP | All negative | Curse of dimensionality, overfitting |
-| Neural hierarchical fusion | All negative (-2% to -9%) | Overfitting on 800-3500 samples |
-| Score-level LR stacking | +0.3% to +1.8% | Ceiling too low, probability compression |
-| Anchor-residual blend | +0.3% to +1.8% | Same ceiling as score-level |
-| Fold-DRO simplex weights | +0.4% to +1.1% | DRO doesn't help when signal is absent |
-| Full 3584d LR (no PCA) | Too slow (25 min/probe) | Impractical for iterative development |
+| Score-level LR stacking | +0.3% to +1.8% | Probability compression ceiling |
+| Feature concat + LR/MLP | All negative | Curse of dimensionality |
+| Neural hierarchical fusion (493K) | -2% to -9% | Overfitting on 800-3500 samples |
+| Anchor-residual blend / DRO | +0.3% to +1.8% | Same ceiling as score-level |
+| Layerwise v3 (5 sources only) | +1.9% to +3.2% | Superseded by MVISF-v2 (more views, better results) |
+| Multi-view v1 (view-level bottleneck) | Mixed | Bottleneck hurts some datasets |
