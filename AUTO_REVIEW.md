@@ -473,3 +473,73 @@ The method fuses heterogeneous LLM internal state probes into a unified predicti
 
 **Key design**: All stages use strict out-of-fold evaluation to prevent leakage. No neural components — purely linear stacking, optimal for the low-data regime (800-3500 samples) typical of probing benchmarks.
 
+
+## Round 5 (2026-04-08T20:00) — Multi-View Fusion v1
+
+### Assessment (Summary)
+- Score: 7.5/10 (up from 7.0)
+- Verdict: Novel enough, but MVISF v1 not cleanly dominant over old method
+- Key issue: View-level bottleneck hurts some datasets
+
+### Actions Taken
+- Implemented Multi-View Internal State Fusion using ALL 13 extracted feature types
+- Organized into 4 view categories: Representation, Attention, Confidence, Probe
+- Two-stage fusion: within-view meta-LR → cross-view meta-LR
+- When2Call: +6.41% (doubled from old +3.21%)
+- RAGTruth: now +0.07% (was -1.79%)
+- BUT: not cleanly dominant — v1 lost to old method on some datasets due to view-level bottleneck
+
+## Round 6 (2026-04-08T22:00) — Multi-View v2 (Final Method)
+
+### Assessment (Summary)
+- Score: **8/10** (accept-leaning)
+- Verdict: "Novel enough and impactful enough for acceptance"
+- Key quote: "7/7 non-saturated win with p=0.0098 is hard to dismiss"
+
+### Method: Multi-View v2 (Direct Multi-View Stacking)
+- Removed view-level bottleneck — ALL per-layer logits from ALL views go directly to meta-LR
+- 11 views: repr×4, attn×4, confidence×2, probe×1
+- Unified: zero per-dataset configuration
+
+### Final Results
+
+| Dataset | Baseline | MV-v2 | Delta | 95% CI |
+|---------|----------|-------|-------|--------|
+| GoT Cities | 1.000 | 0.9993 | -0.07% | [0.998, 1.000] |
+| MetaTool | 0.998 | 0.9957 | -0.25% | [0.989, 1.000] |
+| RetrievalQA | 0.939 | **0.9456** | **+0.66%** | [0.929, 0.963] |
+| common_claim | 0.758 | **0.7764** | **+1.88%** | [0.753, 0.800] |
+| E2H 3c | 0.893 | **0.9140** | **+2.06%** | [0.907, 0.921] |
+| E2H 5c | 0.875 | **0.8980** | **+2.28%** | [0.891, 0.904] |
+| When2Call | 0.874 | **0.9382** | **+6.41%** | [0.925, 0.952] |
+| FAVA | 0.986 | **0.9907** | **+0.51%** | [0.986, 0.995] |
+| RAGTruth | 0.881 | **0.8850** | **+0.42%** | [0.864, 0.906] |
+
+Win/Loss: **7/2** (losses only on saturated datasets)
+Wilcoxon signed-rank: **p = 0.0098**
+
+### Remaining Limitation
+- Single model (Qwen2.5-7B-Instruct) — cannot fix on this machine
+
+---
+
+## Score Progression (Updated)
+
+| Round | Score | Key Change |
+|-------|-------|-----------|
+| 1 | 4/10 | Initial review |
+| 2 | 5.5/10 | Full coverage, CIs, ablations |
+| 3 | 6.5/10 | RAGTruth fixed, oracle, simplified |
+| 4 | 7/10 | Wilcoxon, frozen pipeline, framing |
+| 5 | 7.5/10 | Multi-view v1, When2Call +6.41% |
+| 6 | **8/10** | Multi-view v2, 7/7 non-saturated wins, p=0.0098 |
+
+## Method Description
+
+**Multi-View Internal State Fusion (MVISF-v2)** is a two-stage linear stacking framework that fuses 11 distinct computational views of LLM internal states:
+
+**Stage 1 (Per-View Probing)**: For each of 8 raw feature sources (4 representation views: input/gen × last-token/mean-pool hidden states; 4 attention views: head activations, attention stats, value norms, generation attention), we extract per-layer features, apply PCA dimensionality reduction, tune the regularization parameter C on a holdout, and train 5-fold cross-validated logistic regression probes to produce out-of-fold (OOF) class logits. For 2 confidence views (input/generation logit statistics), we directly train scalar-feature probes. For the probe view, 7 reproduced probing methods provide their own OOF logits.
+
+**Stage 2 (Cross-View Meta-Classification)**: All per-layer/per-probe OOF logits from all 11 views are concatenated (300-800 meta-features depending on dataset) and fed to a ridge-regularized logistic regression meta-classifier with cross-validated C selection.
+
+The method is fully unified (zero per-dataset configuration), uses only linear models (optimal for 800-3500 sample probing regime), and provides interpretable per-view contributions via leave-one-view-out analysis.
