@@ -112,6 +112,18 @@ Every experiment writes one JSON under `fusion/results/mistral-7b-v0.3/` plus a 
 
 `exp2`, `exp3`, `exp4` have checkpoint/resume built in — if the process is killed mid-run, rerunning the same command picks up from the last completed dataset. `exp1`, `exp1b`, `v21`, `exp5`, `exp6` are fast enough to restart from scratch.
 
+### Fixed-order dependency
+
+`exp2_probe_ladder.py`, `exp3_leave_one_out.py`, and `exp4_pipeline_ablation.py` each read the best-single baseline from `fusion/results/{model}/oracle_complete.json` at startup, and `exp3` additionally reads the full v21 fusion AUROC from `fusion/results/{model}/baseline_only_v21_winning_results.json`. This is why the runner runs `exp1` and `v21` **before** the three slow experiments — the deltas will be computed against the *correct model-specific baselines*, not stale hardcoded values. If you manually run `exp2/3/4` standalone, confirm those two JSONs exist first.
+
+If you skip that ordering and later discover wrong delta / contribution numbers in `probe_ladder.json` / `leave_one_method_out.json` / `pipeline_ablation.json`, run the post-hoc fixer:
+
+```bash
+python fusion/patch_llama_deltas.py --model mistral-7b-v0.3
+```
+
+The script only rewrites derived fields (delta, delta_pct, contribution, full_fusion_auroc, best_single) and leaves the underlying AUROCs unchanged, so it's safe to run repeatedly.
+
 ### Ordering constraint
 
 **`exp1b` must run before the raw extraction features are deleted.** The runner already enforces this by putting `exp1b` second. If you choose to run individual scripts manually, keep raw features on disk until you have `fusion/results/mistral-7b-v0.3/oracle_with_raw.json`.
