@@ -1,0 +1,126 @@
+======================================================================
+EXP 2: Probe Ladder — Progressive Method Addition
+======================================================================
+
+======================================================================
+Dataset: common_claim_3class (nc=3)
+Ranked methods: ['pca_lr', 'kb_mlp', 'iti', 'lr_probe', 'attn_satisfies', 'step', 'sep']
+======================================================================
+  k=1: +pca_lr             → AUROC=0.7724 (Δ=+1.48%)  [307s]
+  k=2: +kb_mlp             → AUROC=0.7750 (Δ=+1.74%)  inc=+0.0026  [583s]
+  k=3: +iti                → AUROC=0.7791 (Δ=+2.15%)  inc=+0.0041  [869s]
+  k=4: +lr_probe           → AUROC=0.7796 (Δ=+2.20%)  inc=+0.0005  [1159s]
+  k=5: +attn_satisfies     → AUROC=0.7793 (Δ=+2.17%)  inc=-0.0003  [1481s]
+  k=6: +step               → AUROC=0.7794 (Δ=+2.18%)  inc=+0.0001  [1733s]
+  k=7: +sep                → AUROC=0.7796 (Δ=+2.20%)  inc=+0.0002  [2026s]
+  [SAVED] common_claim_3class checkpointed
+
+======================================================================
+Dataset: e2h_amc_3class (nc=3)
+Ranked methods: ['pca_lr', 'kb_mlp', 'lr_probe', 'iti', 'attn_satisfies', 'sep', 'step']
+======================================================================
+  k=1: +pca_lr             → AUROC=0.8807 (Δ=-1.27%)  [267s]
+  k=2: +kb_mlp             → AUROC=0.8850 (Δ=-0.84%)  inc=+0.0043  [484s]
+  k=3: +lr_probe           → AUROC=0.8880 (Δ=-0.54%)  inc=+0.0030  [706s]
+  k=4: +iti                → AUROC=0.8939 (Δ=+0.05%)  inc=+0.0059  [918s]
+  k=5: +attn_satisfies     → AUROC=0.8956 (Δ=+0.22%)  inc=+0.0017  [1141s]
+  k=6: +sep                → AUROC=0.8962 (Δ=+0.28%)  inc=+0.0006  [1384s]
+  k=7: +step               → AUROC=0.8928 (Δ=-0.06%)  inc=-0.0034  [1614s]
+  [SAVED] e2h_amc_3class checkpointed
+
+======================================================================
+Dataset: e2h_amc_5class (nc=5)
+Ranked methods: ['kb_mlp', 'pca_lr', 'lr_probe', 'iti', 'attn_satisfies', 'sep', 'step']
+======================================================================
+  k=1: +kb_mlp             → AUROC=0.8636 (Δ=-1.16%)  [449s]
+  k=2: +pca_lr             → AUROC=0.8710 (Δ=-0.42%)  inc=+0.0074  [753s]
+  k=3: +lr_probe           → AUROC=0.8756 (Δ=+0.04%)  inc=+0.0046  [1104s]
+  k=4: +iti                → AUROC=0.8798 (Δ=+0.46%)  inc=+0.0042  [1443s]
+  k=5: +attn_satisfies     → AUROC=0.8785 (Δ=+0.33%)  inc=-0.0013  [1791s]
+  k=6: +sep                → AUROC=0.8756 (Δ=+0.04%)  inc=-0.0029  [2159s]
+  k=7: +step               → AUROC=0.8757 (Δ=+0.05%)  inc=+0.0001  [2525s]
+  [SAVED] e2h_amc_5class checkpointed
+
+======================================================================
+Dataset: when2call_3class (nc=3)
+Ranked methods: ['lr_probe', 'kb_mlp', 'iti', 'attn_satisfies', 'pca_lr', 'sep', 'step']
+======================================================================
+  k=1: +lr_probe           → AUROC=0.8998 (Δ=+2.57%)  [329s]
+  k=2: +kb_mlp             → AUROC=0.9101 (Δ=+3.60%)  inc=+0.0103  [567s]
+  k=3: +iti                → AUROC=0.9221 (Δ=+4.80%)  inc=+0.0120  [819s]
+  k=4: +attn_satisfies     → AUROC=0.9264 (Δ=+5.23%)  inc=+0.0043  [1080s]
+  k=5: +pca_lr             → AUROC=0.9280 (Δ=+5.39%)  inc=+0.0016  [1311s]
+  k=6: +sep                → AUROC=0.9272 (Δ=+5.31%)  inc=-0.0008  [1602s]
+  k=7: +step               → AUROC=0.9255 (Δ=+5.14%)  inc=-0.0017  [1862s]
+  [SAVED] when2call_3class checkpointed
+
+======================================================================
+Dataset: ragtruth_binary (nc=2)
+Ranked methods: ['iti', 'lr_probe', 'mm_probe', 'pca_lr', 'kb_mlp', 'attn_satisfies', 'sep', 'step']
+======================================================================
+  k=1: +iti                → AUROC=0.8975 (Δ=+1.67%)  [136s]
+  k=2: +lr_probe           → AUROC=0.8995 (Δ=+1.87%)  inc=+0.0020  [247s]
+  k=3: +mm_probe           → AUROC=0.8986 (Δ=+1.78%)  inc=-0.0009  [388s]
+  k=4: +pca_lr             → AUROC=0.8999 (Δ=+1.91%)  inc=+0.0013  [488s]
+  k=5: +kb_mlp             → AUROC=0.8999 (Δ=+1.91%)  inc=-0.0000  [613s]
+  k=6: +attn_satisfies     → AUROC=0.9012 (Δ=+2.04%)  inc=+0.0013  [730s]
+  k=7: +sep                → AUROC=0.9013 (Δ=+2.05%)  inc=+0.0001  [841s]
+  k=8: +step               → AUROC=0.9005 (Δ=+1.97%)  inc=-0.0008  [972s]
+  [SAVED] ragtruth_binary checkpointed
+
+======================================================================
+SUMMARY: Probe Ladder
+======================================================================
+
+common_claim_3class (best_single=0.7576):
+    k  Added                 AUROC    Delta     Incr
+    1  pca_lr              0.7724   +1.48%    ---
+    2  kb_mlp              0.7750   +1.74%  +0.0026
+    3  iti                 0.7791   +2.15%  +0.0041
+    4  lr_probe            0.7796   +2.20%  +0.0005
+    5  attn_satisfies      0.7793   +2.17%  -0.0003
+    6  step                0.7794   +2.18%  +0.0001
+    7  sep                 0.7796   +2.20%  +0.0002
+
+e2h_amc_3class (best_single=0.8934):
+    k  Added                 AUROC    Delta     Incr
+    1  pca_lr              0.8807   -1.27%    ---
+    2  kb_mlp              0.8850   -0.84%  +0.0043
+    3  lr_probe            0.8880   -0.54%  +0.0030
+    4  iti                 0.8939   +0.05%  +0.0059
+    5  attn_satisfies      0.8956   +0.22%  +0.0017
+    6  sep                 0.8962   +0.28%  +0.0006
+    7  step                0.8928   -0.06%  -0.0034
+
+e2h_amc_5class (best_single=0.8752):
+    k  Added                 AUROC    Delta     Incr
+    1  kb_mlp              0.8636   -1.16%    ---
+    2  pca_lr              0.8710   -0.42%  +0.0074
+    3  lr_probe            0.8756   +0.04%  +0.0046
+    4  iti                 0.8798   +0.46%  +0.0042
+    5  attn_satisfies      0.8785   +0.33%  -0.0013
+    6  sep                 0.8756   +0.04%  -0.0029
+    7  step                0.8757   +0.05%  +0.0001
+
+when2call_3class (best_single=0.8741):
+    k  Added                 AUROC    Delta     Incr
+    1  lr_probe            0.8998   +2.57%    ---
+    2  kb_mlp              0.9101   +3.60%  +0.0103
+    3  iti                 0.9221   +4.80%  +0.0120
+    4  attn_satisfies      0.9264   +5.23%  +0.0043
+    5  pca_lr              0.9280   +5.39%  +0.0016
+    6  sep                 0.9272   +5.31%  -0.0008
+    7  step                0.9255   +5.14%  -0.0017
+
+ragtruth_binary (best_single=0.8808):
+    k  Added                 AUROC    Delta     Incr
+    1  iti                 0.8975   +1.67%    ---
+    2  lr_probe            0.8995   +1.87%  +0.0020
+    3  mm_probe            0.8986   +1.78%  -0.0009
+    4  pca_lr              0.8999   +1.91%  +0.0013
+    5  kb_mlp              0.8999   +1.91%  -0.0000
+    6  attn_satisfies      0.9012   +2.04%  +0.0013
+    7  sep                 0.9013   +2.05%  +0.0001
+    8  step                0.9005   +1.97%  -0.0008
+
+Saved to /home/junyi/NIPS2026/fusion/results/llama3.1-8b/probe_ladder.json

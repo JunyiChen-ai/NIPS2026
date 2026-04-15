@@ -1,0 +1,180 @@
+{
+  "common_claim_3class": {
+    "dataset": "common_claim_3class",
+    "n_classes": 3,
+    "n_methods": 7,
+    "methods_used": [
+      "lr_probe",
+      "pca_lr",
+      "iti",
+      "kb_mlp",
+      "attn_satisfies",
+      "sep",
+      "step"
+    ],
+    "n_meta_features": 21,
+    "meta_C": 0.003,
+    "meta_cv_auroc": 0.7646,
+    "test_auroc": 0.7747,
+    "baseline_auroc": 0.7576,
+    "delta": 0.0171,
+    "delta_pct": "+1.71%",
+    "ci_95": [
+      0.7496,
+      0.7984
+    ],
+    "per_method_auroc": {
+      "lr_probe": 0.7738,
+      "pca_lr": 0.7609,
+      "iti": 0.7288,
+      "kb_mlp": 0.7565,
+      "attn_satisfies": 0.7198,
+      "sep": 0.5242,
+      "step": 0.5265
+    }
+  },
+  "e2h_amc_3class": {
+    "dataset": "e2h_amc_3class",
+    "n_classes": 3,
+    "n_methods": 7,
+    "methods_used": [
+      "lr_probe",
+      "pca_lr",
+      "iti",
+      "kb_mlp",
+      "attn_satisfies",
+      "sep",
+      "step"
+    ],
+    "n_meta_features": 21,
+    "meta_C": 0.01,
+    "meta_cv_auroc": 0.9009,
+    "test_auroc": 0.9078,
+    "baseline_auroc": 0.8934,
+    "delta": 0.0144,
+    "delta_pct": "+1.44%",
+    "ci_95": [
+      0.9002,
+      0.9152
+    ],
+    "per_method_auroc": {
+      "lr_probe": 0.9005,
+      "pca_lr": 0.8958,
+      "iti": 0.866,
+      "kb_mlp": 0.8803,
+      "attn_satisfies": 0.8736,
+      "sep": 0.6725,
+      "step": 0.6261
+    }
+  },
+  "e2h_amc_5class": {
+    "dataset": "e2h_amc_5class",
+    "n_classes": 5,
+    "n_methods": 7,
+    "methods_used": [
+      "lr_probe",
+      "pca_lr",
+      "iti",
+      "kb_mlp",
+      "attn_satisfies",
+      "sep",
+      "step"
+    ],
+    "n_meta_features": 35,
+    "meta_C": 0.01,
+    "meta_cv_auroc": 0.882,
+    "test_auroc": 0.8869,
+    "baseline_auroc": 0.8752,
+    "delta": 0.0117,
+    "delta_pct": "+1.17%",
+    "ci_95": [
+      0.8804,
+      0.8937
+    ],
+    "per_method_auroc": {
+      "lr_probe": 0.8835,
+      "pca_lr": 0.8751,
+      "iti": 0.83,
+      "kb_mlp": 0.8621,
+      "attn_satisfies": 0.8468,
+      "sep": 0.647,
+      "step": 0.6055
+    }
+  },
+  "when2call_3class": {
+    "dataset": "when2call_3class",
+    "n_classes": 3,
+    "n_methods": 7,
+    "methods_used": [
+      "lr_probe",
+      "pca_lr",
+      "iti",
+      "kb_mlp",
+      "attn_satisfies",
+      "sep",
+      "step"
+    ],
+    "n_meta_features": 21,
+    "meta_C": 0.001,
+    "meta_cv_auroc": 0.8665,
+    "test_auroc": 0.8747,
+    "baseline_auroc": 0.8741,
+    "delta": 0.0006,
+    "delta_pct": "+0.06%",
+    "ci_95": [
+      0.8568,
+      0.8932
+    ],
+    "per_method_auroc": {
+      "lr_probe": 0.867,
+      "pca_lr": 0.7978,
+      "iti": 0.8406,
+      "kb_mlp": 0.852,
+      "attn_satisfies": 0.8074,
+      "sep": 0.5465,
+      "step": 0.56
+    }
+  },
+  "ragtruth_binary": {
+    "dataset": "ragtruth_binary",
+    "n_classes": 2,
+    "n_methods": 11,
+    "methods_used": [
+      "lr_probe",
+      "pca_lr",
+      "iti",
+      "kb_mlp",
+      "attn_satisfies",
+      "sep",
+      "step",
+      "mm_probe",
+      "lid",
+      "llm_check",
+      "seakr"
+    ],
+    "n_meta_features": 22,
+    "meta_C": 0.03,
+    "meta_cv_auroc": 0.9372,
+    "test_auroc": 0.8327,
+    "baseline_auroc": 0.8808,
+    "delta": -0.0481,
+    "delta_pct": "-4.81%",
+    "ci_95": [
+      0.8033,
+      0.86
+    ],
+    "per_method_auroc": {
+      "lr_probe": 0.854,
+      "pca_lr": 0.8355,
+      "iti": 0.8602,
+      "kb_mlp": 0.8339,
+      "attn_satisfies": 0.7962,
+      "sep": 0.7007,
+      "step": 0.7075,
+      "mm_probe": 0.8541,
+      "lid": 0.6963,
+      "llm_check": 0.7219,
+      "seakr": 0.5527
+    }
+  }
+}

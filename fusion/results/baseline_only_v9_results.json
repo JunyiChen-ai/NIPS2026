@@ -1,0 +1,97 @@
+{
+  "common_claim_3class": {
+    "dataset": "common_claim_3class",
+    "n_experts": 21,
+    "n_meta_features": 63,
+    "approaches": {
+      "meta_lr": 0.7767,
+      "meta_gbt": 0.765,
+      "meta_blend": 0.7767
+    },
+    "best_approach": "meta_blend",
+    "test_auroc": 0.7767,
+    "baseline_auroc": 0.7576,
+    "delta": 0.0191,
+    "delta_pct": "+1.91%",
+    "ci_95": [
+      0.7512,
+      0.8003
+    ]
+  },
+  "e2h_amc_3class": {
+    "dataset": "e2h_amc_3class",
+    "n_experts": 21,
+    "n_meta_features": 63,
+    "approaches": {
+      "meta_lr": 0.9009,
+      "meta_gbt": 0.8886,
+      "meta_blend": 0.9013
+    },
+    "best_approach": "meta_blend",
+    "test_auroc": 0.9013,
+    "baseline_auroc": 0.8934,
+    "delta": 0.0079,
+    "delta_pct": "+0.79%",
+    "ci_95": [
+      0.8937,
+      0.9092
+    ]
+  },
+  "e2h_amc_5class": {
+    "dataset": "e2h_amc_5class",
+    "n_experts": 21,
+    "n_meta_features": 105,
+    "approaches": {
+      "meta_lr": 0.8874,
+      "meta_gbt": 0.8761,
+      "meta_blend": 0.8879
+    },
+    "best_approach": "meta_blend",
+    "test_auroc": 0.8879,
+    "baseline_auroc": 0.8752,
+    "delta": 0.0127,
+    "delta_pct": "+1.27%",
+    "ci_95": [
+      0.8816,
+      0.8946
+    ]
+  },
+  "when2call_3class": {
+    "dataset": "when2call_3class",
+    "n_experts": 21,
+    "n_meta_features": 63,
+    "approaches": {
+      "meta_lr": 0.8916,
+      "meta_gbt": 0.9251,
+      "meta_blend": 0.926
+    },
+    "best_approach": "meta_blend",
+    "test_auroc": 0.926,
+    "baseline_auroc": 0.8741,
+    "delta": 0.0519,
+    "delta_pct": "+5.19%",
+    "ci_95": [
+      0.9116,
+      0.9403
+    ]
+  },
+  "ragtruth_binary": {
+    "dataset": "ragtruth_binary",
+    "n_experts": 24,
+    "n_meta_features": 48,
+    "approaches": {
+      "meta_lr": 0.8911,
+      "meta_gbt": 0.8913,
+      "meta_blend": 0.8928
+    },
+    "best_approach": "meta_blend",
+    "test_auroc": 0.8928,
+    "baseline_auroc": 0.8808,
+    "delta": 0.012,
+    "delta_pct": "+1.20%",
+    "ci_95": [
+      0.8724,
+      0.9122
+    ]
+  }
+}

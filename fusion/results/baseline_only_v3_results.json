@@ -1,0 +1,468 @@
+{
+  "common_claim_3class": {
+    "dataset": "common_claim_3class",
+    "n_classes": 3,
+    "oracle_auroc": 0.9612,
+    "oracle_headroom": "+20.36%",
+    "per_method_auroc": {
+      "lr_probe": {
+        "cv": 0.7621,
+        "test": 0.7738
+      },
+      "pca_lr": {
+        "cv": 0.7566,
+        "test": 0.7609
+      },
+      "iti": {
+        "cv": 0.7332,
+        "test": 0.7325
+      },
+      "kb_mlp": {
+        "cv": 0.7538,
+        "test": 0.7565
+      },
+      "attn_satisfies": {
+        "cv": 0.7182,
+        "test": 0.7215
+      },
+      "sep": {
+        "cv": 0.5222,
+        "test": 0.5136
+      },
+      "step": {
+        "cv": 0.5355,
+        "test": 0.5314
+      }
+    },
+    "selected_methods": [
+      "lr_probe",
+      "kb_mlp",
+      "iti"
+    ],
+    "selection_history": [
+      {
+        "step": 0,
+        "added": "lr_probe",
+        "selected": [
+          "lr_probe"
+        ],
+        "cv_auroc": 0.7621
+      },
+      {
+        "step": 1,
+        "added": "kb_mlp",
+        "selected": [
+          "lr_probe",
+          "kb_mlp"
+        ],
+        "cv_auroc": 0.7634,
+        "gain": 0.0013
+      },
+      {
+        "step": 2,
+        "added": "iti",
+        "selected": [
+          "lr_probe",
+          "kb_mlp",
+          "iti"
+        ],
+        "cv_auroc": 0.7651,
+        "gain": 0.0017
+      }
+    ],
+    "dropped_weak": [
+      "sep",
+      "step"
+    ],
+    "approaches": {
+      "selected_stack": 0.7769,
+      "feat_combined": 0.7732,
+      "anchor_blend": 0.7769
+    },
+    "best_approach": "selected_stack",
+    "test_auroc": 0.7769,
+    "baseline_auroc": 0.7576,
+    "delta": 0.0193,
+    "delta_pct": "+1.93%",
+    "ci_95": [
+      0.7523,
+      0.8001
+    ],
+    "anchor_alpha": null
+  },
+  "e2h_amc_3class": {
+    "dataset": "e2h_amc_3class",
+    "n_classes": 3,
+    "oracle_auroc": 0.9901,
+    "oracle_headroom": "+9.67%",
+    "per_method_auroc": {
+      "lr_probe": {
+        "cv": 0.9033,
+        "test": 0.9005
+      },
+      "pca_lr": {
+        "cv": 0.8833,
+        "test": 0.8958
+      },
+      "iti": {
+        "cv": 0.8757,
+        "test": 0.8683
+      },
+      "kb_mlp": {
+        "cv": 0.8683,
+        "test": 0.8803
+      },
+      "attn_satisfies": {
+        "cv": 0.8692,
+        "test": 0.8778
+      },
+      "sep": {
+        "cv": 0.6766,
+        "test": 0.6676
+      },
+      "step": {
+        "cv": 0.6325,
+        "test": 0.6351
+      }
+    },
+    "selected_methods": [
+      "lr_probe"
+    ],
+    "selection_history": [
+      {
+        "step": 0,
+        "added": "lr_probe",
+        "selected": [
+          "lr_probe"
+        ],
+        "cv_auroc": 0.9033
+      }
+    ],
+    "dropped_weak": [],
+    "approaches": {
+      "selected_stack": 0.9018,
+      "feat_combined": 0.8989,
+      "anchor_blend": 0.9026
+    },
+    "best_approach": "anchor_blend",
+    "test_auroc": 0.9026,
+    "baseline_auroc": 0.8934,
+    "delta": 0.0092,
+    "delta_pct": "+0.92%",
+    "ci_95": [
+      0.8949,
+      0.9103
+    ],
+    "anchor_alpha": 0.2
+  },
+  "e2h_amc_5class": {
+    "dataset": "e2h_amc_5class",
+    "n_classes": 5,
+    "oracle_auroc": 0.9745,
+    "oracle_headroom": "+9.93%",
+    "per_method_auroc": {
+      "lr_probe": {
+        "cv": 0.8771,
+        "test": 0.886
+      },
+      "pca_lr": {
+        "cv": 0.869,
+        "test": 0.8791
+      },
+      "iti": {
+        "cv": 0.8387,
+        "test": 0.8466
+      },
+      "kb_mlp": {
+        "cv": 0.852,
+        "test": 0.8621
+      },
+      "attn_satisfies": {
+        "cv": 0.8427,
+        "test": 0.8468
+      },
+      "sep": {
+        "cv": 0.6464,
+        "test": 0.647
+      },
+      "step": {
+        "cv": 0.6062,
+        "test": 0.6166
+      }
+    },
+    "selected_methods": [
+      "lr_probe",
+      "pca_lr",
+      "step"
+    ],
+    "selection_history": [
+      {
+        "step": 0,
+        "added": "lr_probe",
+        "selected": [
+          "lr_probe"
+        ],
+        "cv_auroc": 0.8771
+      },
+      {
+        "step": 1,
+        "added": "pca_lr",
+        "selected": [
+          "lr_probe",
+          "pca_lr"
+        ],
+        "cv_auroc": 0.8819,
+        "gain": 0.0049
+      },
+      {
+        "step": 2,
+        "added": "step",
+        "selected": [
+          "lr_probe",
+          "pca_lr",
+          "step"
+        ],
+        "cv_auroc": 0.8836,
+        "gain": 0.0017
+      }
+    ],
+    "dropped_weak": [],
+    "approaches": {
+      "selected_stack": 0.8873,
+      "feat_combined": 0.8534,
+      "anchor_blend": 0.8886
+    },
+    "best_approach": "anchor_blend",
+    "test_auroc": 0.8886,
+    "baseline_auroc": 0.8752,
+    "delta": 0.0134,
+    "delta_pct": "+1.34%",
+    "ci_95": [
+      0.882,
+      0.8954
+    ],
+    "anchor_alpha": 0.2
+  },
+  "when2call_3class": {
+    "dataset": "when2call_3class",
+    "n_classes": 3,
+    "oracle_auroc": 0.9872,
+    "oracle_headroom": "+11.31%",
+    "per_method_auroc": {
+      "lr_probe": {
+        "cv": 0.8532,
+        "test": 0.8718
+      },
+      "pca_lr": {
+        "cv": 0.8073,
+        "test": 0.7979
+      },
+      "iti": {
+        "cv": 0.8118,
+        "test": 0.8418
+      },
+      "kb_mlp": {
+        "cv": 0.8242,
+        "test": 0.8502
+      },
+      "attn_satisfies": {
+        "cv": 0.8088,
+        "test": 0.8041
+      },
+      "sep": {
+        "cv": 0.5486,
+        "test": 0.5285
+      },
+      "step": {
+        "cv": 0.573,
+        "test": 0.5635
+      }
+    },
+    "selected_methods": [
+      "lr_probe",
+      "kb_mlp",
+      "pca_lr",
+      "iti"
+    ],
+    "selection_history": [
+      {
+        "step": 0,
+        "added": "lr_probe",
+        "selected": [
+          "lr_probe"
+        ],
+        "cv_auroc": 0.8532
+      },
+      {
+        "step": 1,
+        "added": "kb_mlp",
+        "selected": [
+          "lr_probe",
+          "kb_mlp"
+        ],
+        "cv_auroc": 0.8628,
+        "gain": 0.0096
+      },
+      {
+        "step": 2,
+        "added": "pca_lr",
+        "selected": [
+          "lr_probe",
+          "kb_mlp",
+          "pca_lr"
+        ],
+        "cv_auroc": 0.865,
+        "gain": 0.0022
+      },
+      {
+        "step": 3,
+        "added": "iti",
+        "selected": [
+          "lr_probe",
+          "kb_mlp",
+          "pca_lr",
+          "iti"
+        ],
+        "cv_auroc": 0.8659,
+        "gain": 0.0009
+      }
+    ],
+    "dropped_weak": [
+      "sep"
+    ],
+    "approaches": {
+      "selected_stack": 0.8752,
+      "feat_combined": 0.8671,
+      "anchor_blend": 0.8769
+    },
+    "best_approach": "anchor_blend",
+    "test_auroc": 0.8769,
+    "baseline_auroc": 0.8741,
+    "delta": 0.0028,
+    "delta_pct": "+0.28%",
+    "ci_95": [
+      0.8587,
+      0.8952
+    ],
+    "anchor_alpha": 0.25
+  },
+  "ragtruth_binary": {
+    "dataset": "ragtruth_binary",
+    "n_classes": 2,
+    "oracle_auroc": 1.0,
+    "oracle_headroom": "+11.92%",
+    "per_method_auroc": {
+      "lr_probe": {
+        "cv": 0.8241,
+        "test": 0.8604
+      },
+      "pca_lr": {
+        "cv": 0.7983,
+        "test": 0.8358
+      },
+      "iti": {
+        "cv": 0.8355,
+        "test": 0.8798
+      },
+      "kb_mlp": {
+        "cv": 0.8159,
+        "test": 0.8346
+      },
+      "attn_satisfies": {
+        "cv": 0.7915,
+        "test": 0.801
+      },
+      "sep": {
+        "cv": 0.6736,
+        "test": 0.7007
+      },
+      "step": {
+        "cv": 0.6878,
+        "test": 0.7075
+      },
+      "mm_probe": {
+        "cv": 0.8241,
+        "test": 0.8604
+      },
+      "lid": {
+        "cv": 0.897,
+        "test": 0.6963
+      },
+      "llm_check": {
+        "cv": 0.6829,
+        "test": 0.7219
+      },
+      "seakr": {
+        "cv": 0.533,
+        "test": 0.5527
+      }
+    },
+    "selected_methods": [
+      "lid",
+      "iti",
+      "mm_probe",
+      "llm_check"
+    ],
+    "selection_history": [
+      {
+        "step": 0,
+        "added": "lid",
+        "selected": [
+          "lid"
+        ],
+        "cv_auroc": 0.897
+      },
+      {
+        "step": 1,
+        "added": "iti",
+        "selected": [
+          "lid",
+          "iti"
+        ],
+        "cv_auroc": 0.9362,
+        "gain": 0.0393
+      },
+      {
+        "step": 2,
+        "added": "mm_probe",
+        "selected": [
+          "lid",
+          "iti",
+          "mm_probe"
+        ],
+        "cv_auroc": 0.939,
+        "gain": 0.0028
+      },
+      {
+        "step": 3,
+        "added": "llm_check",
+        "selected": [
+          "lid",
+          "iti",
+          "mm_probe",
+          "llm_check"
+        ],
+        "cv_auroc": 0.9419,
+        "gain": 0.0029
+      }
+    ],
+    "dropped_weak": [
+      "seakr"
+    ],
+    "approaches": {
+      "selected_stack": 0.8481,
+      "feat_combined": 0.8644,
+      "anchor_blend": 0.8798
+    },
+    "best_approach": "no_fusion",
+    "test_auroc": 0.8808,
+    "baseline_auroc": 0.8808,
+    "delta": 0.0,
+    "delta_pct": "+0.00%",
+    "ci_95": [
+      0.8572,
+      0.9019
+    ],
+    "anchor_alpha": null
+  }
+}

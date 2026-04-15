@@ -1,0 +1,97 @@
+{
+  "common_claim_3class": {
+    "dataset": "common_claim_3class",
+    "approaches": {
+      "A_rich_meta": 0.775,
+      "B_feat_concat": 0.7675,
+      "C_combined": 0.7319,
+      "D_gbt_probs": 0.7709,
+      "E_gbt_rich": 0.77
+    },
+    "best_approach": "A_rich_meta",
+    "test_auroc": 0.775,
+    "baseline_auroc": 0.7576,
+    "delta": 0.0174,
+    "delta_pct": "+1.74%",
+    "ci_95": [
+      0.7497,
+      0.7988
+    ]
+  },
+  "e2h_amc_3class": {
+    "dataset": "e2h_amc_3class",
+    "approaches": {
+      "A_rich_meta": 0.9002,
+      "B_feat_concat": 0.8933,
+      "C_combined": 0.8947,
+      "D_gbt_probs": 0.9028,
+      "E_gbt_rich": 0.8991
+    },
+    "best_approach": "D_gbt_probs",
+    "test_auroc": 0.9028,
+    "baseline_auroc": 0.8934,
+    "delta": 0.0094,
+    "delta_pct": "+0.94%",
+    "ci_95": [
+      0.8949,
+      0.9106
+    ]
+  },
+  "e2h_amc_5class": {
+    "dataset": "e2h_amc_5class",
+    "approaches": {
+      "A_rich_meta": 0.884,
+      "B_feat_concat": 0.8715,
+      "C_combined": 0.8609,
+      "D_gbt_probs": 0.8814,
+      "E_gbt_rich": 0.8826
+    },
+    "best_approach": "A_rich_meta",
+    "test_auroc": 0.884,
+    "baseline_auroc": 0.8752,
+    "delta": 0.0088,
+    "delta_pct": "+0.88%",
+    "ci_95": [
+      0.8771,
+      0.8909
+    ]
+  },
+  "when2call_3class": {
+    "dataset": "when2call_3class",
+    "approaches": {
+      "A_rich_meta": 0.8664,
+      "B_feat_concat": 0.8593,
+      "C_combined": 0.8563,
+      "D_gbt_probs": 0.8751,
+      "E_gbt_rich": 0.875
+    },
+    "best_approach": "D_gbt_probs",
+    "test_auroc": 0.8751,
+    "baseline_auroc": 0.8741,
+    "delta": 0.001,
+    "delta_pct": "+0.10%",
+    "ci_95": [
+      0.8566,
+      0.8935
+    ]
+  },
+  "ragtruth_binary": {
+    "dataset": "ragtruth_binary",
+    "approaches": {
+      "A_rich_meta": 0.8781,
+      "B_feat_concat": 0.8759,
+      "C_combined": 0.872,
+      "D_gbt_probs": 0.8781,
+      "E_gbt_rich": 0.8825
+    },
+    "best_approach": "E_gbt_rich",
+    "test_auroc": 0.8825,
+    "baseline_auroc": 0.8808,
+    "delta": 0.0017,
+    "delta_pct": "+0.17%",
+    "ci_95": [
+      0.8616,
+      0.903
+    ]
+  }
+}

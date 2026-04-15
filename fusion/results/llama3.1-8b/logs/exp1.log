@@ -1,0 +1,45 @@
+======================================================================
+EXP 1: Per-Example Oracle — Complete Coverage
+======================================================================
+
+common_claim_3class (7 probes):
+  Best single: 0.7621 (pca_lr)
+  Oracle AUROC: 0.9777  Acc: 0.841
+  Headroom: +0.2156 (+21.6%)
+
+e2h_amc_3class (7 probes):
+  Best single: 0.8785 (pca_lr)
+  Oracle AUROC: 0.9977  Acc: 0.965
+  Headroom: +0.1192 (+11.9%)
+
+e2h_amc_5class (7 probes):
+  Best single: 0.8576 (pca_lr)
+  Oracle AUROC: 0.9930  Acc: 0.912
+  Headroom: +0.1354 (+13.5%)
+
+when2call_3class (7 probes):
+  Best single: 0.8824 (kb_mlp)
+  Oracle AUROC: 0.9923  Acc: 0.944
+  Headroom: +0.1099 (+11.0%)
+
+ragtruth_binary (11 probes):
+  Best single: 0.8862 (iti)
+  Oracle AUROC: 0.9996  Acc: 0.981
+  Headroom: +0.1134 (+11.3%)
+
+fava_binary (11 probes):
+  Best single: 0.9926 (pca_lr)
+  Oracle AUROC: 1.0000  Acc: 0.999
+  Headroom: +0.0074 (+0.7%)
+
+======================================================================
+Dataset                      Best  Oracle  Headroom Probes
+------------------------------------------------------------
+common_claim_3class       0.7621  0.9777   +21.6%   7
+e2h_amc_3class            0.8785  0.9977   +11.9%   7
+e2h_amc_5class            0.8576  0.9930   +13.5%   7
+when2call_3class          0.8824  0.9923   +11.0%   7
+ragtruth_binary           0.8862  0.9996   +11.3%   11
+fava_binary               0.9926  1.0000    +0.7%   11
+
+Saved to /home/junyi/NIPS2026/fusion/results/llama3.1-8b/oracle_complete.json

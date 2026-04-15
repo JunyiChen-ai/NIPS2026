@@ -1,0 +1,26 @@
+{
+  "common_claim_3class": {
+    "dataset": "common_claim_3class",
+    "n_experts": 28,
+    "n_meta_features": 140,
+    "meta_l2_lr": 0.7801,
+    "meta_l2_C": 0.001,
+    "meta_l1_lr": 0.7778,
+    "meta_l1_C": 0.01,
+    "meta_gbt": 0.7806,
+    "gbt_params": {
+      "ml": 4,
+      "lr": 0.01,
+      "ne": 200
+    },
+    "blend_weights": [
+      0.6,
+      0.0,
+      0.4
+    ],
+    "test_auroc": 0.7819,
+    "baseline_auroc": 0.7576,
+    "delta": 0.0243,
+    "delta_pct": "+2.43%",
+    "target": 0.7819,
+    "target_met": 

@@ -1,0 +1,39 @@
+{
+  "fava_binary": {
+    "dataset": "fava_binary",
+    "n_experts": 64,
+    "n_meta_features": 256,
+    "n_methods": 8,
+    "methods": [
+      "lr_probe",
+      "pca_lr",
+      "iti",
+      "kb_mlp",
+      "attn_satisfies",
+      "sep",
+      "step",
+      "mm_probe"
+    ],
+    "meta_l2_lr": 0.9955,
+    "meta_l1_lr": 0.9953,
+    "meta_gbt": 0.9932,
+    "gbt_params": {
+      "ml": 32,
+      "lr": 0.2,
+      "ne": 100
+    },
+    "blend_weights": [
+      0.9,
+      0.0,
+      0.1
+    ],
+    "test_auroc": 0.9955,
+    "baseline_auroc": 0.9856,
+    "delta": 0.0099,
+    "delta_pct": "+0.99%",
+    "ci_95": [
+      0.9921,
+      0.9982
+    ]
+  }
+}

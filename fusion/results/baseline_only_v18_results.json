@@ -1,0 +1,32 @@
+{
+  "common_claim_3class": {
+    "auroc": 0.7819,
+    "base": 0.7576,
+    "delta": 0.0243,
+    "pct": "+2.43%"
+  },
+  "e2h_amc_3class": {
+    "auroc": 0.9066,
+    "base": 0.8934,
+    "delta": 0.0132,
+    "pct": "+1.32%"
+  },
+  "e2h_amc_5class": {
+    "auroc": 0.8915,
+    "base": 0.8752,
+    "delta": 0.0163,
+    "pct": "+1.63%"
+  },
+  "when2call_3class": {
+    "auroc": 0.9407,
+    "base": 0.8741,
+    "delta": 0.0666,
+    "pct": "+6.66%"
+  },
+  "ragtruth_binary": {
+    "auroc": 0.8897,
+    "base": 0.8808,
+    "delta": 0.0089,
+    "pct": "+0.89%"
+  }
+}

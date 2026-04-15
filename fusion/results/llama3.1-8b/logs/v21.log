@@ -1,0 +1,114 @@
+======================================================================
+BASELINE-ONLY FUSION v21 — WINNING METHOD REPRODUCTION
+Multi-View Expert-Library Stacking
+PCA({32,128}) × {LR,GBT,ET,RF} × 5seeds → {L2-LR, L1-LR, GBT} blend
+======================================================================
+
+======================================================================
+Dataset: common_claim_3class (nc=3, best=0.7576)
+======================================================================
+    lr_probe            : 8 experts, best_te=0.7578 [266.1s]
+    pca_lr              : 8 experts, best_te=0.7626 [201.0s]
+    iti                 : 8 experts, best_te=0.7491 [254.6s]
+    kb_mlp              : 8 experts, best_te=0.7618 [248.3s]
+    attn_satisfies      : 8 experts, best_te=0.7351 [249.7s]
+    sep                 : 8 experts, best_te=0.5916 [253.9s]
+    step                : 8 experts, best_te=0.6141 [247.9s]
+    Total: 56 experts, 280 meta-features
+    Meta-L2-LR (C=0.001): 0.7758 (+1.82%)
+    Meta-L1-LR (C=0.01): 0.7749 (+1.73%)
+    Meta-GBT ({'ml': 4, 'lr': 0.01, 'ne': 100}): 0.7771 (+1.95%)
+    Blend: 0.7796 (+2.20%), weights=(0.3, 0.1, 0.6), CI=[0.7546, 0.8029]
+    Target: 0.7819 ❌
+    Time: 2146s
+
+======================================================================
+Dataset: e2h_amc_3class (nc=3, best=0.8934)
+======================================================================
+    lr_probe            : 8 experts, best_te=0.8848 [214.0s]
+    pca_lr              : 8 experts, best_te=0.8769 [183.0s]
+    iti                 : 8 experts, best_te=0.8691 [199.6s]
+    kb_mlp              : 8 experts, best_te=0.8756 [208.0s]
+    attn_satisfies      : 8 experts, best_te=0.8599 [213.0s]
+    sep                 : 8 experts, best_te=0.6554 [224.4s]
+    step                : 8 experts, best_te=0.6848 [219.6s]
+    Total: 56 experts, 280 meta-features
+    Meta-L2-LR (C=0.01): 0.8894 (-0.40%)
+    Meta-L1-LR (C=0.1): 0.8924 (-0.10%)
+    Meta-GBT ({'ml': 4, 'lr': 0.05, 'ne': 100}): 0.8841 (-0.93%)
+    Blend: 0.8928 (-0.06%), weights=(0.0, 0.85, 0.15), CI=[0.8848, 0.9014]
+    Target: 0.9079 ❌
+    Time: 1672s
+
+======================================================================
+Dataset: e2h_amc_5class (nc=5, best=0.8752)
+======================================================================
+    lr_probe            : 8 experts, best_te=0.8595 [324.2s]
+    pca_lr              : 8 experts, best_te=0.8621 [270.1s]
+    iti                 : 8 experts, best_te=0.8495 [314.7s]
+    kb_mlp              : 8 experts, best_te=0.8559 [324.1s]
+    attn_satisfies      : 8 experts, best_te=0.8345 [324.7s]
+    sep                 : 8 experts, best_te=0.6305 [345.2s]
+    step                : 8 experts, best_te=0.6451 [332.9s]
+    Total: 56 experts, 392 meta-features
+    Meta-L2-LR (C=0.001): 0.8738 (-0.14%)
+    Meta-L1-LR (C=0.1): 0.8698 (-0.54%)
+    Meta-GBT ({'ml': 4, 'lr': 0.01, 'ne': 300}): 0.8719 (-0.33%)
+    Blend: 0.8757 (+0.05%), weights=(0.6, 0.05, 0.35), CI=[0.8688, 0.8829]
+    Target: 0.8945 ❌
+    Time: 2640s
+
+======================================================================
+Dataset: when2call_3class (nc=3, best=0.8741)
+======================================================================
+    lr_probe            : 8 experts, best_te=0.8437 [217.5s]
+    pca_lr              : 8 experts, best_te=0.8235 [179.1s]
+    iti                 : 8 experts, best_te=0.8571 [205.8s]
+    kb_mlp              : 8 experts, best_te=0.8615 [208.9s]
+    attn_satisfies      : 8 experts, best_te=0.8324 [207.0s]
+    sep                 : 8 experts, best_te=0.5586 [230.5s]
+    step                : 8 experts, best_te=0.5769 [217.2s]
+    Total: 56 experts, 280 meta-features
+    Meta-L2-LR (C=0.1): 0.9043 (+3.02%)
+    Meta-L1-LR (C=1.0): 0.9065 (+3.24%)
+    Meta-GBT ({'ml': 16, 'lr': 0.05, 'ne': 300}): 0.9244 (+5.03%)
+    Blend: 0.9255 (+5.14%), weights=(0.0, 0.35, 0.65), CI=[0.9106, 0.9398]
+    Target: 0.9423 ❌
+    Time: 1832s
+
+======================================================================
+Dataset: ragtruth_binary (nc=2, best=0.8808)
+======================================================================
+    lr_probe            : 8 experts, best_te=0.8621 [101.9s]
+    pca_lr              : 8 experts, best_te=0.8503 [84.7s]
+    iti                 : 8 experts, best_te=0.8940 [99.0s]
+    kb_mlp              : 8 experts, best_te=0.8621 [101.7s]
+    attn_satisfies      : 8 experts, best_te=0.8144 [97.4s]
+    sep                 : 8 experts, best_te=0.6861 [93.8s]
+    step                : 8 experts, best_te=0.7062 [92.2s]
+    mm_probe            : 8 experts, best_te=0.8621 [101.6s]
+    Total: 64 experts, 256 meta-features
+    Meta-L2-LR (C=0.01): 0.8958 (+1.50%)
+    Meta-L1-LR (C=0.1): 0.8979 (+1.71%)
+    Meta-GBT ({'ml': 16, 'lr': 0.01, 'ne': 300}): 0.8975 (+1.67%)
+    Blend: 0.9005 (+1.97%), weights=(0.0, 0.55, 0.45), CI=[0.8810, 0.9187]
+    Target: 0.8936 ✅
+    Time: 936s
+
+======================================================================
+SUMMARY v21 — WINNING METHOD REPRODUCTION
+======================================================================
+Dataset                     Best      L2      L1     GBT   Blend   Delta  Target Match
+-----------------------------------------------------------------------------------------------
+common_claim_3class       0.7576 0.7758 0.7749 0.7771 0.7796  +2.20% 0.7819 ❌
+e2h_amc_3class            0.8934 0.8894 0.8924 0.8841 0.8928  -0.06% 0.9079 ❌
+e2h_amc_5class            0.8752 0.8738 0.8698 0.8719 0.8757  +0.05% 0.8945 ❌
+when2call_3class          0.8741 0.9043 0.9065 0.9244 0.9255  +5.14% 0.9423 ❌
+ragtruth_binary           0.8808 0.8958 0.8979 0.8975 0.9005  +1.97% 0.8936 ✅
+
+Avg delta: +1.86%, Min: -0.06%
+Target matched: 1/5
+
+⚠️  4/5 targets not matched
+
+Results saved to /home/junyi/NIPS2026/fusion/results/llama3.1-8b/baseline_only_v21_winning_results.json

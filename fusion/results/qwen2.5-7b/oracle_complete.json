@@ -1,0 +1,112 @@
+{
+  "common_claim_3class": {
+    "oracle_auroc": 0.9792145382137397,
+    "oracle_accuracy": 0.824,
+    "best_single_auroc": 0.7711775896236243,
+    "best_single_method": "lr_probe",
+    "headroom": 0.20803694859011546,
+    "n_probes": 7,
+    "per_probe_auroc": {
+      "lr_probe": 0.7712,
+      "pca_lr": 0.7604,
+      "kb_mlp": 0.7499,
+      "iti": 0.7153,
+      "attn_satisfies": 0.7058,
+      "step": 0.5264,
+      "sep": 0.5158
+    }
+  },
+  "e2h_amc_3class": {
+    "oracle_auroc": 0.9985563552010103,
+    "oracle_accuracy": 0.9784873949579832,
+    "best_single_auroc": 0.8937013882570563,
+    "best_single_method": "pca_lr",
+    "headroom": 0.10485496694395402,
+    "n_probes": 7,
+    "per_probe_auroc": {
+      "pca_lr": 0.8937,
+      "lr_probe": 0.8772,
+      "kb_mlp": 0.8637,
+      "attn_satisfies": 0.8575,
+      "iti": 0.8574,
+      "sep": 0.6514,
+      "step": 0.6228
+    }
+  },
+  "e2h_amc_5class": {
+    "oracle_auroc": 0.9941208190237708,
+    "oracle_accuracy": 0.9196638655462185,
+    "best_single_auroc": 0.8760320988721064,
+    "best_single_method": "pca_lr",
+    "headroom": 0.11808872015166438,
+    "n_probes": 7,
+    "per_probe_auroc": {
+      "pca_lr": 0.876,
+      "lr_probe": 0.8631,
+      "kb_mlp": 0.8403,
+      "iti": 0.84,
+      "attn_satisfies": 0.8236,
+      "sep": 0.6213,
+      "step": 0.606
+    }
+  },
+  "when2call_3class": {
+    "oracle_auroc": 0.9901647760026848,
+    "oracle_accuracy": 0.9302325581395349,
+    "best_single_auroc": 0.8640145960508816,
+    "best_single_method": "lr_probe",
+    "headroom": 0.12615017995180322,
+    "n_probes": 7,
+    "per_probe_auroc": {
+      "lr_probe": 0.864,
+      "kb_mlp": 0.8494,
+      "iti": 0.8405,
+      "attn_satisfies": 0.8079,
+      "pca_lr": 0.7977,
+      "step": 0.5568,
+      "sep": 0.5451
+    }
+  },
+  "ragtruth_binary": {
+    "oracle_auroc": 0.9996963014802002,
+    "oracle_accuracy": 0.974,
+    "best_single_auroc": 0.8804154067579522,
+    "best_single_method": "iti",
+    "headroom": 0.11928089472224801,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "iti": 0.8804,
+      "mm_probe": 0.8576,
+      "lr_probe": 0.8576,
+      "pca_lr": 0.8355,
+      "kb_mlp": 0.824,
+      "attn_satisfies": 0.7969,
+      "llm_check": 0.7219,
+      "lid": 0.6963,
+      "sep": 0.6951,
+      "step": 0.69,
+      "seakr": 0.5527
+    }
+  },
+  "fava_binary": {
+    "oracle_auroc": 1.0,
+    "oracle_accuracy": 0.996,
+    "best_single_auroc": 0.9846127481487494,
+    "best_single_method": "iti",
+    "headroom": 0.01538725185125056,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "iti": 0.9846,
+      "mm_probe": 0.9836,
+      "lr_probe": 0.9836,
+      "pca_lr": 0.9814,
+      "kb_mlp": 0.9632,
+      "attn_satisfies": 0.9599,
+      "lid": 0.8841,
+      "step": 0.661,
+      "sep": 0.659,
+      "llm_check": 0.619,
+      "seakr": 0.5301
+    }
+  }
+}

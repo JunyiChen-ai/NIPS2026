@@ -1,0 +1,23 @@
+======================================================================
+EXP 6: FAVA Binary Extension
+======================================================================
+  lr_probe          : done [108.7s]
+  pca_lr            : done [88.6s]
+  iti               : done [97.7s]
+  kb_mlp            : done [107.7s]
+  attn_satisfies    : done [105.2s]
+  sep               : done [114.5s]
+  step              : done [114.2s]
+  mm_probe          : done [110.7s]
+
+  Total: 64 experts, 256 meta-features
+  Meta-L2-LR (C=0.01): 0.9955
+  Meta-L1-LR (C=0.1): 0.9953
+  Meta-GBT ({'ml': 32, 'lr': 0.2, 'ne': 100}): 0.9932
+
+  RESULT: AUROC=0.9955 (Δ=+0.99%)
+  Best single (ITI): 0.9856
+  Blend weights: (0.9, 0.0, 0.1)
+  95% CI: [0.9921, 0.9982]
+
+Saved to /home/junyi/NIPS2026/fusion/results/llama3.1-8b/fava_extension.json

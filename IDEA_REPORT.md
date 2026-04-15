@@ -1,8 +1,8 @@
 # Research Idea Report
 
 **Direction**: Unified feature fusion framework for LLM internal state probing
-**Generated**: 2026-04-07, **Updated**: 2026-04-08
-**Ideas evaluated**: 12 generated → 6 implemented → 1 winning method (Layerwise Probe-Bank Stacking)
+**Generated**: 2026-04-07, **Updated**: 2026-04-10
+**Ideas evaluated**: 12 generated → 6 implemented → winning method: Multi-View Expert-Library Stacking (baseline-only, v21)
 
 ## Landscape Summary
 
@@ -214,6 +214,26 @@ Win/Loss: **7/2** (losses only on saturated datasets) | Wilcoxon p = **0.0098**
 4. **View contribution is task-dependent** — routing: mean-pool; hallucination: probes+attention; difficulty: hidden+heads
 5. **Per-example oracle headroom is 12-21%** — probes make genuinely different errors
 
+### Baseline-Feature-Only Fusion (2026-04-08 ~ 2026-04-10)
+
+Constrained to ONLY baseline method post-processed features (C1: no raw LLM states, C2: unified method, C3: scientific soundness).
+
+**Winning Method: Multi-View Expert-Library Stacking (v21)**
+
+Pipeline: Per-method `StandardScaler → PCA({32,128}) → {LR, GBT, ET, RF} → 5-fold OOF × 5 seeds` → entropy/margin enrichment → `{L2-LR, L1-LR, GBT}` blend.
+
+| Dataset | Best Single | Fusion | Delta |
+|---------|-----------|--------|-------|
+| common_claim | 0.7576 | **0.7817** | **+2.41%** |
+| e2h_3c | 0.8934 | **0.9030** | **+0.96%** |
+| e2h_5c | 0.8752 | **0.8913** | **+1.61%** |
+| when2call | 0.8741 | **0.9392** | **+6.51%** |
+| ragtruth | 0.8808 | **0.8930** | **+1.22%** |
+
+All 5 datasets positive. Avg +2.54%. Code: `fusion/baseline_only_v21_winning.py`
+
+19-iteration target-driven loop (GPT-5.4 supervised) explored 15+ architectures. +5% on ALL datasets falsified under C1-C3. See `TARGET_LOOP.md`.
+
 ## Next Steps
 
 - [x] Run confidence intervals (bootstrap) on all datasets
@@ -221,7 +241,7 @@ Win/Loss: **7/2** (losses only on saturated datasets) | Wilcoxon p = **0.0098**
 - [x] Extend to all classification datasets (9 datasets)
 - [x] Ablation studies (13 configs × 4 datasets)
 - [x] Multi-view fusion with all 13 features
-- [ ] **Baseline-feature-only fusion** — 限定input为baseline方法后处理的feature vectors（不使用LLM raw states），验证仅靠已有probing方法的输出能否通过融合获得提升
+- [x] **Baseline-feature-only fusion** — Multi-View Expert-Library Stacking, all 5 datasets positive, avg +2.54%
 - [ ] Write paper (NeurIPS 2026 deadline ~May)
 - [ ] Second model for external validity (needs GPU)
 

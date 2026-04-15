@@ -1,0 +1,112 @@
+{
+  "common_claim_3class": {
+    "dataset": "common_claim_3class",
+    "n_experts": 14,
+    "n_meta_features": 126,
+    "meta_lr": 0.7749,
+    "meta_gbt": 0.7714,
+    "meta_lr_stab": 0.7558,
+    "meta_gbt_stab": 0.7561,
+    "gbt_params": {
+      "ml": 4,
+      "lr": 0.01,
+      "ne": 100
+    },
+    "test_auroc": 0.7751,
+    "baseline_auroc": 0.7576,
+    "delta": 0.0175,
+    "delta_pct": "+1.75%",
+    "ci_95": [
+      0.7494,
+      0.7984
+    ]
+  },
+  "e2h_amc_3class": {
+    "dataset": "e2h_amc_3class",
+    "n_experts": 14,
+    "n_meta_features": 126,
+    "meta_lr": 0.9075,
+    "meta_gbt": 0.8976,
+    "meta_lr_stab": 0.8958,
+    "meta_gbt_stab": 0.8973,
+    "gbt_params": {
+      "ml": 8,
+      "lr": 0.01,
+      "ne": 100
+    },
+    "test_auroc": 0.9079,
+    "baseline_auroc": 0.8934,
+    "delta": 0.0145,
+    "delta_pct": "+1.45%",
+    "ci_95": [
+      0.9,
+      0.9154
+    ]
+  },
+  "e2h_amc_5class": {
+    "dataset": "e2h_amc_5class",
+    "n_experts": 14,
+    "n_meta_features": 154,
+    "meta_lr": 0.8906,
+    "meta_gbt": 0.8853,
+    "meta_lr_stab": 0.8833,
+    "meta_gbt_stab": 0.8827,
+    "gbt_params": {
+      "ml": 4,
+      "lr": 0.01,
+      "ne": 300
+    },
+    "test_auroc": 0.8917,
+    "baseline_auroc": 0.8752,
+    "delta": 0.0165,
+    "delta_pct": "+1.65%",
+    "ci_95": [
+      0.8855,
+      0.8983
+    ]
+  },
+  "when2call_3class": {
+    "dataset": "when2call_3class",
+    "n_experts": 14,
+    "n_meta_features": 126,
+    "meta_lr": 0.8567,
+    "meta_gbt": 0.8968,
+    "meta_lr_stab": 0.8758,
+    "meta_gbt_stab": 0.9013,
+    "gbt_params": {
+      "ml": 16,
+      "lr": 0.05,
+      "ne": 300
+    },
+    "test_auroc": 0.8968,
+    "baseline_auroc": 0.8741,
+    "delta": 0.0227,
+    "delta_pct": "+2.27%",
+    "ci_95": [
+      0.8781,
+      0.913
+    ]
+  },
+  "ragtruth_binary": {
+    "dataset": "ragtruth_binary",
+    "n_experts": 16,
+    "n_meta_features": 128,
+    "meta_lr": 0.8826,
+    "meta_gbt": 0.8808,
+    "meta_lr_stab": 0.837,
+    "meta_gbt_stab": 0.8404,
+    "gbt_params": {
+      "ml": 8,
+      "lr": 0.01,
+      "ne": 300
+    },
+    "test_auroc": 0.8843,
+    "baseline_auroc": 0.8808,
+    "delta": 0.0035,
+    "delta_pct": "+0.35%",
+    "ci_95": [
+      0.8632,
+      0.905
+    ]
+  }
+}

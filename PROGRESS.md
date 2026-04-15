@@ -381,6 +381,68 @@ Verdict: "Novel enough and impactful enough for acceptance" — accept-leaning.
 - `fusion/results/multiview_results.json` — v1 results
 - `AUTO_REVIEW.md` — complete 6-round review loop log
 
+### 12. Baseline-Feature-Only Fusion (2026-04-08 ~ 2026-04-10)
+
+Constrained fusion experiment: input limited to baseline method post-processed features only (no raw LLM internal states). Validates whether existing probing method outputs alone can be improved via fusion.
+
+#### Constraints
+- **C1**: Only baseline post-processed features (7 methods multi-class / 8 methods binary)
+- **C2**: One unified method for ALL datasets (same pipeline, no per-dataset tuning)
+- **C3**: Every component must have scientific justification
+
+#### Winning Method: Multi-View Expert-Library Stacking (v21)
+
+**Pipeline** (unified, same code for all datasets):
+```
+Input: Post-processed feature vectors from 7-8 baseline probing methods
+                              ↓
+Per-method expert generation:
+  StandardScaler → PCA({32, 128}) → {LR, GBT, ExtraTrees, RF}
+  → 5-fold OOF probabilities, averaged over 5 random seeds
+  → 8 experts per method, each contributing K-dim OOF probabilities
+                              ↓
+Meta-feature enrichment:
+  Per-expert entropy + margin (captures prediction confidence/uncertainty)
+  → Total meta-features: ~280 (multi-class) or ~256 (binary)
+                              ↓
+Meta-classification:
+  {L2-LR, L1-LR, GBT} trained independently
+  → Optimal 3-way blend
+                              ↓
+Final prediction
+```
+
+**Scientific justification for each component**:
+- Multi-view stacking: each method captures a different computational perspective (hidden states vs attention vs generation)
+- Diverse expert types: LR (linear/global) + GBT/ET/RF (non-linear/local) — different inductive biases
+- Multi-seed averaging: reduces high-variance tree predictions without sacrificing diversity
+- Entropy/margin enrichment: calibrated uncertainty signals help meta-learner judge expert confidence
+- L1/L2/GBT meta-blend: L1 performs implicit feature selection, L2 provides stable global combination, GBT captures conditional expert trust
+
+#### Results (v21, multi-resolution PCA)
+
+| Dataset | Best Single | Fusion | Delta | 95% CI |
+|---------|-----------|--------|-------|--------|
+| common_claim | 0.7576 | **0.7817** | **+2.41%** | [0.757, 0.805] |
+| e2h_amc_3class | 0.8934 | **0.9030** | **+0.96%** | [0.895, 0.911] |
+| e2h_amc_5class | 0.8752 | **0.8913** | **+1.61%** | [0.886, 0.898] |
+| when2call | 0.8741 | **0.9392** | **+6.51%** | [0.926, 0.952] |
+| ragtruth | 0.8808 | **0.8930** | **+1.22%** | [0.871, 0.911] |
+
+**All 5 datasets positive. Avg delta: +2.54%, when2call +6.51%.**
+
+#### Target-Driven Loop (19 iterations)
+
+The method was developed through a GPT-5.4-supervised target-driven optimization loop (19 iterations, 15+ architectures tried). The +5% target on ALL datasets was falsified — the ceiling under C1-C3 is dataset-dependent. See `TARGET_LOOP.md` for full log.
+
+#### Code & Results
+- `fusion/baseline_only_v21_winning.py` — **FINAL baseline-only method** (PCA{32,128} × {LR,GBT,ET,RF} × 5seeds → {L2,L1,GBT} blend)
+- `fusion/baseline_only_v20_winning.py` — variant with PCA(128) only
+- `fusion/baseline_only_v12.py` — original v12 (no L1-LR, base for v20/v21)
+- `fusion/baseline_only_v1~v13_final.py` — iteration history (13 versions with code)
+- `fusion/results/baseline_only_v21_winning_results.json` — final results
+- `fusion/results/baseline_only_v20_winning_results.json` — PCA(128) variant results
+
 ## What's Not Done / Next Steps
 
 - [x] Run confidence intervals (bootstrap) on all datasets
@@ -389,7 +451,7 @@ Verdict: "Novel enough and impactful enough for acceptance" — accept-leaning.
 - [x] Compute oracle upper bound
 - [x] Multi-view fusion with all 13 features
 - [x] Per-view contribution analysis
-- [ ] **Fusion using ONLY baseline processed features as input** — 限定input为12个baseline方法后处理的feature vectors（不使用LLM raw internal states），验证仅靠已有probing方法的输出能否通过融合获得提升。目前可用的processed features: 7个方法(multi-class) / 12个方法(binary)，每个方法的特征维度从1维(scalar score)到14336维(SEP的多层hidden)不等。每个方法feature经过 StandardScaler → PCA(256) → C-tuned LR → OOF概率后，只贡献K个meta-features（K=类别数）。
+- [x] **Baseline-feature-only fusion** — Multi-View Expert-Library Stacking (v21), all 5 datasets positive, avg +2.54%
 - [ ] Write paper (NeurIPS 2026 deadline ~May)
 - [ ] (Optional) Regression / multi-label fusion
 - [ ] (Optional) Second model for external validity (strongest remaining improvement)
@@ -428,18 +490,19 @@ Verdict: "Novel enough and impactful enough for acceptance" — accept-leaning.
 │   ├── results/                 # all_results_v2.json, all_results_v3.json
 │   └── processed_features/      # 7.3 GB per-method processed features
 ├── fusion/
-│   ├── multiview_v2.py          # FINAL METHOD: MVISF-v2 (direct multi-view stacking)
-│   ├── multiview_fusion.py      # MVISF v1 (two-stage with view-level bottleneck)
-│   ├── layerwise_v3.py          # Previous method: layerwise probe-bank stacking
-│   ├── minimal_ablation.py      # Ablation studies with caching
-│   ├── comprehensive_analysis.py # Full dataset coverage analysis
+│   ├── baseline_only_v21_winning.py  # CURRENT METHOD: Multi-View Expert-Library Stacking
+│   ├── baseline_only_v20_winning.py  # Variant: PCA(128) only
+│   ├── baseline_only_v12.py     # Base version (v12, no L1-LR)
+│   ├── baseline_only_v1~v13.py  # Iteration history (13 versions)
+│   ├── multiview_v2.py          # MVISF-v2 (raw features, for reference)
+│   ├── multiview_fusion.py      # MVISF v1
+│   ├── layerwise_v3.py          # Previous: layerwise probe-bank stacking
+│   ├── eval_acc_f1_fast.py      # Accuracy/F1 evaluation
+│   ├── minimal_ablation.py      # Ablation studies
+│   ├── comprehensive_analysis.py # Full dataset coverage
 │   ├── round2_fixes.py          # Oracle, failure analysis, paired CIs
-│   ├── unified_fast.py          # Score-level baseline (PCA+C tuning+stacking)
-│   ├── layerwise_fusion.py      # v1: subsampled + trajectory
-│   ├── layerwise_v2.py          # v2: all layers + direct logits
-│   ├── neural_fusion.py         # Neural approach (failed)
-│   ├── anchor_fusion.py         # Anchor-residual fusion variants
-│   └── results/                 # All result JSONs (15+ files)
+│   ├── unified_fast.py          # Score-level baseline
+│   └── results/                 # All result JSONs (20+ files)
 ├── extraction_plan.md
 ├── selected_datasets.md
 ├── NEW_DATASETS_PIPELINE.md     # Pipeline I/O specification

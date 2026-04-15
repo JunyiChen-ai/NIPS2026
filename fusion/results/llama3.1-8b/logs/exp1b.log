@@ -1,0 +1,125 @@
+========================================================================
+EXP 1b: Oracle with Raw LLM Features — model=llama3.1-8b
+  processed_dir=/home/junyi/NIPS2026/reproduce/processed_features/llama3.1-8b
+  extraction_dir=/home/junyi/NIPS2026/extraction/features/llama3.1-8b
+========================================================================
+
+>>> common_claim_3class
+    raw_input_last_tok: dim=139264  took  21.9s  OK
+    raw_input_mean_pool: dim=139264  took  23.4s  OK
+    raw_gen_last_tok: dim=139264  took  22.8s  OK
+    raw_gen_mean_pool: dim=139264  took  23.9s  OK
+    raw_input_per_head: dim=  4096  took   8.2s  OK
+    raw_input_attn_valnorms: dim=   768  took   3.0s  OK
+    raw_input_attn_stats: dim=  3072  took   6.2s  OK
+    raw_gen_attn_stats: dim=  3072  took   6.8s  OK
+    raw_input_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_step_boundary: dim=  4096  took   8.8s  OK
+  best_single:      0.7621 (pca_lr)
+  oracle baseline:  0.9777
+  oracle w/ raw:    0.9956  (++1.79%)
+  raw win rate:     59.2%
+  n_raw_views used: 11
+
+>>> e2h_amc_3class
+    raw_input_last_tok: dim=139264  took  12.2s  OK
+    raw_input_mean_pool: dim=139264  took  11.8s  OK
+    raw_gen_last_tok: dim=139264  took   9.3s  OK
+    raw_gen_mean_pool: dim=139264  took   9.8s  OK
+    raw_input_per_head: dim=  4096  took   2.5s  OK
+    raw_input_attn_valnorms: dim= 65536  took  30.8s  OK
+    raw_input_attn_stats: dim=  3072  took   2.6s  OK
+    raw_gen_attn_stats: dim=  3072  took   1.4s  OK
+    raw_input_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_step_boundary: dim=  4096  took   6.4s  OK
+  best_single:      0.8785 (pca_lr)
+  oracle baseline:  0.9977
+  oracle w/ raw:    0.9999  (++0.22%)
+  raw win rate:     91.2%
+  n_raw_views used: 11
+
+>>> e2h_amc_5class
+    raw_input_last_tok: dim=139264  took  11.1s  OK
+    raw_input_mean_pool: dim=139264  took  11.0s  OK
+    raw_gen_last_tok: dim=139264  took  10.0s  OK
+    raw_gen_mean_pool: dim=139264  took   9.6s  OK
+    raw_input_per_head: dim=  4096  took   4.8s  OK
+    raw_input_attn_valnorms: dim= 65536  took  27.9s  OK
+    raw_input_attn_stats: dim=  3072  took   2.3s  OK
+    raw_gen_attn_stats: dim=  3072  took   3.6s  OK
+    raw_input_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_step_boundary: dim=  4096  took   6.0s  OK
+  best_single:      0.8576 (pca_lr)
+  oracle baseline:  0.9930
+  oracle w/ raw:    0.9995  (++0.65%)
+  raw win rate:     84.9%
+  n_raw_views used: 11
+
+>>> when2call_3class
+    raw_input_last_tok: dim=139264  took  18.4s  OK
+    raw_input_mean_pool: dim=139264  took  17.6s  OK
+    raw_gen_last_tok: dim=139264  took  16.5s  OK
+    raw_gen_mean_pool: dim=139264  took  16.8s  OK
+    raw_input_per_head: dim=  4096  took   7.5s  OK
+    raw_input_attn_valnorms: dim= 39296  took  19.1s  OK
+    raw_input_attn_stats: dim=  3072  took   4.9s  OK
+    raw_gen_attn_stats: dim=  3072  took   3.4s  OK
+    raw_input_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_step_boundary: dim=  4096  took  11.7s  OK
+  best_single:      0.8824 (kb_mlp)
+  oracle baseline:  0.9923
+  oracle w/ raw:    0.9996  (++0.73%)
+  raw win rate:     72.8%
+  n_raw_views used: 11
+
+>>> ragtruth_binary
+    raw_input_last_tok: dim=139264  took  22.7s  OK
+    raw_input_mean_pool: dim=139264  took  22.1s  OK
+    raw_gen_last_tok: dim=139264  took  22.1s  OK
+    raw_gen_mean_pool: dim=139264  took  22.9s  OK
+    raw_input_per_head: dim=  4096  took   7.7s  OK
+    raw_input_attn_valnorms: dim= 65536  took  33.9s  OK
+    raw_input_attn_stats: dim=  3072  took   5.7s  OK
+    raw_gen_attn_stats: dim=  3072  took   4.1s  OK
+    raw_input_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_step_boundary: dim=  4096  took  13.9s  OK
+  best_single:      0.8862 (iti)
+  oracle baseline:  0.9996
+  oracle w/ raw:    0.9999  (++0.03%)
+  raw win rate:     51.7%
+  n_raw_views used: 11
+
+>>> fava_binary
+    raw_input_last_tok: dim=139264  took  20.5s  OK
+    raw_input_mean_pool: dim=139264  took  22.3s  OK
+    raw_gen_last_tok: dim=139264  took  22.5s  OK
+    raw_gen_mean_pool: dim=139264  took  20.5s  OK
+    raw_input_per_head: dim=  4096  took   5.6s  OK
+    raw_input_attn_valnorms: dim= 65536  took  36.0s  OK
+    raw_input_attn_stats: dim=  3072  took   6.1s  OK
+    raw_gen_attn_stats: dim=  3072  took   6.2s  OK
+    raw_input_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_logit_stats: dim=    13  took   0.0s  OK
+    raw_gen_step_boundary: dim=  4096  took  11.9s  OK
+  best_single:      0.9926 (pca_lr)
+  oracle baseline:  1.0000
+  oracle w/ raw:    1.0000  (++0.00%)
+  raw win rate:     95.6%
+  n_raw_views used: 11
+
+========================================================================
+Dataset                     Best  OracleBL  OracleRaw       Δ   Rawwin
+------------------------------------------------------------------------
+common_claim_3class      0.7621  0.9777   0.9956  +1.79%   59.2%
+e2h_amc_3class           0.8785  0.9977   0.9999  +0.22%   91.2%
+e2h_amc_5class           0.8576  0.9930   0.9995  +0.65%   84.9%
+when2call_3class         0.8824  0.9923   0.9996  +0.73%   72.8%
+ragtruth_binary          0.8862  0.9996   0.9999  +0.03%   51.7%
+fava_binary              0.9926  1.0000   1.0000  +0.00%   95.6%
+
+Saved → /home/junyi/NIPS2026/fusion/results/llama3.1-8b/oracle_with_raw.json
