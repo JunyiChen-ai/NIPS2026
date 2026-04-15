@@ -8,3 +8,116 @@ Dataset: common_claim_3class (nc=3, full_fusion=0.7817)
   drop lr_probe           → AUROC=0.7792  contribution=+0.250%  [1752s]
   drop pca_lr             → AUROC=0.7738  contribution=+0.790%  [1944s]
   drop iti                → AUROC=0.7763  contribution=+0.542%  [1889s]
+  drop kb_mlp             → AUROC=0.7794  contribution=+0.229%  [1905s]
+  drop attn_satisfies     → AUROC=0.7799  contribution=+0.178%  [1903s]
+  drop sep                → AUROC=0.7794  contribution=+0.234%  [1926s]
+  drop step               → AUROC=0.7795  contribution=+0.222%  [1899s]
+  [SAVED] common_claim_3class checkpointed
+
+  Contribution ranking:
+    #1: pca_lr             contribution=+0.790%
+    #2: iti                contribution=+0.540%
+    #3: lr_probe           contribution=+0.250%
+    #4: kb_mlp             contribution=+0.230%
+    #5: sep                contribution=+0.230%
+    #6: step               contribution=+0.220%
+    #7: attn_satisfies     contribution=+0.180%
+
+======================================================================
+Dataset: e2h_amc_3class (nc=3, full_fusion=0.9030)
+======================================================================
+  drop lr_probe           → AUROC=0.8909  contribution=+1.211%  [1473s]
+  drop pca_lr             → AUROC=0.8945  contribution=+0.850%  [1507s]
+  drop iti                → AUROC=0.8878  contribution=+1.522%  [1488s]
+  drop kb_mlp             → AUROC=0.8953  contribution=+0.769%  [1474s]
+  drop attn_satisfies     → AUROC=0.8908  contribution=+1.221%  [1477s]
+  drop sep                → AUROC=0.8945  contribution=+0.846%  [1464s]
+  drop step               → AUROC=0.8963  contribution=+0.673%  [1470s]
+  [SAVED] e2h_amc_3class checkpointed
+
+  Contribution ranking:
+    #1: iti                contribution=+1.520%
+    #2: attn_satisfies     contribution=+1.220%
+    #3: lr_probe           contribution=+1.210%
+    #4: pca_lr             contribution=+0.850%
+    #5: sep                contribution=+0.850%
+    #6: kb_mlp             contribution=+0.770%
+    #7: step               contribution=+0.670%
+
+======================================================================
+Dataset: e2h_amc_5class (nc=5, full_fusion=0.8913)
+======================================================================
+  drop lr_probe           → AUROC=0.8740  contribution=+1.728%  [2350s]
+  drop pca_lr             → AUROC=0.8722  contribution=+1.907%  [2441s]
+  drop iti                → AUROC=0.8706  contribution=+2.075%  [2391s]
+  drop kb_mlp             → AUROC=0.8738  contribution=+1.750%  [2385s]
+  drop attn_satisfies     → AUROC=0.8761  contribution=+1.516%  [2391s]
+  drop sep                → AUROC=0.8782  contribution=+1.313%  [2351s]
+  drop step               → AUROC=0.8756  contribution=+1.569%  [2369s]
+  [SAVED] e2h_amc_5class checkpointed
+
+  Contribution ranking:
+    #1: iti                contribution=+2.070%
+    #2: pca_lr             contribution=+1.910%
+    #3: kb_mlp             contribution=+1.750%
+    #4: lr_probe           contribution=+1.730%
+    #5: step               contribution=+1.570%
+    #6: attn_satisfies     contribution=+1.520%
+    #7: sep                contribution=+1.310%
+
+======================================================================
+Dataset: when2call_3class (nc=3, full_fusion=0.9392)
+======================================================================
+  drop lr_probe           → AUROC=0.9288  contribution=+1.040%  [1769s]
+  drop pca_lr             → AUROC=0.9252  contribution=+1.400%  [1817s]
+  drop iti                → AUROC=0.9196  contribution=+1.965%  [1776s]
+  drop kb_mlp             → AUROC=0.9183  contribution=+2.088%  [1766s]
+  drop attn_satisfies     → AUROC=0.9175  contribution=+2.165%  [1775s]
+  drop sep                → AUROC=0.9270  contribution=+1.224%  [1739s]
+  drop step               → AUROC=0.9272  contribution=+1.201%  [1756s]
+  [SAVED] when2call_3class checkpointed
+
+  Contribution ranking:
+    #1: attn_satisfies     contribution=+2.170%
+    #2: kb_mlp             contribution=+2.090%
+    #3: iti                contribution=+1.960%
+    #4: pca_lr             contribution=+1.400%
+    #5: sep                contribution=+1.220%
+    #6: step               contribution=+1.200%
+    #7: lr_probe           contribution=+1.040%
+
+======================================================================
+Dataset: ragtruth_binary (nc=2, full_fusion=0.8930)
+======================================================================
+  drop lr_probe           → AUROC=0.9009  contribution=-0.790%  [751s]
+  drop pca_lr             → AUROC=0.9002  contribution=-0.722%  [773s]
+  drop iti                → AUROC=0.8689  contribution=+2.409%  [751s]
+  drop kb_mlp             → AUROC=0.9009  contribution=-0.790%  [753s]
+  drop attn_satisfies     → AUROC=0.8993  contribution=-0.631%  [751s]
+  drop sep                → AUROC=0.9003  contribution=-0.735%  [761s]
+  drop step               → AUROC=0.9008  contribution=-0.785%  [762s]
+  [SAVED] ragtruth_binary checkpointed
+
+  Contribution ranking:
+    #1: iti                contribution=+2.410%
+    #2: attn_satisfies     contribution=-0.630%
+    #3: pca_lr             contribution=-0.720%
+    #4: sep                contribution=-0.730%
+    #5: step               contribution=-0.780%
+    #6: lr_probe           contribution=-0.790%
+    #7: kb_mlp             contribution=-0.790%
+
+======================================================================
+CROSS-DATASET METHOD CONTRIBUTION MATRIX
+======================================================================
+Method             common_claim e2h_amc_3cla e2h_amc_5cla when2call_3c ragtruth_bin       Avg
+---------------------------------------------------------------------------------------------
+lr_probe                 +0.250%       +1.210%       +1.730%       +1.040%       -0.790%    +0.688%
+pca_lr                   +0.790%       +0.850%       +1.910%       +1.400%       -0.720%    +0.846%
+iti                      +0.540%       +1.520%       +2.070%       +1.960%       +2.410%    +1.700%
+kb_mlp                   +0.230%       +0.770%       +1.750%       +2.090%       -0.790%    +0.810%
+attn_satisfies           +0.180%       +1.220%       +1.520%       +2.170%       -0.630%    +0.892%
+sep                      +0.230%       +0.850%       +1.310%       +1.220%       -0.730%    +0.576%
+step                     +0.220%       +0.670%       +1.570%       +1.200%       -0.780%    +0.576%
+
+Saved to /home/junyi/NIPS2026/fusion/results/llama3.1-8b/leave_one_method_out.json

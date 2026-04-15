@@ -45,14 +45,55 @@ ALL_DATASETS = {
     "ragtruth_binary":     {"n_classes": 2, "ext": "ragtruth", "train": "train", "val": "val", "test": "test", "best_single": 0.8808},
 }
 
-# Full fusion results from v21
-FULL_FUSION = {
-    "common_claim_3class": 0.7817,
-    "e2h_amc_3class": 0.9030,
-    "e2h_amc_5class": 0.8913,
-    "when2call_3class": 0.9392,
-    "ragtruth_binary": 0.8930,
-}
+
+def _patch_best_single(datasets_dict):
+    """Override hardcoded Qwen best_single with the active model's values.
+
+    Reads fusion/results/{model}/oracle_complete.json if present and updates
+    the in-memory ALL_DATASETS so delta/contribution computations use the
+    correct baseline for the model being run.
+    """
+    path = os.path.join(RESULTS_DIR, "oracle_complete.json")
+    if not os.path.exists(path):
+        return datasets_dict
+    try:
+        with open(path) as f:
+            oc = json.load(f)
+        for ds, cfg in datasets_dict.items():
+            if ds in oc and "best_single_auroc" in oc[ds]:
+                cfg["best_single"] = float(oc[ds]["best_single_auroc"])
+    except Exception as e:
+        print(f"[WARN] _patch_best_single: {e}, keeping hardcoded values")
+    return datasets_dict
+
+
+_patch_best_single(ALL_DATASETS)
+
+# Full fusion results loaded from v21 output for the active model.
+# Falls back to the Qwen values if the v21 results are missing (legacy behavior).
+def _load_full_fusion():
+    path = os.path.join(RESULTS_DIR, "baseline_only_v21_winning_results.json")
+    if os.path.exists(path):
+        try:
+            with open(path) as f:
+                d = json.load(f)
+            return {
+                k: v["test_auroc"]
+                for k, v in d.items()
+                if isinstance(v, dict) and "test_auroc" in v
+            }
+        except Exception as e:
+            print(f"[WARN] Could not parse {path}: {e}, falling back to hardcoded")
+    return {
+        "common_claim_3class": 0.7817,
+        "e2h_amc_3class": 0.9030,
+        "e2h_amc_5class": 0.8913,
+        "when2call_3class": 0.9392,
+        "ragtruth_binary": 0.8930,
+    }
+
+
+FULL_FUSION = _load_full_fusion()
 
 
 def load_labels(ext, split):

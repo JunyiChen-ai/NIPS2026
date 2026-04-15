@@ -46,6 +46,26 @@ ALL_DATASETS = {
     "ragtruth_binary":     {"n_classes": 2, "ext": "ragtruth", "train": "train", "val": "val", "test": "test", "best_single": 0.8808},
 }
 
+
+def _patch_best_single(datasets_dict):
+    """Override hardcoded Qwen best_single with the active model's values
+    (reads fusion/results/{model}/oracle_complete.json if present)."""
+    path = os.path.join(RESULTS_DIR, "oracle_complete.json")
+    if not os.path.exists(path):
+        return datasets_dict
+    try:
+        with open(path) as f:
+            oc = json.load(f)
+        for ds, cfg in datasets_dict.items():
+            if ds in oc and "best_single_auroc" in oc[ds]:
+                cfg["best_single"] = float(oc[ds]["best_single_auroc"])
+    except Exception as e:
+        print(f"[WARN] _patch_best_single: {e}, keeping hardcoded values")
+    return datasets_dict
+
+
+_patch_best_single(ALL_DATASETS)
+
 # Ablation configurations
 ABLATION_CONFIGS = {
     "full":              {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "blend"},
