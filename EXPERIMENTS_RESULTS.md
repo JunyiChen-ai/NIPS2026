@@ -1,8 +1,15 @@
 # Baseline Probing Feature Fusion — Experiment Results
 
-**Date**: 2026-04-13 (results), 2026-04-14 (figures + clustering interpretation)
-**Scope**: Post-processed features from 12 baseline probing methods only. No raw LLM internal states.
+**Updated**: 2026-04-16
+**Scope**: Post-processed features from 12 baseline probing methods. Raw LLM features added for oracle analysis (exp1b).
 **Method under study**: Multi-View Expert-Library Stacking (v21) — `fusion/baseline_only_v21_winning.py`
+**Models**: Qwen-2.5-7B (complete), Llama-3.1-8B (in progress), Mistral-7B-v0.3 (pending)
+
+## Research Questions
+
+- **RQ1**: Can a single probe generalize across tasks? (No — best probe changes across datasets and models)
+- **RQ2**: Does fusing multiple probes improve over the best single? (Yes — +0.96% to +6.51%, but model-dependent)
+- **RQ3**: What are the fusion principles? (Task-feature matching; method contribution is task-dependent; 2 algorithmic clusters)
 
 ## Figures
 
