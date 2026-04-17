@@ -19,11 +19,11 @@ datasets: ['common_claim_3class', 'e2h_amc_3class', 'e2h_amc_5class', 'when2call
 
 | Dataset | qwen2.5-7b | llama3.1-8b |
 |---|---|---|
-| common_claim_3class | 0.7817 (Δ+2.41%) | 0.7796 (Δ+2.20%) |
-| e2h_amc_3class | 0.9030 (Δ+0.96%) | 0.8928 (Δ-0.06%) |
-| e2h_amc_5class | 0.8913 (Δ+1.61%) | 0.8757 (Δ+0.05%) |
-| when2call_3class | 0.9392 (Δ+6.51%) | 0.9255 (Δ+5.14%) |
-| ragtruth_binary | 0.8930 (Δ+1.22%) | 0.9005 (Δ+1.97%) |
+| common_claim_3class | 0.7817 (Δ+2.41%) | 0.7796 (Δ+1.75%) |
+| e2h_amc_3class | 0.9030 (Δ+0.96%) | 0.8928 (Δ+1.43%) |
+| e2h_amc_5class | 0.8913 (Δ+1.61%) | 0.8757 (Δ+1.81%) |
+| when2call_3class | 0.9392 (Δ+6.51%) | 0.9255 (Δ+4.31%) |
+| ragtruth_binary | 0.8930 (Δ+1.22%) | 0.9005 (Δ+1.43%) |
 | fava_binary | 0.9880 (Δ+0.24%) | 0.9955 (Δ+0.99%) |
 
 **Oracle headroom — baseline-only vs with-raw (AUROC):**

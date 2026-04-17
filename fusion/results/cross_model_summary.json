@@ -1587,9 +1587,9 @@
     "v21_fusion": {
       "common_claim_3class": {
         "test_auroc": 0.7796,
-        "baseline_auroc": 0.7576,
-        "delta": 0.022,
-        "delta_pct": "+2.20%",
+        "baseline_auroc": 0.7621,
+        "delta": 0.0175,
+        "delta_pct": "+1.75%",
         "ci_95": [
           0.7546,
           0.8029
@@ -1597,9 +1597,9 @@
       },
       "e2h_amc_3class": {
         "test_auroc": 0.8928,
-        "baseline_auroc": 0.8934,
-        "delta": -0.0006,
-        "delta_pct": "-0.06%",
+        "baseline_auroc": 0.8785,
+        "delta": 0.0143,
+        "delta_pct": "+1.43%",
         "ci_95": [
           0.8848,
           0.9014
@@ -1607,9 +1607,9 @@
       },
       "e2h_amc_5class": {
         "test_auroc": 0.8757,
-        "baseline_auroc": 0.8752,
-        "delta": 0.0005,
-        "delta_pct": "+0.05%",
+        "baseline_auroc": 0.8576,
+        "delta": 0.0181,
+        "delta_pct": "+1.81%",
         "ci_95": [
           0.8688,
           0.8829
@@ -1617,9 +1617,9 @@
       },
       "when2call_3class": {
         "test_auroc": 0.9255,
-        "baseline_auroc": 0.8741,
-        "delta": 0.0514,
-        "delta_pct": "+5.14%",
+        "baseline_auroc": 0.8824,
+        "delta": 0.0431,
+        "delta_pct": "+4.31%",
         "ci_95": [
           0.9106,
           0.9398
@@ -1627,9 +1627,9 @@
       },
       "ragtruth_binary": {
         "test_auroc": 0.9005,
-        "baseline_auroc": 0.8808,
-        "delta": 0.0197,
-        "delta_pct": "+1.97%",
+        "baseline_auroc": 0.8862,
+        "delta": 0.0143,
+        "delta_pct": "+1.43%",
         "ci_95": [
           0.881,
           0.9187
