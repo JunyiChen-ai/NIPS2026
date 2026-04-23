@@ -1,0 +1,653 @@
+{
+  "common_claim_3class": {
+    "method_ranking": [
+      "pca_lr",
+      "kb_mlp",
+      "iti",
+      "lr_probe",
+      "attn_satisfies",
+      "step",
+      "sep"
+    ],
+    "best_single": 0.7489862014553218,
+    "ladder": [
+      {
+        "n_methods": 1,
+        "methods": [
+          "pca_lr"
+        ],
+        "added": "pca_lr",
+        "added_standalone": 0.749,
+        "fusion_auroc": 0.7602,
+        "delta_vs_best_single": 0.0112,
+        "delta_pct": "+1.12%",
+        "time_seconds": 318.4,
+        "incremental_gain": null
+      },
+      {
+        "n_methods": 2,
+        "methods": [
+          "pca_lr",
+          "kb_mlp"
+        ],
+        "added": "kb_mlp",
+        "added_standalone": 0.7428,
+        "fusion_auroc": 0.7635,
+        "delta_vs_best_single": 0.0145,
+        "delta_pct": "+1.45%",
+        "time_seconds": 598.1,
+        "incremental_gain": 0.0033
+      },
+      {
+        "n_methods": 3,
+        "methods": [
+          "pca_lr",
+          "kb_mlp",
+          "iti"
+        ],
+        "added": "iti",
+        "added_standalone": 0.7195,
+        "fusion_auroc": 0.7718,
+        "delta_vs_best_single": 0.0228,
+        "delta_pct": "+2.28%",
+        "time_seconds": 893.2,
+        "incremental_gain": 0.0083
+      },
+      {
+        "n_methods": 4,
+        "methods": [
+          "pca_lr",
+          "kb_mlp",
+          "iti",
+          "lr_probe"
+        ],
+        "added": "lr_probe",
+        "added_standalone": 0.7412,
+        "fusion_auroc": 0.7755,
+        "delta_vs_best_single": 0.0265,
+        "delta_pct": "+2.65%",
+        "time_seconds": 1189.4,
+        "incremental_gain": 0.0037
+      },
+      {
+        "n_methods": 5,
+        "methods": [
+          "pca_lr",
+          "kb_mlp",
+          "iti",
+          "lr_probe",
+          "attn_satisfies"
+        ],
+        "added": "attn_satisfies",
+        "added_standalone": 0.7131,
+        "fusion_auroc": 0.7754,
+        "delta_vs_best_single": 0.0264,
+        "delta_pct": "+2.64%",
+        "time_seconds": 1514.2,
+        "incremental_gain": -0.0001
+      },
+      {
+        "n_methods": 6,
+        "methods": [
+          "pca_lr",
+          "kb_mlp",
+          "iti",
+          "lr_probe",
+          "attn_satisfies",
+          "step"
+        ],
+        "added": "step",
+        "added_standalone": 0.5892,
+        "fusion_auroc": 0.7756,
+        "delta_vs_best_single": 0.0266,
+        "delta_pct": "+2.66%",
+        "time_seconds": 1768.3,
+        "incremental_gain": 0.0002
+      },
+      {
+        "n_methods": 7,
+        "methods": [
+          "pca_lr",
+          "kb_mlp",
+          "iti",
+          "lr_probe",
+          "attn_satisfies",
+          "step",
+          "sep"
+        ],
+        "added": "sep",
+        "added_standalone": 0.5683,
+        "fusion_auroc": 0.7758,
+        "delta_vs_best_single": 0.0268,
+        "delta_pct": "+2.68%",
+        "time_seconds": 2062.8,
+        "incremental_gain": 0.0002
+      }
+    ]
+  },
+  "e2h_amc_3class": {
+    "method_ranking": [
+      "pca_lr",
+      "kb_mlp",
+      "lr_probe",
+      "iti",
+      "attn_satisfies",
+      "sep",
+      "step"
+    ],
+    "best_single": 0.8840127835014862,
+    "ladder": [
+      {
+        "n_methods": 1,
+        "methods": [
+          "pca_lr"
+        ],
+        "added": "pca_lr",
+        "added_standalone": 0.884,
+        "fusion_auroc": 0.8862,
+        "delta_vs_best_single": 0.0022,
+        "delta_pct": "+0.22%",
+        "time_seconds": 274.3,
+        "incremental_gain": null
+      },
+      {
+        "n_methods": 2,
+        "methods": [
+          "pca_lr",
+          "kb_mlp"
+        ],
+        "added": "kb_mlp",
+        "added_standalone": 0.8524,
+        "fusion_auroc": 0.8905,
+        "delta_vs_best_single": 0.0065,
+        "delta_pct": "+0.65%",
+        "time_seconds": 498.7,
+        "incremental_gain": 0.0043
+      },
+      {
+        "n_methods": 3,
+        "methods": [
+          "pca_lr",
+          "kb_mlp",
+          "lr_probe"
+        ],
+        "added": "lr_probe",
+        "added_standalone": 0.8714,
+        "fusion_auroc": 0.8932,
+        "delta_vs_best_single": 0.0092,
+        "delta_pct": "+0.92%",
+        "time_seconds": 726.1,
+        "incremental_gain": 0.0027
+      },
+      {
+        "n_methods": 4,
+        "methods": [
+          "pca_lr",
+          "kb_mlp",
+          "lr_probe",
+          "iti"
+        ],
+        "added": "iti",
+        "added_standalone": 0.8598,
+        "fusion_auroc": 0.8988,
+        "delta_vs_best_single": 0.0148,
+        "delta_pct": "+1.48%",
+        "time_seconds": 941.5,
+        "incremental_gain": 0.0056
+      },
+      {
+        "n_methods": 5,
+        "methods": [
+          "pca_lr",
+          "kb_mlp",
+          "lr_probe",
+          "iti",
+          "attn_satisfies"
+        ],
+        "added": "attn_satisfies",
+        "added_standalone": 0.8385,
+        "fusion_auroc": 0.9002,
+        "delta_vs_best_single": 0.0162,
+        "delta_pct": "+1.62%",
+        "time_seconds": 1168.8,
+        "incremental_gain": 0.0014
+      },
+      {
+        "n_methods": 6,
+        "methods": [
+          "pca_lr",
+          "kb_mlp",
+          "lr_probe",
+          "iti",
+          "attn_satisfies",
+          "sep"
+        ],
+        "added": "sep",
+        "added_standalone": 0.6381,
+        "fusion_auroc": 0.9005,
+        "delta_vs_best_single": 0.0165,
+        "delta_pct": "+1.65%",
+        "time_seconds": 1412.4,
+        "incremental_gain": 0.0003
+      },
+      {
+        "n_methods": 7,
+        "methods": [
+          "pca_lr",
+          "kb_mlp",
+          "lr_probe",
+          "iti",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ],
+        "added": "step",
+        "added_standalone": 0.6592,
+        "fusion_auroc": 0.8976,
+        "delta_vs_best_single": 0.0136,
+        "delta_pct": "+1.36%",
+        "time_seconds": 1648.2,
+        "incremental_gain": -0.0029
+      }
+    ]
+  },
+  "e2h_amc_5class": {
+    "method_ranking": [
+      "kb_mlp",
+      "pca_lr",
+      "lr_probe",
+      "iti",
+      "attn_satisfies",
+      "sep",
+      "step"
+    ],
+    "best_single": 0.8610382456238917,
+    "ladder": [
+      {
+        "n_methods": 1,
+        "methods": [
+          "kb_mlp"
+        ],
+        "added": "kb_mlp",
+        "added_standalone": 0.8298,
+        "fusion_auroc": 0.8692,
+        "delta_vs_best_single": 0.0082,
+        "delta_pct": "+0.82%",
+        "time_seconds": 462.4,
+        "incremental_gain": null
+      },
+      {
+        "n_methods": 2,
+        "methods": [
+          "kb_mlp",
+          "pca_lr"
+        ],
+        "added": "pca_lr",
+        "added_standalone": 0.861,
+        "fusion_auroc": 0.8772,
+        "delta_vs_best_single": 0.0162,
+        "delta_pct": "+1.62%",
+        "time_seconds": 772.6,
+        "incremental_gain": 0.008
+      },
+      {
+        "n_methods": 3,
+        "methods": [
+          "kb_mlp",
+          "pca_lr",
+          "lr_probe"
+        ],
+        "added": "lr_probe",
+        "added_standalone": 0.8381,
+        "fusion_auroc": 0.8818,
+        "delta_vs_best_single": 0.0208,
+        "delta_pct": "+2.08%",
+        "time_seconds": 1131.8,
+        "incremental_gain": 0.0046
+      },
+      {
+        "n_methods": 4,
+        "methods": [
+          "kb_mlp",
+          "pca_lr",
+          "lr_probe",
+          "iti"
+        ],
+        "added": "iti",
+        "added_standalone": 0.8402,
+        "fusion_auroc": 0.8858,
+        "delta_vs_best_single": 0.0248,
+        "delta_pct": "+2.48%",
+        "time_seconds": 1478.3,
+        "incremental_gain": 0.004
+      },
+      {
+        "n_methods": 5,
+        "methods": [
+          "kb_mlp",
+          "pca_lr",
+          "lr_probe",
+          "iti",
+          "attn_satisfies"
+        ],
+        "added": "attn_satisfies",
+        "added_standalone": 0.8096,
+        "fusion_auroc": 0.8848,
+        "delta_vs_best_single": 0.0238,
+        "delta_pct": "+2.38%",
+        "time_seconds": 1835.7,
+        "incremental_gain": -0.001
+      },
+      {
+        "n_methods": 6,
+        "methods": [
+          "kb_mlp",
+          "pca_lr",
+          "lr_probe",
+          "iti",
+          "attn_satisfies",
+          "sep"
+        ],
+        "added": "sep",
+        "added_standalone": 0.6075,
+        "fusion_auroc": 0.8822,
+        "delta_vs_best_single": 0.0212,
+        "delta_pct": "+2.12%",
+        "time_seconds": 2202.4,
+        "incremental_gain": -0.0026
+      },
+      {
+        "n_methods": 7,
+        "methods": [
+          "kb_mlp",
+          "pca_lr",
+          "lr_probe",
+          "iti",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ],
+        "added": "step",
+        "added_standalone": 0.6238,
+        "fusion_auroc": 0.8825,
+        "delta_vs_best_single": 0.0215,
+        "delta_pct": "+2.15%",
+        "time_seconds": 2571.6,
+        "incremental_gain": 0.0003
+      }
+    ]
+  },
+  "when2call_3class": {
+    "method_ranking": [
+      "lr_probe",
+      "kb_mlp",
+      "iti",
+      "attn_satisfies",
+      "pca_lr",
+      "sep",
+      "step"
+    ],
+    "best_single": 0.8690142857142857,
+    "ladder": [
+      {
+        "n_methods": 1,
+        "methods": [
+          "lr_probe"
+        ],
+        "added": "lr_probe",
+        "added_standalone": 0.8615,
+        "fusion_auroc": 0.8942,
+        "delta_vs_best_single": 0.0252,
+        "delta_pct": "+2.52%",
+        "time_seconds": 342.6,
+        "incremental_gain": null
+      },
+      {
+        "n_methods": 2,
+        "methods": [
+          "lr_probe",
+          "kb_mlp"
+        ],
+        "added": "kb_mlp",
+        "added_standalone": 0.869,
+        "fusion_auroc": 0.9082,
+        "delta_vs_best_single": 0.0392,
+        "delta_pct": "+3.92%",
+        "time_seconds": 584.2,
+        "incremental_gain": 0.014
+      },
+      {
+        "n_methods": 3,
+        "methods": [
+          "lr_probe",
+          "kb_mlp",
+          "iti"
+        ],
+        "added": "iti",
+        "added_standalone": 0.8482,
+        "fusion_auroc": 0.9198,
+        "delta_vs_best_single": 0.0508,
+        "delta_pct": "+5.08%",
+        "time_seconds": 841.8,
+        "incremental_gain": 0.0116
+      },
+      {
+        "n_methods": 4,
+        "methods": [
+          "lr_probe",
+          "kb_mlp",
+          "iti",
+          "attn_satisfies"
+        ],
+        "added": "attn_satisfies",
+        "added_standalone": 0.8378,
+        "fusion_auroc": 0.9302,
+        "delta_vs_best_single": 0.0612,
+        "delta_pct": "+6.12%",
+        "time_seconds": 1108.4,
+        "incremental_gain": 0.0104
+      },
+      {
+        "n_methods": 5,
+        "methods": [
+          "lr_probe",
+          "kb_mlp",
+          "iti",
+          "attn_satisfies",
+          "pca_lr"
+        ],
+        "added": "pca_lr",
+        "added_standalone": 0.8053,
+        "fusion_auroc": 0.9318,
+        "delta_vs_best_single": 0.0628,
+        "delta_pct": "+6.28%",
+        "time_seconds": 1342.8,
+        "incremental_gain": 0.0016
+      },
+      {
+        "n_methods": 6,
+        "methods": [
+          "lr_probe",
+          "kb_mlp",
+          "iti",
+          "attn_satisfies",
+          "pca_lr",
+          "sep"
+        ],
+        "added": "sep",
+        "added_standalone": 0.5572,
+        "fusion_auroc": 0.9342,
+        "delta_vs_best_single": 0.0652,
+        "delta_pct": "+6.52%",
+        "time_seconds": 1638.4,
+        "incremental_gain": 0.0024
+      },
+      {
+        "n_methods": 7,
+        "methods": [
+          "lr_probe",
+          "kb_mlp",
+          "iti",
+          "attn_satisfies",
+          "pca_lr",
+          "sep",
+          "step"
+        ],
+        "added": "step",
+        "added_standalone": 0.5681,
+        "fusion_auroc": 0.9334,
+        "delta_vs_best_single": 0.0644,
+        "delta_pct": "+6.44%",
+        "time_seconds": 1904.2,
+        "incremental_gain": -0.0008
+      }
+    ]
+  },
+  "ragtruth_binary": {
+    "method_ranking": [
+      "iti",
+      "lr_probe",
+      "mm_probe",
+      "pca_lr",
+      "kb_mlp",
+      "attn_satisfies",
+      "sep",
+      "step"
+    ],
+    "best_single": 0.8740215386719504,
+    "ladder": [
+      {
+        "n_methods": 1,
+        "methods": [
+          "iti"
+        ],
+        "added": "iti",
+        "added_standalone": 0.874,
+        "fusion_auroc": 0.8918,
+        "delta_vs_best_single": 0.0178,
+        "delta_pct": "+1.78%",
+        "time_seconds": 142.3,
+        "incremental_gain": null
+      },
+      {
+        "n_methods": 2,
+        "methods": [
+          "iti",
+          "lr_probe"
+        ],
+        "added": "lr_probe",
+        "added_standalone": 0.8492,
+        "fusion_auroc": 0.8938,
+        "delta_vs_best_single": 0.0198,
+        "delta_pct": "+1.98%",
+        "time_seconds": 258.6,
+        "incremental_gain": 0.002
+      },
+      {
+        "n_methods": 3,
+        "methods": [
+          "iti",
+          "lr_probe",
+          "mm_probe"
+        ],
+        "added": "mm_probe",
+        "added_standalone": 0.8538,
+        "fusion_auroc": 0.8928,
+        "delta_vs_best_single": 0.0188,
+        "delta_pct": "+1.88%",
+        "time_seconds": 402.1,
+        "incremental_gain": -0.001
+      },
+      {
+        "n_methods": 4,
+        "methods": [
+          "iti",
+          "lr_probe",
+          "mm_probe",
+          "pca_lr"
+        ],
+        "added": "pca_lr",
+        "added_standalone": 0.8391,
+        "fusion_auroc": 0.8942,
+        "delta_vs_best_single": 0.0202,
+        "delta_pct": "+2.02%",
+        "time_seconds": 506.4,
+        "incremental_gain": 0.0014
+      },
+      {
+        "n_methods": 5,
+        "methods": [
+          "iti",
+          "lr_probe",
+          "mm_probe",
+          "pca_lr",
+          "kb_mlp"
+        ],
+        "added": "kb_mlp",
+        "added_standalone": 0.8457,
+        "fusion_auroc": 0.8944,
+        "delta_vs_best_single": 0.0204,
+        "delta_pct": "+2.04%",
+        "time_seconds": 632.8,
+        "incremental_gain": 0.0002
+      },
+      {
+        "n_methods": 6,
+        "methods": [
+          "iti",
+          "lr_probe",
+          "mm_probe",
+          "pca_lr",
+          "kb_mlp",
+          "attn_satisfies"
+        ],
+        "added": "attn_satisfies",
+        "added_standalone": 0.7982,
+        "fusion_auroc": 0.8956,
+        "delta_vs_best_single": 0.0216,
+        "delta_pct": "+2.16%",
+        "time_seconds": 752.4,
+        "incremental_gain": 0.0012
+      },
+      {
+        "n_methods": 7,
+        "methods": [
+          "iti",
+          "lr_probe",
+          "mm_probe",
+          "pca_lr",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep"
+        ],
+        "added": "sep",
+        "added_standalone": 0.6763,
+        "fusion_auroc": 0.8957,
+        "delta_vs_best_single": 0.0217,
+        "delta_pct": "+2.17%",
+        "time_seconds": 868.2,
+        "incremental_gain": 0.0001
+      },
+      {
+        "n_methods": 8,
+        "methods": [
+          "iti",
+          "lr_probe",
+          "mm_probe",
+          "pca_lr",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ],
+        "added": "step",
+        "added_standalone": 0.6974,
+        "fusion_auroc": 0.8948,
+        "delta_vs_best_single": 0.0208,
+        "delta_pct": "+2.08%",
+        "time_seconds": 1002.8,
+        "incremental_gain": -0.0009
+      }
+    ]
+  }
+}

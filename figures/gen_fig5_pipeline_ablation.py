@@ -1,21 +1,20 @@
-"""Figure 5: Pipeline ablation — average delta across 5 datasets, sorted."""
+"""Pipeline ablation: average delta across 5 datasets, sorted."""
 import json
 import os
 import sys
 sys.path.insert(0, os.path.dirname(__file__))
 import numpy as np
 import matplotlib.pyplot as plt
-from paper_plot_style import setup_style, COLORS
+from paper_plot_style import setup_style
 
 setup_style()
 
-DATA = "/home/junyi/NIPS2026/fusion/results/pipeline_ablation.json"
+DATA = "/home/junyi/NIPS2026/fusion/results/qwen2.5-7b/pipeline_ablation.json"
 OUT = "/home/junyi/NIPS2026/figures/fig5_pipeline_ablation"
 
 with open(DATA) as f:
     data = json.load(f)
 
-# Pretty config labels
 LABELS = {
     "full":              "Full (Ours)",
     "pca128_only":       "PCA(128) only",
@@ -33,7 +32,6 @@ LABELS = {
     "et_expert_only":    "ET Expert only",
 }
 
-# Compute avg delta per config
 configs = list(LABELS.keys())
 avg_deltas = {}
 for cfg in configs:
@@ -41,32 +39,41 @@ for cfg in configs:
     for ds, cfgs in data.items():
         if cfg in cfgs and cfgs[cfg]["delta"] is not None:
             deltas.append(cfgs[cfg]["delta"])
-    avg_deltas[cfg] = np.mean(deltas) * 100  # to %
+    avg_deltas[cfg] = np.mean(deltas) * 100
 
-# Sort by delta descending
 sorted_cfgs = sorted(configs, key=lambda c: -avg_deltas[c])
-
 names = [LABELS[c] for c in sorted_cfgs]
 vals = [avg_deltas[c] for c in sorted_cfgs]
-colors_bar = [COLORS[3] if c == "full" else COLORS[0] for c in sorted_cfgs]
 
-fig, ax = plt.subplots(figsize=(6.8, 5.2))
-y = np.arange(len(names))[::-1]  # top = best
-bars = ax.barh(y, vals, color=colors_bar, edgecolor='white', linewidth=0.6, height=0.7)
+highlight = '#E07A3E'
+neutral = '#6B90C6'
+colors_bar = [highlight if c == "full" else neutral for c in sorted_cfgs]
 
-# Annotate values
+fig, ax = plt.subplots(figsize=(5.2, 3.4))
+y = np.arange(len(names))[::-1]
+ax.barh(y, vals, color=colors_bar, edgecolor='white', linewidth=0.7, height=0.72)
+
+xmax = max(vals) * 1.22
 for i, v in enumerate(vals):
-    ax.text(v + 0.04, y[i], f"+{v:.2f}", va='center', ha='left', fontsize=11)
+    ax.text(v + xmax * 0.012, y[i], f"+{v:.2f}",
+            va='center', ha='left', fontsize=8,
+            color='#1a1a1a')
 
 ax.set_yticks(y)
-ax.set_yticklabels(names)
-ax.set_xlabel("Avg. Δ AUROC vs Best Single (%)")
-ax.set_xlim(0, max(vals) * 1.18)
+ax.set_yticklabels(names, fontsize=8.5)
+ax.set_xlabel(r"Avg. $\Delta$ AUROC vs. best single (%)", fontsize=9)
+ax.tick_params(axis='x', labelsize=8)
+ax.set_xlim(0, xmax)
 
-# Reference line at full
 full_val = avg_deltas["full"]
-ax.axvline(x=full_val, color=COLORS[3], linestyle=':', linewidth=1.2, alpha=0.6)
+ax.axvline(x=full_val, color=highlight, linestyle=':',
+           linewidth=1.0, alpha=0.7)
 
+ax.grid(True, axis='x', linestyle='--', linewidth=0.5,
+        color='#BBBBBB', alpha=0.5)
+ax.set_axisbelow(True)
+
+plt.tight_layout(pad=0.2)
 plt.savefig(f"{OUT}.pdf")
 plt.savefig(f"{OUT}.png")
 print(f"Saved {OUT}.pdf and .png")

@@ -28,4 +28,23 @@ run_*.sh
 # Logs
 *.err
 *.out
+*.log
 reproduce/__pycache__/
+
+# Claude Code local state
+.claude/
+
+# LaTeX / slides build artifacts
+*.aux
+*.toc
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Paper / slides / paper-plan (tracked separately, not in main repo)
+paper/
+PAPER_PLAN.md
+slides/figures/
+Formatting_Instructions_For_NeurIPS_2026/

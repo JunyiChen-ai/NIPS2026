@@ -1,0 +1,37 @@
+{
+  "common_claim_3class": {
+    "best_single": 0.7712,
+    "score_avg": 0.7652,
+    "score_avg_delta": "-0.60%",
+    "lr_on_preds": 0.7733,
+    "lr_on_preds_delta": "+0.21%"
+  },
+  "e2h_amc_3class": {
+    "best_single": 0.8937,
+    "score_avg": 0.8999,
+    "score_avg_delta": "+0.62%",
+    "lr_on_preds": 0.9062,
+    "lr_on_preds_delta": "+1.25%"
+  },
+  "e2h_amc_5class": {
+    "best_single": 0.876,
+    "score_avg": 0.8847,
+    "score_avg_delta": "+0.87%",
+    "lr_on_preds": 0.8866,
+    "lr_on_preds_delta": "+1.06%"
+  },
+  "when2call_3class": {
+    "best_single": 0.864,
+    "score_avg": 0.8444,
+    "score_avg_delta": "-1.97%",
+    "lr_on_preds": 0.8525,
+    "lr_on_preds_delta": "-1.15%"
+  },
+  "ragtruth_binary": {
+    "best_single": 0.8804,
+    "score_avg": 0.8585,
+    "score_avg_delta": "-2.20%",
+    "lr_on_preds": 0.8873,
+    "lr_on_preds_delta": "+0.69%"
+  }
+}
