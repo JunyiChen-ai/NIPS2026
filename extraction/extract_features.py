@@ -346,9 +346,23 @@ class FeatureExtractor:
     # Batched extraction
     # ----------------------------------------------------------
     @torch.inference_mode()
-    def extract_batch(self, texts):
-        """Extract features for a batch of texts."""
+    def extract_batch(self, texts, instruction=None):
+        """Extract features for a batch of texts.
+
+        If `instruction` is provided, wrap each text as a user turn via the
+        tokenizer's chat template (for Instruct-tuned models). Otherwise use
+        raw continuation-mode tokenization (legacy behavior for Phase 1/2).
+        """
         B = len(texts)
+
+        if instruction:
+            texts = [
+                self.tokenizer.apply_chat_template(
+                    [{"role": "user", "content": f"{instruction}\n\n{t}"}],
+                    tokenize=False, add_generation_prompt=True,
+                )
+                for t in texts
+            ]
 
         # Tokenize with left-padding
         batch = self.tokenizer(
