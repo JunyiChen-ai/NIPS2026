@@ -21,7 +21,8 @@ __pycache__/
 *.h5
 *.xlsx
 
-# SLURM / run scripts
+# SLURM / run scripts (cluster-local infrastructure, not portable across machines)
+slurm/
 *.slurm
 run_*.sh
 
