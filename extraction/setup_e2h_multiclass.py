@@ -13,18 +13,19 @@ New label source: e2h_amc_3class/ and e2h_amc_5class/ JSONL files
 
 import os
 import json
+import argparse
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-FEATURES_DIR = "/data/jehc223/NIPS2026/extraction/features"
-DATASETS_DIR = "/data/jehc223/NIPS2026/datasets/reasoning_difficulty"
+DEFAULT_FEATURES_DIR = "/data/jehc223/NIPS2026/extraction/features"
+DEFAULT_DATASETS_DIR = "/data/jehc223/NIPS2026/datasets/reasoning_difficulty"
 SEED = 42
 
 
-def load_class_labels(variant):
+def load_class_labels(datasets_dir, variant):
     """Load class_label from e2h_amc_{variant} JSONL, keyed by problem text prefix."""
     labels = {}
-    base = os.path.join(DATASETS_DIR, f"e2h_amc_{variant}")
+    base = os.path.join(datasets_dir, f"e2h_amc_{variant}")
     for split in ["train", "eval"]:
         path = os.path.join(base, f"{split}.jsonl")
         with open(path) as f:
@@ -35,12 +36,12 @@ def load_class_labels(variant):
     return labels
 
 
-def setup_variant(variant):
+def setup_variant(features_dir, datasets_dir, variant):
     """Create e2h_amc_{variant}/ with symlinks + new meta.json for each split."""
     print(f"\nSetting up e2h_amc_{variant}")
-    class_labels = load_class_labels(variant)
-    src_base = os.path.join(FEATURES_DIR, "easy2hard_amc")
-    dst_base = os.path.join(FEATURES_DIR, f"e2h_amc_{variant}")
+    class_labels = load_class_labels(datasets_dir, variant)
+    src_base = os.path.join(features_dir, "easy2hard_amc")
+    dst_base = os.path.join(features_dir, f"e2h_amc_{variant}")
 
     # Process train and eval splits (which have extracted features)
     for split in ["train", "eval"]:
@@ -152,8 +153,17 @@ def setup_variant(variant):
 
 
 def main():
-    setup_variant("3class")
-    setup_variant("5class")
+    parser = argparse.ArgumentParser(
+        description="Set up E2H AMC 3-class and 5-class feature directories."
+    )
+    parser.add_argument("--features_dir", type=str, default=DEFAULT_FEATURES_DIR,
+                        help="Directory containing extracted features")
+    parser.add_argument("--datasets_dir", type=str, default=DEFAULT_DATASETS_DIR,
+                        help="Directory containing e2h_amc_3class/5class JSONL files")
+    args = parser.parse_args()
+
+    setup_variant(args.features_dir, args.datasets_dir, "3class")
+    setup_variant(args.features_dir, args.datasets_dir, "5class")
     print("\nDone!")
 
 

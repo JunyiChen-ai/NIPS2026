@@ -9,7 +9,9 @@ Usage:
 import os, json, argparse
 from collections import OrderedDict
 
-BASE_RESULTS = "/home/junyi/NIPS2026/fusion/results"
+from pathlib import Path as _Path
+_REPO_ROOT = _Path(__file__).resolve().parents[1]
+BASE_RESULTS = str(_REPO_ROOT / "fusion" / "results")
 DEFAULT_MODELS = ["qwen2.5-7b", "llama3.1-8b", "mistral-7b-v0.3"]
 DATASETS = ["common_claim_3class", "e2h_amc_3class", "e2h_amc_5class",
             "when2call_3class", "ragtruth_binary", "fava_binary"]

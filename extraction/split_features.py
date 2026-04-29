@@ -16,13 +16,14 @@ only include the samples in that split.
 
 import os
 import json
+import argparse
 import torch
 import numpy as np
 
-FEATURES_DIR = "/data/jehc223/NIPS2026/extraction/features"
-PREPARED_DIR = "/data/jehc223/NIPS2026/datasets_prepared"
+DEFAULT_FEATURES_DIR = "/data/jehc223/NIPS2026/extraction/features"
+DEFAULT_PREPARED_DIR = "/data/jehc223/NIPS2026/datasets_prepared"
 
-DATASETS = [
+DEFAULT_DATASETS = [
     "common_claim_3class",
     "when2call_3class",
     "fava",
@@ -49,10 +50,10 @@ JSON_FIELDS = [
 ]
 
 
-def slice_and_save(dataset, split_name, indices):
+def slice_and_save(features_dir, dataset, split_name, indices):
     """Slice features from 'all' directory by indices and save to split directory."""
-    all_dir = os.path.join(FEATURES_DIR, dataset, "all")
-    split_dir = os.path.join(FEATURES_DIR, dataset, split_name)
+    all_dir = os.path.join(features_dir, dataset, "all")
+    split_dir = os.path.join(features_dir, dataset, split_name)
     os.makedirs(split_dir, exist_ok=True)
     idx = np.array(sorted(indices))
 
@@ -111,22 +112,36 @@ def slice_and_save(dataset, split_name, indices):
 
 
 def main():
-    for dataset in DATASETS:
+    parser = argparse.ArgumentParser(
+        description="Split extracted features from 'all' into train/val/test."
+    )
+    parser.add_argument("--features_dir", type=str, default=DEFAULT_FEATURES_DIR,
+                        help="Directory containing extracted features")
+    parser.add_argument("--prepared_dir", type=str, default=DEFAULT_PREPARED_DIR,
+                        help="Directory containing split_indices.json files")
+    parser.add_argument("--datasets", type=str, default=None,
+                        help="Comma-separated dataset names (default: all Phase 2)")
+    args = parser.parse_args()
+
+    datasets = (
+        [d.strip() for d in args.datasets.split(",")]
+        if args.datasets else DEFAULT_DATASETS
+    )
+
+    for dataset in datasets:
         print(f"\nSplitting {dataset}")
 
-        # Load split indices
-        indices_path = os.path.join(PREPARED_DIR, dataset, "split_indices.json")
+        indices_path = os.path.join(args.prepared_dir, dataset, "split_indices.json")
         with open(indices_path) as f:
             splits = json.load(f)
 
-        # Verify all dir exists
-        all_dir = os.path.join(FEATURES_DIR, dataset, "all")
+        all_dir = os.path.join(args.features_dir, dataset, "all")
         if not os.path.exists(os.path.join(all_dir, "meta.json")):
             print(f"  Skipping (features/all not extracted yet)")
             continue
 
         for split_name, indices in splits.items():
-            slice_and_save(dataset, split_name, indices)
+            slice_and_save(args.features_dir, dataset, split_name, indices)
 
     print("\nDone!")
 

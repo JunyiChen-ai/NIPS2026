@@ -15,6 +15,7 @@ Saves train, val, and test features so they can be used for analysis.
 
 import os
 import json
+import argparse
 import torch
 import numpy as np
 from sklearn.preprocessing import StandardScaler
@@ -29,9 +30,8 @@ from methods import (
     seakr_energy_score,
 )
 
-FEATURES_DIR = "/data/jehc223/NIPS2026/extraction/features"
-OUTPUT_DIR = "/data/jehc223/NIPS2026/reproduce/processed_features"
-HIDDEN_DIM = 3584
+DEFAULT_FEATURES_DIR = "/data/jehc223/NIPS2026/extraction/features"
+DEFAULT_OUTPUT_DIR = "/data/jehc223/NIPS2026/reproduce/processed_features"
 
 # Same dataset configs as run_new_datasets.py
 DATASETS = {
@@ -49,8 +49,8 @@ FEATURE_ALIAS = {
 }
 
 
-def load_split(dataset, split):
-    split_dir = os.path.join(FEATURES_DIR, dataset, split)
+def load_split(features_dir, dataset, split):
+    split_dir = os.path.join(features_dir, dataset, split)
     data = {}
     for name in ["input_last_token_hidden", "input_mean_pool_hidden",
                  "input_per_head_activation", "input_attn_stats",
@@ -72,8 +72,13 @@ def load_split(dataset, split):
     return data
 
 
+# Module-level config set by main() via argparse
+_FEATURES_DIR = DEFAULT_FEATURES_DIR
+_OUTPUT_DIR = DEFAULT_OUTPUT_DIR
+
+
 def save_feat(dataset, method, split_name, tensor):
-    out_dir = os.path.join(OUTPUT_DIR, dataset, method)
+    out_dir = os.path.join(_OUTPUT_DIR, dataset, method)
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, f"{split_name}.pt")
     if isinstance(tensor, np.ndarray):
@@ -82,7 +87,7 @@ def save_feat(dataset, method, split_name, tensor):
 
 
 def save_meta(dataset, method, meta_dict):
-    out_dir = os.path.join(OUTPUT_DIR, dataset, method)
+    out_dir = os.path.join(_OUTPUT_DIR, dataset, method)
     os.makedirs(out_dir, exist_ok=True)
     with open(os.path.join(out_dir, "meta.json"), "w") as f:
         json.dump(meta_dict, f, indent=2)
@@ -230,6 +235,7 @@ def process_lid(train, val, test, n_classes, dataset):
     if n_classes > 2:
         print(f"    lid: skipped (multi-class)")
         return
+    hidden_dim = train["input_last_token_hidden"].shape[-1]
     tr_labels = np.array(train["labels"])
     va_labels = np.array(val["labels"])
     n_layers = train["input_last_token_hidden"].shape[1]
@@ -241,7 +247,7 @@ def process_lid(train, val, test, n_classes, dataset):
         k = len(ref_acts) - 1
         if k < 2:
             continue
-        lids = compute_lid(ref_acts, va_acts, k=k, hidden_dim=HIDDEN_DIM)
+        lids = compute_lid(ref_acts, va_acts, k=k, hidden_dim=hidden_dim)
         auroc_pos = roc_auc_score(va_labels, lids)
         auroc_neg = roc_auc_score(va_labels, -lids)
         m = max(auroc_pos, auroc_neg)
@@ -252,7 +258,7 @@ def process_lid(train, val, test, n_classes, dataset):
     k = len(ref_acts) - 1
     for split_name, data in [("train", train), ("val", val), ("test", test)]:
         acts = data["input_last_token_hidden"][:, best_layer, :]
-        scores = compute_lid(ref_acts, acts, k=k, hidden_dim=HIDDEN_DIM)
+        scores = compute_lid(ref_acts, acts, k=k, hidden_dim=hidden_dim)
         save_feat(dataset, "lid", split_name, torch.tensor(scores, dtype=torch.float32))
     save_meta(dataset, "lid", {"best_layer": best_layer, "shape": "N", "desc": "LID score (scalar per sample)"})
     print(f"    lid: layer={best_layer}")
@@ -375,16 +381,29 @@ PROCESSORS = {
 
 
 def main():
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    global _FEATURES_DIR, _OUTPUT_DIR
+
+    parser = argparse.ArgumentParser(
+        description="Save processed feature vectors for each baseline method."
+    )
+    parser.add_argument("--features_dir", type=str, default=DEFAULT_FEATURES_DIR,
+                        help="Directory containing raw extracted features")
+    parser.add_argument("--output_dir", type=str, default=DEFAULT_OUTPUT_DIR,
+                        help="Output directory for processed features")
+    args = parser.parse_args()
+
+    _FEATURES_DIR = args.features_dir
+    _OUTPUT_DIR = args.output_dir
+    os.makedirs(_OUTPUT_DIR, exist_ok=True)
 
     for dataset, (train_split, val_split, test_split, n_classes, task_type) in DATASETS.items():
         print(f"\n{'='*60}")
         print(f"Dataset: {dataset} ({task_type}, {n_classes} classes)")
 
         feat_name = FEATURE_ALIAS.get(dataset, dataset)
-        train = load_split(feat_name, train_split)
-        val = load_split(feat_name, val_split)
-        test = load_split(feat_name, test_split)
+        train = load_split(_FEATURES_DIR, feat_name, train_split)
+        val = load_split(_FEATURES_DIR, feat_name, val_split)
+        test = load_split(_FEATURES_DIR, feat_name, test_split)
         print(f"  Train: {len(train['labels'])}, Val: {len(val['labels'])}, Test: {len(test['labels'])}")
 
         for method_name, processor in PROCESSORS.items():
@@ -393,7 +412,7 @@ def main():
             except Exception as e:
                 print(f"    {method_name}: ERROR {e}")
 
-    print(f"\nAll done! Output at: {OUTPUT_DIR}")
+    print(f"\nAll done! Output at: {_OUTPUT_DIR}")
 
 
 if __name__ == "__main__":

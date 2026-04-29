@@ -35,9 +35,11 @@ _ap = _argparse.ArgumentParser(add_help=False)
 _ap.add_argument("--model", default="qwen2.5-7b")
 _cli, _ = _ap.parse_known_args()
 _MODEL = _cli.model
-_BASE_PROCESSED = "/home/junyi/NIPS2026/reproduce/processed_features"
-_BASE_EXTRACTION = "/home/junyi/NIPS2026/extraction/features"
-_BASE_RESULTS = "/home/junyi/NIPS2026/fusion/results"
+from pathlib import Path as _Path
+_REPO_ROOT = _Path(__file__).resolve().parents[1]
+_BASE_PROCESSED = str(_REPO_ROOT / "reproduce" / "processed_features")
+_BASE_EXTRACTION = str(_REPO_ROOT / "extraction" / "features")
+_BASE_RESULTS = str(_REPO_ROOT / "fusion" / "results")
 PROCESSED_DIR = os.path.join(_BASE_PROCESSED, _MODEL) if _MODEL else _BASE_PROCESSED
 EXTRACTION_DIR = os.path.join(_BASE_EXTRACTION, _MODEL) if _MODEL else _BASE_EXTRACTION
 RESULTS_DIR = os.path.join(_BASE_RESULTS, _MODEL) if _MODEL else _BASE_RESULTS

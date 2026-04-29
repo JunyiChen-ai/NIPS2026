@@ -2,6 +2,7 @@
 datasets/
 extraction/data/
 extraction/features/
+extraction/hf_cache/
 extraction/logs/
 extraction/__pycache__/
 reproduce/processed_features/

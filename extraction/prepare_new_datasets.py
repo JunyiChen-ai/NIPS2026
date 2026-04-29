@@ -288,13 +288,199 @@ def prepare_ragtruth():
     save_dataset(name, all_samples, idx_train, idx_val, idx_test)
 
 
+# ============================================================
+# New QA datasets: {gsm8k, math, commonsenseqa, theoremqa, mmlu, belebele}
+# Each pulls from the test set of its source, stores gold_answer, 70/10/20 split.
+# ============================================================
+def _random_split_70_10_20(n):
+    """Return (idx_train, idx_val, idx_test) as np arrays — no stratification."""
+    idx_all = np.arange(n)
+    idx_trainval, idx_test = train_test_split(idx_all, test_size=0.2, random_state=SEED)
+    idx_train, idx_val = train_test_split(idx_trainval, test_size=0.125, random_state=SEED)
+    return idx_train, idx_val, idx_test
+
+
+def _stratified_split_70_10_20(n, labels):
+    idx_all = np.arange(n)
+    idx_trainval, idx_test = train_test_split(
+        idx_all, test_size=0.2, stratify=labels, random_state=SEED)
+    labels_tv = [labels[i] for i in idx_trainval]
+    idx_train, idx_val = train_test_split(
+        idx_trainval, test_size=0.125, stratify=labels_tv, random_state=SEED)
+    return idx_train, idx_val, idx_test
+
+
+def prepare_gsm8k():
+    """GSM8K test set (6140). text=question, label=0 (placeholder),
+    gold_answer=final numeric answer after '####'."""
+    name = "gsm8k"
+    print(f"\n{'='*60}\nPreparing {name}")
+    src = os.path.join(BASE, "datasets/reasoning_math/gsm8k/test.csv")
+
+    samples = []
+    with open(src) as f:
+        for row in csv.DictReader(f):
+            q = row["question"]
+            ans = row["answer"]
+            if "####" in ans:
+                gold = ans.split("####")[-1].strip().replace(",", "")
+            else:
+                gold = ans.strip()
+            samples.append({"text": q, "label": 0, "gold_answer": gold})
+
+    print(f"  Loaded: {len(samples)} samples")
+    idx_train, idx_val, idx_test = _random_split_70_10_20(len(samples))
+    save_dataset(name, samples, idx_train, idx_val, idx_test)
+
+
+def prepare_math():
+    """MATH test (5000). text=en, label=0, gold_answer=answer string (can be fraction/expr)."""
+    name = "math"
+    print(f"\n{'='*60}\nPreparing {name}")
+    src = os.path.join(BASE, "datasets/reasoning_math/chain_of_embedding/math/test.jsonl")
+
+    samples = []
+    with open(src) as f:
+        for line in f:
+            d = json.loads(line)
+            samples.append({"text": d["en"], "label": 0, "gold_answer": str(d["answer"])})
+
+    print(f"  Loaded: {len(samples)} samples")
+    idx_train, idx_val, idx_test = _random_split_70_10_20(len(samples))
+    save_dataset(name, samples, idx_train, idx_val, idx_test)
+
+
+def prepare_commonsenseqa():
+    """CommonsenseQA test (1221). text=en (question + choices),
+    label=int 0..4 from letter A-E, gold_answer=letter."""
+    name = "commonsenseqa"
+    print(f"\n{'='*60}\nPreparing {name}")
+    src = os.path.join(BASE, "datasets/reasoning_math/chain_of_embedding/commonsenseqa/test.jsonl")
+
+    samples = []
+    with open(src) as f:
+        for line in f:
+            d = json.loads(line)
+            letter = str(d["answer"]).strip().upper()
+            label = ord(letter) - ord("A") if letter and letter[0] in "ABCDE" else 0
+            samples.append({"text": d["en"], "label": int(label), "gold_answer": letter})
+
+    print(f"  Loaded: {len(samples)} samples, labels: {Counter(s['label'] for s in samples)}")
+    labels = [s["label"] for s in samples]
+    idx_train, idx_val, idx_test = _stratified_split_70_10_20(len(samples), labels)
+    save_dataset(name, samples, idx_train, idx_val, idx_test)
+
+
+def prepare_theoremqa():
+    """TheoremQA test (800). text=en, label=0 (answers are heterogeneous: float/list/str),
+    gold_answer=str(answer)."""
+    name = "theoremqa"
+    print(f"\n{'='*60}\nPreparing {name}")
+    src = os.path.join(BASE, "datasets/reasoning_math/chain_of_embedding/theoremqa/test.jsonl")
+
+    samples = []
+    with open(src) as f:
+        for line in f:
+            d = json.loads(line)
+            samples.append({"text": d["en"], "label": 0, "gold_answer": str(d["answer"])})
+
+    print(f"  Loaded: {len(samples)} samples")
+    idx_train, idx_val, idx_test = _random_split_70_10_20(len(samples))
+    save_dataset(name, samples, idx_train, idx_val, idx_test)
+
+
+def prepare_mmlu():
+    """MMLU: download cais/mmlu 'all' test (14042) via HuggingFace, apply the local
+    indices file (datasets/knowledge_factual/mmlu_indices/test.jsonl, 3511 indices)
+    to curate the pool, then 70/10/20 stratified on choice idx.
+
+    Format text to match CSQA/Belebele style: "Question: ...\\nChoices:\\n(A) ...\\n..."
+    """
+    name = "mmlu"
+    print(f"\n{'='*60}\nPreparing {name}")
+    idx_path = os.path.join(BASE, "datasets/knowledge_factual/mmlu_indices/test.jsonl")
+    with open(idx_path) as f:
+        indices = [int(line.strip()) for line in f if line.strip()]
+    print(f"  Loaded {len(indices)} local indices (max={max(indices)})")
+
+    from datasets import load_dataset
+    print("  Downloading cais/mmlu 'all' test via HuggingFace…")
+    ds = load_dataset("cais/mmlu", "all", split="test")
+    print(f"  Full HF test: {len(ds)} rows")
+    if max(indices) >= len(ds):
+        raise RuntimeError(
+            f"Index {max(indices)} out of range for HF mmlu test size {len(ds)}")
+
+    letters = "ABCDE"
+    samples = []
+    for idx in indices:
+        row = ds[int(idx)]
+        q = row["question"]
+        choices = row["choices"]
+        ans = int(row["answer"])
+        choices_block = "\n".join(f"({letters[i]}) {c}" for i, c in enumerate(choices))
+        text = f"Question: {q}\nChoices:\n{choices_block}"
+        samples.append({
+            "text": text,
+            "label": ans,
+            "gold_answer": letters[ans],
+        })
+
+    print(f"  Prepared: {len(samples)} samples, labels: {Counter(s['label'] for s in samples)}")
+    labels = [s["label"] for s in samples]
+    idx_train, idx_val, idx_test = _stratified_split_70_10_20(len(samples), labels)
+    save_dataset(name, samples, idx_train, idx_val, idx_test)
+
+
+def prepare_belebele():
+    """Belebele test (900). text=en, label=int 0..3 from '1'..'4' (1-indexed→0-indexed),
+    gold_answer=raw string from source."""
+    name = "belebele"
+    print(f"\n{'='*60}\nPreparing {name}")
+    src = os.path.join(BASE, "datasets/multilingual/chain_of_embedding/belebele/test.jsonl")
+
+    samples = []
+    with open(src) as f:
+        for line in f:
+            d = json.loads(line)
+            raw = str(d["answer"]).strip()
+            label = int(raw) - 1 if raw.isdigit() else 0  # 1-indexed → 0-indexed
+            samples.append({"text": d["en"], "label": label, "gold_answer": raw})
+
+    print(f"  Loaded: {len(samples)} samples, labels: {Counter(s['label'] for s in samples)}")
+    labels = [s["label"] for s in samples]
+    idx_train, idx_val, idx_test = _stratified_split_70_10_20(len(samples), labels)
+    save_dataset(name, samples, idx_train, idx_val, idx_test)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
-    prepare_common_claim()
-    prepare_when2call()
-    prepare_fava()
-    prepare_ragtruth()
-    print(f"\nAll done. Output at: {OUT}")
+    import sys
+    available = {
+        "common_claim": prepare_common_claim,
+        "when2call": prepare_when2call,
+        "fava": prepare_fava,
+        "ragtruth": prepare_ragtruth,
+        "gsm8k": prepare_gsm8k,
+        "math": prepare_math,
+        "commonsenseqa": prepare_commonsenseqa,
+        "theoremqa": prepare_theoremqa,
+        "mmlu": prepare_mmlu,
+        "belebele": prepare_belebele,
+    }
+    # CLI: `python prepare_new_datasets.py gsm8k,math,...` — comma list or empty=all
+    args = sys.argv[1:]
+    if args:
+        requested = [n.strip() for n in args[0].split(",")]
+        for n in requested:
+            if n not in available:
+                raise ValueError(f"Unknown dataset: {n}. Available: {list(available)}")
+        to_run = requested
+    else:
+        to_run = list(available)
+    for n in to_run:
+        available[n]()
+    print(f"\nAll done ({len(to_run)} datasets). Output at: {OUT}")
 
 
 if __name__ == "__main__":

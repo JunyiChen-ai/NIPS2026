@@ -19,9 +19,11 @@ from sklearn.metrics import roc_auc_score
 
 warnings.filterwarnings("ignore")
 
-BASE_PROCESSED = "/home/junyi/NIPS2026/reproduce/processed_features"
-BASE_EXTRACTION = "/home/junyi/NIPS2026/extraction/features"
-BASE_RESULTS = "/home/junyi/NIPS2026/fusion/results"
+from pathlib import Path as _Path
+_REPO_ROOT = _Path(__file__).resolve().parents[1]
+BASE_PROCESSED = str(_REPO_ROOT / "reproduce" / "processed_features")
+BASE_EXTRACTION = str(_REPO_ROOT / "extraction" / "features")
+BASE_RESULTS = str(_REPO_ROOT / "fusion" / "results")
 
 MC_METHODS = ["lr_probe", "pca_lr", "iti", "kb_mlp", "attn_satisfies", "sep", "step"]
 BIN_EXTRA = ["mm_probe", "lid", "llm_check", "seakr"]

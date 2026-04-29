@@ -5,11 +5,12 @@
 
 set -u
 MODEL="${1:-qwen2.5-7b}"
-PY=/home/junyi/miniconda3/envs/WWW/bin/python
-LOG_DIR=/home/junyi/NIPS2026/fusion/results/$MODEL/logs
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PY="${PY_BIN:-python}"
+LOG_DIR="$REPO_ROOT/fusion/results/$MODEL/logs"
 mkdir -p "$LOG_DIR"
 
-cd /home/junyi/NIPS2026
+cd "$REPO_ROOT"
 
 run() {
     local name=$1 ; shift
@@ -38,4 +39,4 @@ run exp4  $PY -u fusion/exp4_pipeline_ablation.py --model $MODEL
 
 echo
 echo "=== Done: $MODEL ==="
-ls -la /home/junyi/NIPS2026/fusion/results/$MODEL/*.json
+ls -la "$REPO_ROOT/fusion/results/$MODEL"/*.json
