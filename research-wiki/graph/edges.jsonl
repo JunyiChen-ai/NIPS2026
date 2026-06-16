@@ -1,0 +1,68 @@
+{"from": "idea:001", "to": "paper:unifact2025", "type": "inspired_by", "evidence": "UniFact: no paradigm dominates, hybrid strongest -> motivates expert-library stacking"}
+{"from": "idea:001", "to": "paper:han2024_fusemoe", "type": "inspired_by", "evidence": "Borrows sparse-MoE / heterogeneous-expert framing"}
+{"from": "idea:001", "to": "paper:yun2024_flex_moe", "type": "inspired_by", "evidence": "Arbitrary modality (probe) combination idea"}
+{"from": "idea:001", "to": "paper:hemker2024_healnet", "type": "inspired_by", "evidence": "Hybrid fusion of heterogeneous sources; modality-collapse risk"}
+{"from": "idea:002", "to": "paper:unifact2025", "type": "inspired_by", "evidence": "Hybrid-strongest result reframed as a scaffold"}
+{"from": "idea:002", "to": "paper:sriramanan2024_llm_check", "type": "inspired_by", "evidence": "Differentiation: LLM-Check reads 3 sources but does NO learned fusion"}
+{"from": "idea:002", "to": "paper:ghadiri2025_gnosis", "type": "inspired_by", "evidence": "Differentiation: Gnosis learns fusion but only 2 sources, backbone-bound"}
+{"from": "idea:002", "to": "paper:halunet2025", "type": "inspired_by", "evidence": "Differentiation: HaluNet learns fusion but output-side only, QA only"}
+{"from": "idea:002", "to": "paper:du2024_haloscope", "type": "inspired_by", "evidence": "HaloScope plugged into the scaffold as a new probe (extensibility demo)"}
+{"from": "idea:001", "to": "gap:G1", "type": "addresses_gap", "evidence": "Fuses heterogeneous probe outputs"}
+{"from": "idea:002", "to": "gap:G1", "type": "addresses_gap", "evidence": "Generic adapter absorbs any probe's features"}
+{"from": "idea:002", "to": "gap:G3", "type": "addresses_gap", "evidence": "Validated across 3 models x both settings"}
+{"from": "idea:002", "to": "gap:G4", "type": "addresses_gap", "evidence": "Scaffold absorbs probes fragmented by timing x target-semantics"}
+{"from": "paper:unifact2025", "to": "gap:G3", "type": "addresses_gap", "evidence": "Identifies that no single paradigm dominates; provides no method"}
+{"from": "paper:orgad2024_llms_know_more", "to": "gap:G2", "type": "addresses_gap", "evidence": "Truthfulness signal concentrates on exact-answer tokens -> position matters"}
+{"from": "paper:niu2025_hami", "to": "gap:G2", "type": "addresses_gap", "evidence": "Learns the best probe position via MIL"}
+{"from": "paper:niu2025_hami", "to": "paper:orgad2024_llms_know_more", "type": "extends", "evidence": "Operationalizes the position-matters insight as adaptive token selection"}
+{"from": "paper:neural_probe2025_hallucination", "to": "gap:G1", "type": "addresses_gap", "evidence": "Cross-task neural probe but single signal source -> partial"}
+{"from": "paper:clap2025_cross_layer_attention", "to": "gap:G1", "type": "addresses_gap", "evidence": "Cross-layer attention probe but single signal source -> partial"}
+{"from": "paper:wehner2025_repe_survey", "to": "gap:G1", "type": "addresses_gap", "evidence": "Survey confirms no prior work fuses multiple probing methods"}
+{"from": "paper:hallucination_survey2025", "to": "gap:G1", "type": "addresses_gap", "evidence": "Taxonomy of 5 detection families; embedding-based = our residual+attention probes"}
+{"from": "paper:marks2024_geometry_of_truth", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Reproduced as lr_probe + mm_probe"}
+{"from": "paper:azaria2023_saplma", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Reproduced as pca_lr"}
+{"from": "paper:kossen2024_semantic_entropy_probes", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Reproduced as sep"}
+{"from": "paper:yin2024_lid", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Reproduced as lid"}
+{"from": "paper:wang2025_chain_of_embedding", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Reproduced as coe"}
+{"from": "paper:ni2025_knowledge_boundary", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Reproduced as kb_mlp"}
+{"from": "paper:yuksekgonul2024_sat_probe", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Reproduced as attn_satisfies"}
+{"from": "paper:li2023_iti", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Reproduced as iti (detection use)"}
+{"from": "paper:sriramanan2024_llm_check", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Reproduced as llm_check (degraded PPL)"}
+{"from": "paper:step2026_trace_pruning", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Reproduced as step (step->sample aggregation)"}
+{"from": "paper:chen2024_eigenscore_inside", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Partially reproduced; needs 10x sampling"}
+{"from": "paper:yao2025_seakr", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Reproduced as seakr (1-sample energy proxy)"}
+{"from": "paper:du2024_haloscope", "to": "exp:correctness_track", "type": "tested_by", "evidence": "HaloScope features extracted (Qwen) for the scaffold plug-in"}
+{"from": "claim:C1", "to": "exp:baseline_repro", "type": "tested_by", "evidence": "Best-single winner shifts by task/model/setting"}
+{"from": "claim:C2", "to": "exp:exp1_oracle", "type": "tested_by", "evidence": "Per-example oracle headroom 10-21%"}
+{"from": "claim:C3", "to": "exp:v21_fusion", "type": "tested_by", "evidence": "v21 +2.54% avg over best single"}
+{"from": "claim:C4", "to": "exp:exp5_clustering", "type": "tested_by", "evidence": "Ward clusters + near-orthogonal cross-family errors"}
+{"from": "claim:C5", "to": "exp:exp3_loo", "type": "tested_by", "evidence": "LOO contribution is task-dependent"}
+{"from": "claim:C7", "to": "exp:correctness_track", "type": "tested_by", "evidence": "gen-input gap +0.08 (correctness) vs -0.022 (dataset-label)"}
+{"from": "claim:C8", "to": "exp:exp7_scaffold", "type": "tested_by", "evidence": "Scaffold wins both settings"}
+{"from": "exp:baseline_repro", "to": "claim:C1", "type": "supports", "evidence": "No universal probe"}
+{"from": "exp:exp1_oracle", "to": "claim:C1", "type": "supports", "evidence": "Probes err on different examples"}
+{"from": "exp:exp1_oracle", "to": "claim:C2", "type": "supports", "evidence": "10-21% oracle headroom"}
+{"from": "exp:exp1b_oracle_raw", "to": "claim:C2", "type": "supports", "evidence": "Raw views win 43-95% of oracle competitions"}
+{"from": "exp:exp5_clustering", "to": "claim:C4", "type": "supports", "evidence": "Structural complementarity"}
+{"from": "exp:exp3_loo", "to": "claim:C5", "type": "supports", "evidence": "Task-dependent contribution"}
+{"from": "exp:v21_fusion", "to": "claim:C3", "type": "supports", "evidence": "All datasets positive"}
+{"from": "exp:v21_fusion", "to": "claim:C11", "type": "supports", "evidence": "Mean-pool prompt hidden gave biggest MVISF-v2 gain"}
+{"from": "exp:exp7_scaffold", "to": "claim:C3", "type": "supports", "evidence": "+3.10pp / +1.13pp over val-single"}
+{"from": "exp:exp7_scaffold", "to": "claim:C8", "type": "supports", "evidence": "Generalizes across target semantics"}
+{"from": "exp:exp7_scaffold", "to": "claim:C9", "type": "supports", "evidence": "dim64 sweet spot"}
+{"from": "exp:exp7_scaffold", "to": "claim:C10", "type": "supports", "evidence": "margin002 no-regression"}
+{"from": "exp:exp7_scaffold", "to": "claim:C12", "type": "supports", "evidence": "mistral/theoremqa val-test ranking shift documented"}
+{"from": "exp:correctness_track", "to": "claim:C7", "type": "supports", "evidence": "Generation-side dominates correctness"}
+{"from": "exp:correctness_track", "to": "claim:C8", "type": "supports", "evidence": "Scaffold validated on the new setting"}
+{"from": "exp:exp2_probe_ladder", "to": "idea:002", "type": "supports", "evidence": "Gains saturate at k=4-5 -> few experts suffice"}
+{"from": "exp:exp4_pipeline_ablation", "to": "idea:001", "type": "supports", "evidence": "Expert diversity + meta-blend load-bearing; PCA32/enrichment/seeds droppable"}
+{"from": "exp:exp5_clustering", "to": "idea:002", "type": "supports", "evidence": "Family structure grounds family-aware composition"}
+{"from": "exp:exp3_loo", "to": "idea:002", "type": "supports", "evidence": "Task-dependent contribution grounds reliability weighting"}
+{"from": "idea:004", "to": "claim:C6", "type": "supports", "evidence": "493K-param neural fusion -2% to -9% (overfit)"}
+{"from": "idea:003", "to": "claim:C6", "type": "supports", "evidence": "MoE routing too complex for sample sizes"}
+{"from": "idea:005", "to": "claim:C6", "type": "supports", "evidence": "Feature concat all negative (curse of dimensionality)"}
+{"from": "exp:exp4_pipeline_ablation", "to": "claim:C6", "type": "supports", "evidence": "Lower-capacity configs lose nothing"}
+{"from": "idea:002", "to": "idea:001", "type": "supersedes", "evidence": "Lighter scaffold replaces heavy stacking as the headline method"}
+{"from": "idea:002", "to": "idea:004", "type": "supersedes", "evidence": "sklearn scaffold replaces the failed neural fusion branch"}
+{"from": "idea:001", "to": "idea:009", "type": "supersedes", "evidence": "MVISF-v2 superseded layerwise-v3 (added mean-pool, removed bottleneck)"}
+{"from": "idea:001", "to": "idea:008", "type": "supersedes", "evidence": "Removed the view bottleneck"}
