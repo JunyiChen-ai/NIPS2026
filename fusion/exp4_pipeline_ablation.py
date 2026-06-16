@@ -20,33 +20,41 @@ from sklearn.ensemble import HistGradientBoostingClassifier, ExtraTreesClassifie
 
 warnings.filterwarnings("ignore")
 
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 import argparse as _argparse
 _ap = _argparse.ArgumentParser(add_help=False)
 _ap.add_argument("--model", default="qwen2.5-7b")
+_ap.add_argument("--setting", default="old", choices=["old", "new"])
 _cli, _ = _ap.parse_known_args()
 _MODEL = _cli.model
-from pathlib import Path as _Path
-_REPO_ROOT = _Path(__file__).resolve().parents[1]
-_BASE_PROCESSED = str(_REPO_ROOT / "reproduce" / "processed_features")
-_BASE_EXTRACTION = str(_REPO_ROOT / "extraction" / "features")
-_BASE_RESULTS = str(_REPO_ROOT / "fusion" / "results")
-PROCESSED_DIR = os.path.join(_BASE_PROCESSED, _MODEL) if _MODEL else _BASE_PROCESSED
-EXTRACTION_DIR = os.path.join(_BASE_EXTRACTION, _MODEL) if _MODEL else _BASE_EXTRACTION
-RESULTS_DIR = os.path.join(_BASE_RESULTS, _MODEL) if _MODEL else _BASE_RESULTS
+from fusion.settings import get_config as _get_config
+cfg = _get_config(_cli.setting)
+PROCESSED_DIR = str(cfg.base_processed / _MODEL)
+EXTRACTION_DIR = str(cfg.base_extraction / _MODEL)
+RESULTS_DIR = str(cfg.model_results_dir(_MODEL))
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 N_FOLDS = 5
-C_GRID = [1e-3, 1e-2, 1e-1, 1.0, 10.0]
+if cfg.name == "new":
+    C_GRID = [1e-2, 1e-1, 1.0]
+else:
+    C_GRID = [1e-3, 1e-2, 1e-1, 1.0, 10.0]
 
 MC_METHODS = ["lr_probe", "pca_lr", "iti", "kb_mlp", "attn_satisfies", "sep", "step"]
 
-ALL_DATASETS = {
-    "common_claim_3class": {"n_classes": 3, "ext": "common_claim_3class", "train": "train", "val": "val", "test": "test", "best_single": 0.7576},
-    "e2h_amc_3class":      {"n_classes": 3, "ext": "e2h_amc_3class", "train": "train_sub", "val": "val_split", "test": "eval", "best_single": 0.8934},
-    "e2h_amc_5class":      {"n_classes": 5, "ext": "e2h_amc_5class", "train": "train_sub", "val": "val_split", "test": "eval", "best_single": 0.8752},
-    "when2call_3class":    {"n_classes": 3, "ext": "when2call_3class", "train": "train", "val": "val", "test": "test", "best_single": 0.8741},
-    "ragtruth_binary":     {"n_classes": 2, "ext": "ragtruth", "train": "train", "val": "val", "test": "test", "best_single": 0.8808},
+_OLD_BEST_SINGLE = {
+    "common_claim_3class": 0.7576, "e2h_amc_3class": 0.8934, "e2h_amc_5class": 0.8752,
+    "when2call_3class": 0.8741, "ragtruth_binary": 0.8808, "fava_binary": 0.9856,
 }
+ALL_DATASETS = {}
+for _ds, _info in cfg.datasets.items():
+    ALL_DATASETS[_ds] = {
+        "n_classes": _info["n_classes"], "ext": _info["ext"],
+        "train": _info["splits"]["train"], "val": _info["splits"]["val"], "test": _info["splits"]["test"],
+        "best_single": _OLD_BEST_SINGLE.get(_ds, 0.5),
+    }
 
 
 def _patch_best_single(datasets_dict):
@@ -58,9 +66,9 @@ def _patch_best_single(datasets_dict):
     try:
         with open(path) as f:
             oc = json.load(f)
-        for ds, cfg in datasets_dict.items():
+        for ds, ds_cfg in datasets_dict.items():
             if ds in oc and "best_single_auroc" in oc[ds]:
-                cfg["best_single"] = float(oc[ds]["best_single_auroc"])
+                ds_cfg["best_single"] = float(oc[ds]["best_single_auroc"])
     except Exception as e:
         print(f"[WARN] _patch_best_single: {e}, keeping hardcoded values")
     return datasets_dict
@@ -69,27 +77,60 @@ def _patch_best_single(datasets_dict):
 _patch_best_single(ALL_DATASETS)
 
 # Ablation configurations
-ABLATION_CONFIGS = {
-    "full":              {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "blend"},
-    "pca32_only":        {"pca_dims": [32],      "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "blend"},
-    "pca128_only":       {"pca_dims": [128],     "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "blend"},
-    "lr_expert_only":    {"pca_dims": [32, 128], "expert_types": ["lr"],                    "n_seeds": 5, "enrich": True, "meta": "blend"},
-    "gbt_expert_only":   {"pca_dims": [32, 128], "expert_types": ["gbt"],                   "n_seeds": 5, "enrich": True, "meta": "blend"},
-    "et_expert_only":    {"pca_dims": [32, 128], "expert_types": ["et"],                    "n_seeds": 5, "enrich": True, "meta": "blend"},
-    "rf_expert_only":    {"pca_dims": [32, 128], "expert_types": ["rf"],                    "n_seeds": 5, "enrich": True, "meta": "blend"},
-    "tree_experts_only": {"pca_dims": [32, 128], "expert_types": ["gbt", "et", "rf"],       "n_seeds": 5, "enrich": True, "meta": "blend"},
-    "meta_l2_only":      {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "l2"},
-    "meta_l1_only":      {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "l1"},
-    "meta_gbt_only":     {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "gbt"},
-    "no_enrichment":     {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": False, "meta": "blend"},
-    "seed1_only":        {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 1, "enrich": True, "meta": "blend"},
-    "seed3":             {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 3, "enrich": True, "meta": "blend"},
-}
+# In new setting: drop ET/RF (CPU-only, slow on this matrix), use single PCA dim
+# (multi-resolution adds <1% in practice and doubles compute), and reduce seeds.
+# Configs are also pruned to the 7 most informative: full / each expert in
+# isolation / each meta-blender alternative / enrichment / seed sensitivity.
+if cfg.name == "new":
+    ABLATION_CONFIGS = {
+        "full":            {"pca_dims": [128], "expert_types": ["lr", "gbt"], "n_seeds": 2, "enrich": True,  "meta": "blend"},
+        "lr_expert_only":  {"pca_dims": [128], "expert_types": ["lr"],        "n_seeds": 2, "enrich": True,  "meta": "blend"},
+        "gbt_expert_only": {"pca_dims": [128], "expert_types": ["gbt"],       "n_seeds": 2, "enrich": True,  "meta": "blend"},
+        "meta_l2_only":    {"pca_dims": [128], "expert_types": ["lr", "gbt"], "n_seeds": 2, "enrich": True,  "meta": "l2"},
+        "meta_l1_only":    {"pca_dims": [128], "expert_types": ["lr", "gbt"], "n_seeds": 2, "enrich": True,  "meta": "l1"},
+        "no_enrichment":   {"pca_dims": [128], "expert_types": ["lr", "gbt"], "n_seeds": 2, "enrich": False, "meta": "blend"},
+        "seed1_only":      {"pca_dims": [128], "expert_types": ["lr", "gbt"], "n_seeds": 1, "enrich": True,  "meta": "blend"},
+    }
+else:
+    ABLATION_CONFIGS = {
+        "full":              {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "blend"},
+        "pca32_only":        {"pca_dims": [32],      "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "blend"},
+        "pca128_only":       {"pca_dims": [128],     "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "blend"},
+        "lr_expert_only":    {"pca_dims": [32, 128], "expert_types": ["lr"],                    "n_seeds": 5, "enrich": True, "meta": "blend"},
+        "gbt_expert_only":   {"pca_dims": [32, 128], "expert_types": ["gbt"],                   "n_seeds": 5, "enrich": True, "meta": "blend"},
+        "et_expert_only":    {"pca_dims": [32, 128], "expert_types": ["et"],                    "n_seeds": 5, "enrich": True, "meta": "blend"},
+        "rf_expert_only":    {"pca_dims": [32, 128], "expert_types": ["rf"],                    "n_seeds": 5, "enrich": True, "meta": "blend"},
+        "tree_experts_only": {"pca_dims": [32, 128], "expert_types": ["gbt", "et", "rf"],       "n_seeds": 5, "enrich": True, "meta": "blend"},
+        "meta_l2_only":      {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "l2"},
+        "meta_l1_only":      {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "l1"},
+        "meta_gbt_only":     {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": True, "meta": "gbt"},
+        "no_enrichment":     {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 5, "enrich": False, "meta": "blend"},
+        "seed1_only":        {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 1, "enrich": True, "meta": "blend"},
+        "seed3":             {"pca_dims": [32, 128], "expert_types": ["lr", "gbt", "et", "rf"], "n_seeds": 3, "enrich": True, "meta": "blend"},
+    }
 
 
-def load_labels(ext, split):
-    with open(os.path.join(EXTRACTION_DIR, ext, split, "meta.json")) as f:
-        return np.array(json.load(f)["labels"])
+def load_labels(ds_name, split):
+    """Setting-aware. Pass dataset name + alias ('train'/'val'/'test')."""
+    return cfg.load_labels(_MODEL, ds_name, split)
+
+
+_USE_GPU_LR = cfg.name == "new"
+if _USE_GPU_LR:
+    # Rebind HGB to xgboost-gpu shim so all HistGradientBoostingClassifier(...) calls go to GPU.
+    from fusion._gpu_clf import get_hgb_class as _get_hgb_class
+    HistGradientBoostingClassifier = _get_hgb_class(True)
+if _USE_GPU_LR:
+    from fusion._gpu_clf import gpu_lr_fit_predict as _gpu_lr_fit_predict
+
+
+def _fit_predict_proba(X_tr, y_tr, X_te, n_classes, C=0.1, max_iter=2000):
+    if _USE_GPU_LR and n_classes == 2:
+        p1 = _gpu_lr_fit_predict(X_tr, y_tr, X_te, C=C)[0]
+        return np.stack([1 - p1, p1], axis=1)
+    clf = LogisticRegression(max_iter=max_iter, C=C, random_state=42)
+    clf.fit(X_tr, y_tr)
+    return clf.predict_proba(X_te)
 
 
 def compute_auroc(y, p, nc):
@@ -123,9 +164,7 @@ def train_expert_oof(Xs, Xts, labels, nc, etype, seed, skf):
         for C in C_GRID:
             inner = np.zeros((n_trva, nc))
             for _, (ti, vi) in enumerate(skf.split(Xs, labels)):
-                clf = LogisticRegression(max_iter=2000, C=C, random_state=seed)
-                clf.fit(Xs[ti], labels[ti])
-                inner[vi] = clf.predict_proba(Xs[vi])
+                inner[vi] = _fit_predict_proba(Xs[ti], labels[ti], Xs[vi], nc, C=C, max_iter=2000)
             try:
                 au = compute_auroc(labels, inner, nc)
             except:
@@ -133,10 +172,15 @@ def train_expert_oof(Xs, Xts, labels, nc, etype, seed, skf):
             if au > best_au:
                 best_au, best_C = au, C
         for _, (ti, vi) in enumerate(skf.split(Xs, labels)):
-            clf = LogisticRegression(max_iter=2000, C=best_C, random_state=seed)
-            clf.fit(Xs[ti], labels[ti])
-            oof[vi] = clf.predict_proba(Xs[vi])
-            ta += clf.predict_proba(Xts) / N_FOLDS
+            if _USE_GPU_LR and nc == 2:
+                p_vi, p_te = _gpu_lr_fit_predict(Xs[ti], labels[ti], Xs[vi], Xts, C=best_C)
+                oof[vi] = np.stack([1 - p_vi, p_vi], axis=1)
+                ta += np.stack([1 - p_te, p_te], axis=1) / N_FOLDS
+            else:
+                clf = LogisticRegression(max_iter=2000, C=best_C, random_state=seed)
+                clf.fit(Xs[ti], labels[ti])
+                oof[vi] = clf.predict_proba(Xs[vi])
+                ta += clf.predict_proba(Xts) / N_FOLDS
 
     elif etype == "gbt":
         best_au, bp = -1, {}
@@ -177,19 +221,18 @@ def train_expert_oof(Xs, Xts, labels, nc, etype, seed, skf):
     return oof, ta
 
 
-def run_pipeline(ds_name, cfg, ablation_cfg):
+def run_pipeline(ds_name, ds_cfg, ablation_cfg):
     """Run pipeline with specific ablation config."""
-    nc = cfg["n_classes"]
-    ext = cfg["ext"]
+    nc = ds_cfg["n_classes"]
     pca_dims = ablation_cfg["pca_dims"]
     expert_types = ablation_cfg["expert_types"]
     n_seeds = ablation_cfg["n_seeds"]
     enrich = ablation_cfg["enrich"]
     meta_mode = ablation_cfg["meta"]
 
-    tr_labels = load_labels(ext, cfg["train"])
-    va_labels = load_labels(ext, cfg["val"])
-    te_labels = load_labels(ext, cfg["test"])
+    tr_labels = load_labels(ds_name, "train")
+    va_labels = load_labels(ds_name, "val")
+    te_labels = load_labels(ds_name, "test")
     trva_labels = np.concatenate([tr_labels, va_labels])
     n_trva, n_te = len(trva_labels), len(te_labels)
 
@@ -365,7 +408,7 @@ def main():
         with open(out_path, "w") as f:
             json.dump(results, f, indent=2, default=convert)
 
-    for ds_name, cfg in ALL_DATASETS.items():
+    for ds_name, ds_cfg in ALL_DATASETS.items():
         print(f"\n{'='*70}")
         print(f"Dataset: {ds_name}")
         print(f"{'='*70}")
@@ -377,9 +420,9 @@ def main():
                 continue
 
             t0 = time.time()
-            auroc = run_pipeline(ds_name, cfg, ablation_cfg)
+            auroc = run_pipeline(ds_name, ds_cfg, ablation_cfg)
             elapsed = time.time() - t0
-            delta = auroc - cfg["best_single"] if auroc else None
+            delta = auroc - ds_cfg["best_single"] if auroc else None
 
             ds_results[config_name] = {
                 "auroc": round(auroc, 4) if auroc else None,

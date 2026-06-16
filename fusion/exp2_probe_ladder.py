@@ -16,37 +16,56 @@ from sklearn.ensemble import HistGradientBoostingClassifier, ExtraTreesClassifie
 
 warnings.filterwarnings("ignore")
 
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 import argparse as _argparse
 _ap = _argparse.ArgumentParser(add_help=False)
 _ap.add_argument("--model", default="qwen2.5-7b")
+_ap.add_argument("--setting", default="old", choices=["old", "new"])
 _cli, _ = _ap.parse_known_args()
 _MODEL = _cli.model
-from pathlib import Path as _Path
-_REPO_ROOT = _Path(__file__).resolve().parents[1]
-_BASE_PROCESSED = str(_REPO_ROOT / "reproduce" / "processed_features")
-_BASE_EXTRACTION = str(_REPO_ROOT / "extraction" / "features")
-_BASE_RESULTS = str(_REPO_ROOT / "fusion" / "results")
-PROCESSED_DIR = os.path.join(_BASE_PROCESSED, _MODEL) if _MODEL else _BASE_PROCESSED
-EXTRACTION_DIR = os.path.join(_BASE_EXTRACTION, _MODEL) if _MODEL else _BASE_EXTRACTION
-RESULTS_DIR = os.path.join(_BASE_RESULTS, _MODEL) if _MODEL else _BASE_RESULTS
+from fusion.settings import get_config as _get_config
+cfg = _get_config(_cli.setting)
+PROCESSED_DIR = str(cfg.base_processed / _MODEL)
+EXTRACTION_DIR = str(cfg.base_extraction / _MODEL)
+RESULTS_DIR = str(cfg.model_results_dir(_MODEL))
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
-PCA_DIMS = [32, 128]
-EXPERT_TYPES = ["lr", "gbt", "et", "rf"]
-N_SEEDS = 5
-N_FOLDS = 5
-C_GRID = [1e-3, 1e-2, 1e-1, 1.0, 10.0]
+if cfg.name == "new":
+    PCA_DIMS = [128]
+    EXPERT_TYPES = ["lr"]
+    N_SEEDS = 1
+    N_FOLDS = 5
+    C_GRID = [1e-2, 1e-1, 1.0]
+else:
+    PCA_DIMS = [32, 128]
+    EXPERT_TYPES = ["lr", "gbt", "et", "rf"]
+    N_SEEDS = 5
+    N_FOLDS = 5
+    C_GRID = [1e-3, 1e-2, 1e-1, 1.0, 10.0]
 
 MC_METHODS = ["lr_probe", "pca_lr", "iti", "kb_mlp", "attn_satisfies", "sep", "step"]
 BIN_METHODS = MC_METHODS + ["mm_probe"]
 
-ALL_DATASETS = {
-    "common_claim_3class": {"n_classes": 3, "ext": "common_claim_3class", "train": "train", "val": "val", "test": "test", "best_single": 0.7576},
-    "e2h_amc_3class":      {"n_classes": 3, "ext": "e2h_amc_3class", "train": "train_sub", "val": "val_split", "test": "eval", "best_single": 0.8934},
-    "e2h_amc_5class":      {"n_classes": 5, "ext": "e2h_amc_5class", "train": "train_sub", "val": "val_split", "test": "eval", "best_single": 0.8752},
-    "when2call_3class":    {"n_classes": 3, "ext": "when2call_3class", "train": "train", "val": "val", "test": "test", "best_single": 0.8741},
-    "ragtruth_binary":     {"n_classes": 2, "ext": "ragtruth", "train": "train", "val": "val", "test": "test", "best_single": 0.8808},
+# Build ALL_DATASETS from cfg (per-setting); best_single is patched dynamically below.
+# Old setting hardcoded values are kept for backward-compat default; _patch_best_single
+# overrides them from oracle_complete.json. New setting starts with placeholder 0.5
+# and gets patched at runtime.
+_OLD_BEST_SINGLE = {
+    "common_claim_3class": 0.7576, "e2h_amc_3class": 0.8934, "e2h_amc_5class": 0.8752,
+    "when2call_3class": 0.8741, "ragtruth_binary": 0.8808, "fava_binary": 0.9856,
 }
+ALL_DATASETS = {}
+for _ds, _info in cfg.datasets.items():
+    ALL_DATASETS[_ds] = {
+        "n_classes": _info["n_classes"],
+        "ext": _info["ext"],
+        "train": _info["splits"]["train"],
+        "val": _info["splits"]["val"],
+        "test": _info["splits"]["test"],
+        "best_single": _OLD_BEST_SINGLE.get(_ds, 0.5),
+    }
 
 
 def _patch_best_single(datasets_dict):
@@ -58,9 +77,9 @@ def _patch_best_single(datasets_dict):
     try:
         with open(path) as f:
             oc = json.load(f)
-        for ds, cfg in datasets_dict.items():
+        for ds, ds_cfg in datasets_dict.items():
             if ds in oc and "best_single_auroc" in oc[ds]:
-                cfg["best_single"] = float(oc[ds]["best_single_auroc"])
+                ds_cfg["best_single"] = float(oc[ds]["best_single_auroc"])
     except Exception as e:
         print(f"[WARN] _patch_best_single: {e}, keeping hardcoded values")
     return datasets_dict
@@ -68,7 +87,7 @@ def _patch_best_single(datasets_dict):
 
 _patch_best_single(ALL_DATASETS)
 
-# Per-method standalone AUROC from all_results_v3.json (used for ranking)
+# Per-method standalone AUROC from all_results_v3.json (legacy fallback only).
 STANDALONE_AUROC = {
     "common_claim_3class": {"pca_lr": 0.7576, "kb_mlp": 0.7570, "iti": 0.7368, "lr_probe": 0.6935, "attn_satisfies": 0.6396, "step": 0.5045, "sep": 0.4995},
     "e2h_amc_3class": {"pca_lr": 0.8934, "kb_mlp": 0.8908, "lr_probe": 0.8861, "iti": 0.8558, "attn_satisfies": 0.8372, "sep": 0.6677, "step": 0.6328},
@@ -78,9 +97,68 @@ STANDALONE_AUROC = {
 }
 
 
-def load_labels(ext, split):
-    with open(os.path.join(EXTRACTION_DIR, ext, split, "meta.json")) as f:
-        return np.array(json.load(f)["labels"])
+def load_labels(ds_name, split):
+    """Setting-aware. Pass dataset name + alias ('train'/'val'/'test')."""
+    return cfg.load_labels(_MODEL, ds_name, split)
+
+
+def _load_standalone_aurocs_from_oracle(model, ds_name):
+    """Read standalone method AUROCs from the active model's oracle output."""
+    path = _Path(RESULTS_DIR) / "oracle_complete.json"
+    if not path.exists():
+        return {}
+    try:
+        with path.open() as f:
+            data = json.load(f)
+        return {
+            method: float(value)
+            for method, value in data.get(ds_name, {}).get("per_probe_auroc", {}).items()
+        }
+    except Exception as e:
+        print(f"[WARN] failed to load standalone AUROCs from oracle for {ds_name}: {e}")
+        return {}
+
+
+def _load_standalone_aurocs_new(model, ds_name):
+    """For new setting: read per-method test AUROC from
+    reproduce/results_correctness/{model}/{ds_name}.json. Returns {method: auroc}."""
+    path = _Path("/home/junyi/NIPS2026/reproduce/results_correctness") / model / f"{ds_name}.json"
+    if not path.exists():
+        return {}
+    with open(path) as f:
+        data = json.load(f)
+    out = {}
+    for method, res in data.items():
+        if isinstance(res, dict):
+            if "auroc" in res:
+                out[method] = float(res["auroc"])
+            elif method == "coe":
+                # coe stores nested per-variant dicts; pick max auroc
+                aurocs = [v.get("auroc") for v in res.values()
+                          if isinstance(v, dict) and "auroc" in v]
+                if aurocs:
+                    out[method] = float(max(aurocs))
+    return out
+
+
+# In new setting (all binary), use GPU LBFGS.
+_USE_GPU_LR = cfg.name == "new"
+if _USE_GPU_LR:
+    # Rebind HGB to xgboost-gpu shim so all HistGradientBoostingClassifier(...) calls go to GPU.
+    from fusion._gpu_clf import get_hgb_class as _get_hgb_class
+    HistGradientBoostingClassifier = _get_hgb_class(True)
+if _USE_GPU_LR:
+    from fusion._gpu_clf import gpu_lr_fit_predict as _gpu_lr_fit_predict
+    from fusion._gpu_clf import gpu_gbt_fit_predict as _gpu_gbt_fit_predict
+
+
+def _fit_predict_proba(X_tr, y_tr, X_te, n_classes, C=0.1, max_iter=2000):
+    if _USE_GPU_LR and n_classes == 2:
+        p1 = _gpu_lr_fit_predict(X_tr, y_tr, X_te, C=C)[0]
+        return np.stack([1 - p1, p1], axis=1)
+    clf = LogisticRegression(max_iter=max_iter, C=C, random_state=42)
+    clf.fit(X_tr, y_tr)
+    return clf.predict_proba(X_te)
 
 
 def compute_auroc(y, p, nc):
@@ -114,9 +192,7 @@ def train_expert_oof(Xs, Xts, labels, nc, etype, seed, skf):
         for C in C_GRID:
             inner = np.zeros((n_trva, nc))
             for _, (ti, vi) in enumerate(skf.split(Xs, labels)):
-                clf = LogisticRegression(max_iter=2000, C=C, random_state=seed)
-                clf.fit(Xs[ti], labels[ti])
-                inner[vi] = clf.predict_proba(Xs[vi])
+                inner[vi] = _fit_predict_proba(Xs[ti], labels[ti], Xs[vi], nc, C=C, max_iter=2000)
             try:
                 au = compute_auroc(labels, inner, nc)
             except:
@@ -124,10 +200,15 @@ def train_expert_oof(Xs, Xts, labels, nc, etype, seed, skf):
             if au > best_au:
                 best_au, best_C = au, C
         for _, (ti, vi) in enumerate(skf.split(Xs, labels)):
-            clf = LogisticRegression(max_iter=2000, C=best_C, random_state=seed)
-            clf.fit(Xs[ti], labels[ti])
-            oof[vi] = clf.predict_proba(Xs[vi])
-            ta += clf.predict_proba(Xts) / N_FOLDS
+            if _USE_GPU_LR and nc == 2:
+                p_vi, p_te = _gpu_lr_fit_predict(Xs[ti], labels[ti], Xs[vi], Xts, C=best_C)
+                oof[vi] = np.stack([1 - p_vi, p_vi], axis=1)
+                ta += np.stack([1 - p_te, p_te], axis=1) / N_FOLDS
+            else:
+                clf = LogisticRegression(max_iter=2000, C=best_C, random_state=seed)
+                clf.fit(Xs[ti], labels[ti])
+                oof[vi] = clf.predict_proba(Xs[vi])
+                ta += clf.predict_proba(Xts) / N_FOLDS
 
     elif etype == "gbt":
         best_au, bp = -1, {}
@@ -168,14 +249,13 @@ def train_expert_oof(Xs, Xts, labels, nc, etype, seed, skf):
     return oof, ta
 
 
-def run_pipeline_with_methods(ds_name, cfg, method_list):
+def run_pipeline_with_methods(ds_name, ds_cfg, method_list):
     """Run v21 pipeline on a subset of methods. Returns test AUROC."""
-    nc = cfg["n_classes"]
-    ext = cfg["ext"]
+    nc = ds_cfg["n_classes"]
 
-    tr_labels = load_labels(ext, cfg["train"])
-    va_labels = load_labels(ext, cfg["val"])
-    te_labels = load_labels(ext, cfg["test"])
+    tr_labels = load_labels(ds_name, "train")
+    va_labels = load_labels(ds_name, "val")
+    te_labels = load_labels(ds_name, "test")
     trva_labels = np.concatenate([tr_labels, va_labels])
     n_trva, n_te = len(trva_labels), len(te_labels)
 
@@ -338,16 +418,21 @@ def main():
         with open(out_path, "w") as f:
             json.dump(results, f, indent=2, default=convert)
 
-    for ds_name, cfg in ALL_DATASETS.items():
+    for ds_name, ds_cfg in ALL_DATASETS.items():
         if ds_name in results:
             print(f"\n  [SKIP] {ds_name}: already completed")
             continue
 
-        nc = cfg["n_classes"]
+        nc = ds_cfg["n_classes"]
         methods_pool = BIN_METHODS if nc == 2 else MC_METHODS
 
-        # Rank methods by standalone AUROC for this dataset
-        standalone = STANDALONE_AUROC.get(ds_name, {})
+        # Rank methods by standalone AUROC for this dataset. Prefer the active
+        # oracle file so newly added old-setting datasets are covered.
+        standalone = _load_standalone_aurocs_from_oracle(_MODEL, ds_name)
+        if not standalone:
+            standalone = STANDALONE_AUROC.get(ds_name, {})
+        if cfg.name == "new":
+            standalone = _load_standalone_aurocs_new(_MODEL, ds_name)
         # Only keep methods in our pool
         ranked = sorted(
             [m for m in methods_pool if m in standalone],
@@ -363,9 +448,9 @@ def main():
         for k in range(1, len(ranked) + 1):
             subset = ranked[:k]
             t0 = time.time()
-            auroc = run_pipeline_with_methods(ds_name, cfg, subset)
+            auroc = run_pipeline_with_methods(ds_name, ds_cfg, subset)
             elapsed = time.time() - t0
-            delta = (auroc - cfg["best_single"]) if auroc else None
+            delta = (auroc - ds_cfg["best_single"]) if auroc else None
             added_method = ranked[k - 1]
 
             step = {
@@ -390,7 +475,7 @@ def main():
 
         results[ds_name] = {
             "method_ranking": ranked,
-            "best_single": cfg["best_single"],
+            "best_single": ds_cfg["best_single"],
             "ladder": ladder,
         }
         save_checkpoint()

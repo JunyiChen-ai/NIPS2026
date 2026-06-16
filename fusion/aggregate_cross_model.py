@@ -6,15 +6,15 @@ Usage:
     python fusion/aggregate_cross_model.py
 """
 
-import os, json, argparse
+import os, json, argparse, sys
 from collections import OrderedDict
 
 from pathlib import Path as _Path
-_REPO_ROOT = _Path(__file__).resolve().parents[1]
-BASE_RESULTS = str(_REPO_ROOT / "fusion" / "results")
+_sys = sys
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+from fusion.settings import get_config as _get_config
 DEFAULT_MODELS = ["qwen2.5-7b", "llama3.1-8b", "mistral-7b-v0.3"]
-DATASETS = ["common_claim_3class", "e2h_amc_3class", "e2h_amc_5class",
-            "when2call_3class", "ragtruth_binary", "fava_binary"]
+# BASE_RESULTS and default DATASETS resolved at runtime in main() based on --setting.
 
 EXP_FILES = {
     "oracle_baseline":     "oracle_complete.json",
@@ -39,9 +39,9 @@ def load_if_exists(path):
         return None
 
 
-def normalize_one_model(model):
+def normalize_one_model(model, base_results):
     """Read all 8 JSONs for one model. Return a dict keyed by experiment → dataset → metrics."""
-    model_dir = os.path.join(BASE_RESULTS, model)
+    model_dir = os.path.join(base_results, model)
     out = {}
 
     # oracle (baseline only)
@@ -171,7 +171,7 @@ def normalize_one_model(model):
     return out
 
 
-def build_summary(models):
+def build_summary(models, BASE_RESULTS):
     summary = OrderedDict()
     for model in models:
         model_dir = os.path.join(BASE_RESULTS, model)
@@ -179,7 +179,7 @@ def build_summary(models):
             print(f"[INFO] no results dir for {model}, skipping")
             continue
         print(f"[INFO] aggregating {model}")
-        summary[model] = normalize_one_model(model)
+        summary[model] = normalize_one_model(model, BASE_RESULTS)
     return summary
 
 
@@ -275,13 +275,24 @@ def markdown_rq3(summary, models, datasets):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--setting", default="old", choices=["old", "new"])
     ap.add_argument("--models", nargs="+", default=DEFAULT_MODELS)
-    ap.add_argument("--datasets", nargs="+", default=DATASETS)
-    ap.add_argument("--out-json", default=os.path.join(BASE_RESULTS, "cross_model_summary.json"))
-    ap.add_argument("--out-md",   default=os.path.join(BASE_RESULTS, "cross_model_summary.md"))
+    ap.add_argument("--datasets", nargs="+", default=None)
+    ap.add_argument("--out-json", default=None)
+    ap.add_argument("--out-md", default=None)
     args = ap.parse_args()
 
-    summary = build_summary(args.models)
+    cfg = _get_config(args.setting)
+    BASE_RESULTS = str(cfg.base_results)
+    if args.datasets is None:
+        args.datasets = list(cfg.datasets.keys())
+    if args.out_json is None:
+        args.out_json = os.path.join(BASE_RESULTS, "cross_model_summary.json")
+    if args.out_md is None:
+        args.out_md = os.path.join(BASE_RESULTS, "cross_model_summary.md")
+    os.makedirs(BASE_RESULTS, exist_ok=True)
+
+    summary = build_summary(args.models, BASE_RESULTS)
 
     # Coverage report — which (model, experiment) cells are missing
     print("\n=== Coverage ===")

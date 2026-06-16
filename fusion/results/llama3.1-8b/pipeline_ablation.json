@@ -428,5 +428,61 @@
       "delta_pct": "+1.42%",
       "time_seconds": 581.3
     }
+  },
+  "fava_binary": {
+    "full": {
+      "auroc": 0.9954,
+      "delta": 0.0028,
+      "delta_pct": "+0.28%",
+      "time_seconds": 2008.5
+    },
+    "pca32_only": {
+      "auroc": 0.9951,
+      "delta": 0.0025,
+      "delta_pct": "+0.25%",
+      "time_seconds": 800.3
+    },
+    "pca128_only": {
+      "auroc": 0.9952,
+      "delta": 0.0026,
+      "delta_pct": "+0.26%",
+      "time_seconds": 1155.2
+    },
+    "lr_expert_only": {
+      "auroc": 0.9956,
+      "delta": 0.0029,
+      "delta_pct": "+0.29%",
+      "time_seconds": 459.7
+    },
+    "gbt_expert_only": {
+      "auroc": 0.9953,
+      "delta": 0.0027,
+      "delta_pct": "+0.27%",
+      "time_seconds": 1322.6
+    },
+    "et_expert_only": {
+      "auroc": 0.9945,
+      "delta": 0.0019,
+      "delta_pct": "+0.19%",
+      "time_seconds": 220.6
+    },
+    "rf_expert_only": {
+      "auroc": 0.9944,
+      "delta": 0.0017,
+      "delta_pct": "+0.17%",
+      "time_seconds": 297.4
+    },
+    "tree_experts_only": {
+      "auroc": 0.9956,
+      "delta": 0.0029,
+      "delta_pct": "+0.29%",
+      "time_seconds": 1536.3
+    },
+    "meta_l2_only": {
+      "auroc": 0.9954,
+      "delta": 0.0027,
+      "delta_pct": "+0.27%",
+      "time_seconds": 1816.4
+    }
   }
 }

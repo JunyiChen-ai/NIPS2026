@@ -1,0 +1,212 @@
+{
+  "gsm8k": {
+    "oracle_auroc": 0.9996536596628954,
+    "oracle_accuracy": 0.9924242424242424,
+    "best_single_auroc": 0.7541560840452551,
+    "best_single_method": "sep",
+    "headroom": 0.2454975756176403,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "sep": 0.7542,
+      "step": 0.7514,
+      "pca_lr": 0.668,
+      "lr_probe": 0.6531,
+      "mm_probe": 0.6531,
+      "kb_mlp": 0.6274,
+      "attn_satisfies": 0.6238,
+      "llm_check": 0.6129,
+      "iti": 0.6125,
+      "lid": 0.6094,
+      "seakr": 0.555
+    }
+  },
+  "math": {
+    "oracle_auroc": 0.99977347377959,
+    "oracle_accuracy": 0.939,
+    "best_single_auroc": 0.8158856660385712,
+    "best_single_method": "step",
+    "headroom": 0.18388780774101887,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "step": 0.8159,
+      "sep": 0.8108,
+      "mm_probe": 0.8008,
+      "lr_probe": 0.8008,
+      "kb_mlp": 0.7713,
+      "iti": 0.7642,
+      "attn_satisfies": 0.7545,
+      "pca_lr": 0.7443,
+      "lid": 0.7,
+      "llm_check": 0.6868,
+      "seakr": 0.5424
+    }
+  },
+  "mmlu": {
+    "oracle_auroc": 0.9982621811266312,
+    "oracle_accuracy": 0.9743954480796586,
+    "best_single_auroc": 0.7401550921371893,
+    "best_single_method": "sep",
+    "headroom": 0.2581070889894419,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "sep": 0.7402,
+      "attn_satisfies": 0.7399,
+      "lr_probe": 0.7341,
+      "mm_probe": 0.7341,
+      "pca_lr": 0.73,
+      "kb_mlp": 0.7248,
+      "step": 0.7238,
+      "iti": 0.7013,
+      "lid": 0.6926,
+      "llm_check": 0.6068,
+      "seakr": 0.5901
+    }
+  },
+  "commonsenseqa": {
+    "oracle_auroc": 1.0,
+    "oracle_accuracy": 0.9428571428571428,
+    "best_single_auroc": 0.7277365491651205,
+    "best_single_method": "iti",
+    "headroom": 0.27226345083487946,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "iti": 0.7277,
+      "sep": 0.7221,
+      "step": 0.7221,
+      "kb_mlp": 0.6891,
+      "pca_lr": 0.6841,
+      "lr_probe": 0.6664,
+      "mm_probe": 0.6664,
+      "attn_satisfies": 0.6625,
+      "seakr": 0.6526,
+      "lid": 0.6122,
+      "llm_check": 0.5454
+    }
+  },
+  "belebele": {
+    "oracle_auroc": 1.0,
+    "oracle_accuracy": 0.9166666666666666,
+    "best_single_auroc": 0.6855555555555555,
+    "best_single_method": "step",
+    "headroom": 0.3144444444444445,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "step": 0.6856,
+      "sep": 0.6849,
+      "kb_mlp": 0.6642,
+      "iti": 0.6578,
+      "lr_probe": 0.6149,
+      "mm_probe": 0.6149,
+      "lid": 0.6113,
+      "seakr": 0.6109,
+      "pca_lr": 0.6044,
+      "llm_check": 0.5573,
+      "attn_satisfies": 0.5502
+    }
+  },
+  "theoremqa": {
+    "oracle_auroc": 0.9988738738738738,
+    "oracle_accuracy": 0.9375,
+    "best_single_auroc": 0.7336711711711711,
+    "best_single_method": "pca_lr",
+    "headroom": 0.26520270270270274,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "pca_lr": 0.7337,
+      "iti": 0.7162,
+      "lr_probe": 0.714,
+      "mm_probe": 0.714,
+      "sep": 0.7089,
+      "attn_satisfies": 0.6678,
+      "step": 0.6678,
+      "kb_mlp": 0.6639,
+      "llm_check": 0.6244,
+      "seakr": 0.4623,
+      "lid": 0.4347
+    }
+  },
+  "fava": {
+    "oracle_auroc": 1.0,
+    "oracle_accuracy": 0.991,
+    "best_single_auroc": 0.951171875,
+    "best_single_method": "sep",
+    "headroom": 0.048828125,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "sep": 0.9512,
+      "step": 0.9408,
+      "kb_mlp": 0.9168,
+      "lr_probe": 0.9142,
+      "mm_probe": 0.9142,
+      "pca_lr": 0.9055,
+      "attn_satisfies": 0.8888,
+      "iti": 0.8677,
+      "seakr": 0.5334,
+      "llm_check": 0.5028,
+      "lid": 0.4689
+    }
+  },
+  "ragtruth": {
+    "oracle_auroc": 1.0,
+    "oracle_accuracy": 1.0,
+    "best_single_auroc": 0.8522043891254504,
+    "best_single_method": "iti",
+    "headroom": 0.14779561087454962,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "iti": 0.8522,
+      "kb_mlp": 0.836,
+      "pca_lr": 0.7988,
+      "attn_satisfies": 0.7913,
+      "lr_probe": 0.7892,
+      "mm_probe": 0.7892,
+      "sep": 0.768,
+      "step": 0.7652,
+      "llm_check": 0.7122,
+      "seakr": 0.5484,
+      "lid": 0.3526
+    }
+  },
+  "common_claim_3class": {
+    "oracle_auroc": 0.9999958154618684,
+    "oracle_accuracy": 0.902,
+    "best_single_auroc": 0.8258060466576002,
+    "best_single_method": "sep",
+    "headroom": 0.17418976880426829,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "sep": 0.8258,
+      "step": 0.8166,
+      "pca_lr": 0.816,
+      "iti": 0.8034,
+      "attn_satisfies": 0.7985,
+      "kb_mlp": 0.798,
+      "lr_probe": 0.7954,
+      "mm_probe": 0.7954,
+      "lid": 0.615,
+      "seakr": 0.5816,
+      "llm_check": 0.5633
+    }
+  },
+  "when2call_3class": {
+    "oracle_auroc": 1.0,
+    "oracle_accuracy": 0.9316005471956225,
+    "best_single_auroc": 0.7188099473335426,
+    "best_single_method": "kb_mlp",
+    "headroom": 0.28119005266645736,
+    "n_probes": 11,
+    "per_probe_auroc": {
+      "kb_mlp": 0.7188,
+      "attn_satisfies": 0.7024,
+      "step": 0.7019,
+      "mm_probe": 0.7013,
+      "lr_probe": 0.7013,
+      "sep": 0.6961,
+      "pca_lr": 0.6745,
+      "iti": 0.649,
+      "lid": 0.577,
+      "seakr": 0.5605,
+      "llm_check": 0.5574
+    }
+  }
+}

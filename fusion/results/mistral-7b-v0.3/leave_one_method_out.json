@@ -255,7 +255,7 @@
   },
   "e2h_amc_5class": {
     "full_fusion_auroc": 0.8825,
-    "best_single": 0.8610382456238917,
+    "best_single": 0.8610382456238918,
     "ablations": {
       "lr_probe": {
         "dropped": "lr_probe",
@@ -617,7 +617,7 @@
           "attn_satisfies",
           "sep"
         ],
-        "auroc_without": 0.8950,
+        "auroc_without": 0.895,
         "full_auroc": 0.8948,
         "contribution": -0.0002,
         "contribution_pct": "-0.020%",
@@ -630,6 +630,260 @@
       "pca_lr",
       "sep",
       "step",
+      "kb_mlp",
+      "lr_probe"
+    ]
+  },
+  "fava_binary": {
+    "full_fusion_auroc": 0.9933,
+    "best_single": 0.9887256360996114,
+    "ablations": {
+      "lr_probe": {
+        "dropped": "lr_probe",
+        "remaining_methods": [
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ],
+        "auroc_without": 0.9928,
+        "full_auroc": 0.9933,
+        "contribution": 0.0005,
+        "contribution_pct": "+0.048%",
+        "time_seconds": 1528.2
+      },
+      "pca_lr": {
+        "dropped": "pca_lr",
+        "remaining_methods": [
+          "lr_probe",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ],
+        "auroc_without": 0.9924,
+        "full_auroc": 0.9933,
+        "contribution": 0.0009,
+        "contribution_pct": "+0.089%",
+        "time_seconds": 1697.7
+      },
+      "iti": {
+        "dropped": "iti",
+        "remaining_methods": [
+          "lr_probe",
+          "pca_lr",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ],
+        "auroc_without": 0.9929,
+        "full_auroc": 0.9933,
+        "contribution": 0.0004,
+        "contribution_pct": "+0.039%",
+        "time_seconds": 1649.6
+      },
+      "kb_mlp": {
+        "dropped": "kb_mlp",
+        "remaining_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ],
+        "auroc_without": 0.9934,
+        "full_auroc": 0.9933,
+        "contribution": -0.0001,
+        "contribution_pct": "-0.008%",
+        "time_seconds": 1584.2
+      },
+      "attn_satisfies": {
+        "dropped": "attn_satisfies",
+        "remaining_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "sep",
+          "step"
+        ],
+        "auroc_without": 0.9933,
+        "full_auroc": 0.9933,
+        "contribution": -0.0,
+        "contribution_pct": "-0.001%",
+        "time_seconds": 1804.1
+      },
+      "sep": {
+        "dropped": "sep",
+        "remaining_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "step"
+        ],
+        "auroc_without": 0.9933,
+        "full_auroc": 0.9933,
+        "contribution": -0.0,
+        "contribution_pct": "-0.001%",
+        "time_seconds": 1613.9
+      },
+      "step": {
+        "dropped": "step",
+        "remaining_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep"
+        ],
+        "auroc_without": 0.9935,
+        "full_auroc": 0.9933,
+        "contribution": -0.0002,
+        "contribution_pct": "-0.020%",
+        "time_seconds": 1834.0
+      }
+    },
+    "contribution_ranking": [
+      "pca_lr",
+      "lr_probe",
+      "iti",
+      "attn_satisfies",
+      "sep",
+      "kb_mlp",
+      "step"
+    ]
+  },
+  "belebele": {
+    "full_fusion_auroc": 0.9253,
+    "best_single": 0.8767616298066796,
+    "ablations": {
+      "lr_probe": {
+        "dropped": "lr_probe",
+        "remaining_methods": [
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ],
+        "auroc_without": 0.928,
+        "full_auroc": 0.9253,
+        "contribution": -0.0027,
+        "contribution_pct": "-0.274%",
+        "time_seconds": 3681.7
+      },
+      "pca_lr": {
+        "dropped": "pca_lr",
+        "remaining_methods": [
+          "lr_probe",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ],
+        "auroc_without": 0.9263,
+        "full_auroc": 0.9253,
+        "contribution": -0.001,
+        "contribution_pct": "-0.103%",
+        "time_seconds": 3484.2
+      },
+      "iti": {
+        "dropped": "iti",
+        "remaining_methods": [
+          "lr_probe",
+          "pca_lr",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ],
+        "auroc_without": 0.9243,
+        "full_auroc": 0.9253,
+        "contribution": 0.001,
+        "contribution_pct": "+0.098%",
+        "time_seconds": 3959.4
+      },
+      "kb_mlp": {
+        "dropped": "kb_mlp",
+        "remaining_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ],
+        "auroc_without": 0.9278,
+        "full_auroc": 0.9253,
+        "contribution": -0.0025,
+        "contribution_pct": "-0.250%",
+        "time_seconds": 3923.7
+      },
+      "attn_satisfies": {
+        "dropped": "attn_satisfies",
+        "remaining_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "sep",
+          "step"
+        ],
+        "auroc_without": 0.9249,
+        "full_auroc": 0.9253,
+        "contribution": 0.0004,
+        "contribution_pct": "+0.043%",
+        "time_seconds": 3429.4
+      },
+      "sep": {
+        "dropped": "sep",
+        "remaining_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "step"
+        ],
+        "auroc_without": 0.9097,
+        "full_auroc": 0.9253,
+        "contribution": 0.0156,
+        "contribution_pct": "+1.561%",
+        "time_seconds": 3393.3
+      },
+      "step": {
+        "dropped": "step",
+        "remaining_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep"
+        ],
+        "auroc_without": 0.9221,
+        "full_auroc": 0.9253,
+        "contribution": 0.0032,
+        "contribution_pct": "+0.315%",
+        "time_seconds": 3436.0
+      }
+    },
+    "contribution_ranking": [
+      "sep",
+      "step",
+      "iti",
+      "attn_satisfies",
+      "pca_lr",
       "kb_mlp",
       "lr_probe"
     ]

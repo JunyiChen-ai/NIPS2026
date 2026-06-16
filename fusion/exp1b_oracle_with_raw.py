@@ -19,23 +19,30 @@ from sklearn.metrics import roc_auc_score
 
 warnings.filterwarnings("ignore")
 
+import sys as _sys
 from pathlib import Path as _Path
-_REPO_ROOT = _Path(__file__).resolve().parents[1]
-BASE_PROCESSED = str(_REPO_ROOT / "reproduce" / "processed_features")
-BASE_EXTRACTION = str(_REPO_ROOT / "extraction" / "features")
-BASE_RESULTS = str(_REPO_ROOT / "fusion" / "results")
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+# Pre-parse for setting (full argparse done at the bottom for backward compat)
+import argparse as _early_argparse
+_early_ap = _early_argparse.ArgumentParser(add_help=False)
+_early_ap.add_argument("--setting", default="old", choices=["old", "new"])
+_early_ap.add_argument("--model", default="qwen2.5-7b")
+_early_cli, _ = _early_ap.parse_known_args()
+from fusion.settings import get_config as _get_config
+cfg = _get_config(_early_cli.setting)
+BASE_PROCESSED = str(cfg.base_processed)
+BASE_EXTRACTION = str(cfg.base_extraction)
+BASE_RESULTS = str(cfg.base_results)
 
 MC_METHODS = ["lr_probe", "pca_lr", "iti", "kb_mlp", "attn_satisfies", "sep", "step"]
 BIN_EXTRA = ["mm_probe", "lid", "llm_check", "seakr"]
 
-ALL_DATASETS = {
-    "common_claim_3class": {"n_classes": 3, "ext": "common_claim_3class", "train": "train",     "val": "val",       "test": "test"},
-    "e2h_amc_3class":      {"n_classes": 3, "ext": "e2h_amc_3class",      "train": "train_sub", "val": "val_split", "test": "eval"},
-    "e2h_amc_5class":      {"n_classes": 5, "ext": "e2h_amc_5class",      "train": "train_sub", "val": "val_split", "test": "eval"},
-    "when2call_3class":    {"n_classes": 3, "ext": "when2call_3class",    "train": "train",     "val": "val",       "test": "test"},
-    "ragtruth_binary":     {"n_classes": 2, "ext": "ragtruth",            "train": "train",     "val": "val",       "test": "test"},
-    "fava_binary":         {"n_classes": 2, "ext": "fava",                "train": "train",     "val": "val",       "test": "test"},
-}
+ALL_DATASETS = {}
+for _ds, _info in cfg.datasets.items():
+    ALL_DATASETS[_ds] = {
+        "n_classes": _info["n_classes"], "ext": _info["ext"],
+        "train": _info["splits"]["train"], "val": _info["splits"]["val"], "test": _info["splits"]["test"],
+    }
 
 # Raw views: (key, filename, category)
 # category drives how we flatten each sample.
@@ -59,9 +66,9 @@ RAW_VIEWS = [
 ]
 
 
-def load_labels(extraction_dir, ext, split):
-    with open(os.path.join(extraction_dir, ext, split, "meta.json")) as f:
-        return np.array(json.load(f)["labels"])
+def load_labels(model, ds_name, split_alias):
+    """Setting-aware labels loader."""
+    return cfg.load_labels(model, ds_name, split_alias)
 
 
 def compute_auroc(y, p, nc):
@@ -87,25 +94,18 @@ def _flatten_logit_stats(entries):
     return out
 
 
-def load_raw_view(extraction_dir, ext, split, filename, category):
-    """Return a numpy array [N, D] or None on failure."""
-    path = os.path.join(extraction_dir, ext, split, filename)
-    if not os.path.exists(path):
-        return None
-
+def load_raw_view(model, ds_name, split_alias, filename, category):
+    """Return a numpy array [N, D] or None on failure. Setting-aware via cfg."""
     try:
         if category == "logit":
-            with open(path) as f:
-                entries = json.load(f)
+            entries = cfg.raw_view_json(model, ds_name, split_alias, filename)
             return _flatten_logit_stats(entries)
 
         if category == "boundary":
-            obj = torch.load(path, map_location="cpu", weights_only=False)
-            # list[N] of list[k] of [L,D] tensor
+            obj = cfg.raw_view(model, ds_name, split_alias, filename)
             pooled = []
             for sample in obj:
                 if isinstance(sample, list) and len(sample) > 0:
-                    # stack and mean-pool over steps and layers
                     try:
                         steps = [t.float().mean(dim=0) if t.ndim == 2 else t.float().reshape(-1) for t in sample]
                         vec = torch.stack(steps, dim=0).mean(dim=0)
@@ -116,7 +116,6 @@ def load_raw_view(extraction_dir, ext, split, filename, category):
                 else:
                     vec = torch.zeros(3584, dtype=torch.float32)
                 pooled.append(vec.numpy())
-            # pad/truncate to common length
             max_d = max(v.shape[0] for v in pooled)
             arr = np.zeros((len(pooled), max_d), dtype=np.float32)
             for i, v in enumerate(pooled):
@@ -124,25 +123,22 @@ def load_raw_view(extraction_dir, ext, split, filename, category):
             return arr
 
         # tensor-backed
-        t = torch.load(path, map_location="cpu", weights_only=False)
+        t = cfg.raw_view(model, ds_name, split_alias, filename)
         if not hasattr(t, "shape"):
             return None
         t = t.float()
         if category == "hidden":
-            # [N, L, D] → flatten LD
-            if t.ndim == 3:
-                return t.reshape(t.shape[0], -1).numpy()
             return t.reshape(t.shape[0], -1).numpy()
         if category == "per_head":
-            # [N, H1, H2, D] → per-head mean over H1 first to cut size, then flatten
             if t.ndim == 4:
-                # reduce along the layer/head axis we choose as H1 (the first non-sample dim)
                 t = t.mean(dim=1)  # [N, H2, D]
             return t.reshape(t.shape[0], -1).numpy()
         if category == "stats":
             return t.reshape(t.shape[0], -1).numpy()
+    except FileNotFoundError:
+        return None
     except Exception as e:
-        print(f"    [WARN] load_raw_view failed for {path}: {type(e).__name__}: {str(e)[:100]}")
+        print(f"    [WARN] load_raw_view failed for {ds_name}/{split_alias}/{filename}: {type(e).__name__}: {str(e)[:100]}")
         return None
     return None
 
@@ -214,17 +210,16 @@ def oracle_over_pool(all_preds, te_labels, nc):
     return oracle_probs, correct / n_te, winners
 
 
-def process_dataset(ds_name, cfg, processed_dir, extraction_dir):
-    nc = cfg["n_classes"]
-    ext = cfg["ext"]
+def process_dataset(ds_name, ds_cfg, processed_dir, extraction_dir, model):
+    nc = ds_cfg["n_classes"]
     probe_dir = os.path.join(processed_dir, ds_name)
     if not os.path.exists(probe_dir):
         print(f"\n[SKIP] {ds_name}: no processed features at {probe_dir}")
         return None
 
-    tr_labels = load_labels(extraction_dir, ext, cfg["train"])
-    va_labels = load_labels(extraction_dir, ext, cfg["val"])
-    te_labels = load_labels(extraction_dir, ext, cfg["test"])
+    tr_labels = load_labels(model, ds_name, "train")
+    va_labels = load_labels(model, ds_name, "val")
+    te_labels = load_labels(model, ds_name, "test")
     trva_labels = np.concatenate([tr_labels, va_labels])
 
     # --- Baseline probes ---
@@ -239,9 +234,9 @@ def process_dataset(ds_name, cfg, processed_dir, extraction_dir):
     raw_preds = {}
     for key, filename, category in RAW_VIEWS:
         t0 = time.time()
-        tr_feat = load_raw_view(extraction_dir, ext, cfg["train"], filename, category)
-        va_feat = load_raw_view(extraction_dir, ext, cfg["val"],   filename, category)
-        te_feat = load_raw_view(extraction_dir, ext, cfg["test"],  filename, category)
+        tr_feat = load_raw_view(model, ds_name, "train", filename, category)
+        va_feat = load_raw_view(model, ds_name, "val",   filename, category)
+        te_feat = load_raw_view(model, ds_name, "test",  filename, category)
         if tr_feat is None or va_feat is None or te_feat is None:
             print(f"    [SKIP] {key}: missing file or load failure")
             continue
@@ -305,33 +300,26 @@ def process_dataset(ds_name, cfg, processed_dir, extraction_dir):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="qwen2.5-7b",
-                    help="Model subdir under extraction/features and processed_features. "
-                         "Use '' (empty) to point at the legacy flat layout.")
+    ap.add_argument("--model", default="qwen2.5-7b")
+    ap.add_argument("--setting", default="old", choices=["old", "new"])
     args = ap.parse_args()
 
-    if args.model:
-        processed_dir  = os.path.join(BASE_PROCESSED,  args.model)
-        extraction_dir = os.path.join(BASE_EXTRACTION, args.model)
-        results_dir    = os.path.join(BASE_RESULTS,    args.model)
-    else:
-        processed_dir  = BASE_PROCESSED
-        extraction_dir = BASE_EXTRACTION
-        results_dir    = BASE_RESULTS
-
-    # Back-compat: if the per-model subdir doesn't exist yet (pre-reorg), fall back to flat.
+    model = args.model
+    processed_dir  = str(cfg.base_processed / model)
+    extraction_dir = str(cfg.base_extraction / model)
+    results_dir    = str(cfg.model_results_dir(model))
     os.makedirs(results_dir, exist_ok=True)
 
     print("=" * 72)
-    print(f"EXP 1b: Oracle with Raw LLM Features — model={args.model or '(flat)'}")
+    print(f"EXP 1b: Oracle with Raw LLM Features — model={model}, setting={cfg.name}")
     print(f"  processed_dir={processed_dir}")
     print(f"  extraction_dir={extraction_dir}")
     print("=" * 72)
 
     results = {}
-    for ds_name, cfg in ALL_DATASETS.items():
+    for ds_name, ds_cfg in ALL_DATASETS.items():
         print(f"\n>>> {ds_name}")
-        r = process_dataset(ds_name, cfg, processed_dir, extraction_dir)
+        r = process_dataset(ds_name, ds_cfg, processed_dir, extraction_dir, model)
         if r is None:
             continue
         results[ds_name] = r

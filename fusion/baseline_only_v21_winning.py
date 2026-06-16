@@ -30,58 +30,53 @@ from scipy import stats
 
 warnings.filterwarnings("ignore")
 
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 import argparse as _argparse
 _ap = _argparse.ArgumentParser(add_help=False)
 _ap.add_argument("--model", default="qwen2.5-7b")
+_ap.add_argument("--setting", default="old", choices=["old", "new"])
 _cli, _ = _ap.parse_known_args()
 _MODEL = _cli.model
-from pathlib import Path as _Path
-_REPO_ROOT = _Path(__file__).resolve().parents[1]
-_BASE_PROCESSED = str(_REPO_ROOT / "reproduce" / "processed_features")
-_BASE_EXTRACTION = str(_REPO_ROOT / "extraction" / "features")
-_BASE_RESULTS = str(_REPO_ROOT / "fusion" / "results")
-PROCESSED_DIR = os.path.join(_BASE_PROCESSED, _MODEL) if _MODEL else _BASE_PROCESSED
-EXTRACTION_DIR = os.path.join(_BASE_EXTRACTION, _MODEL) if _MODEL else _BASE_EXTRACTION
-RESULTS_DIR = os.path.join(_BASE_RESULTS, _MODEL) if _MODEL else _BASE_RESULTS
+from fusion.settings import get_config as _get_config
+cfg = _get_config(_cli.setting)
+PROCESSED_DIR = str(cfg.base_processed / _MODEL)
+EXTRACTION_DIR = str(cfg.base_extraction / _MODEL)
+RESULTS_DIR = str(cfg.model_results_dir(_MODEL))
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 # === UNIFIED CONFIGURATION ===
-PCA_DIMS = [32, 128]  # multi-resolution like v12
-EXPERT_TYPES = ["lr", "gbt", "et", "rf"]
-N_SEEDS = 5
-N_FOLDS = 5
-C_GRID = [1e-3, 1e-2, 1e-1, 1.0, 10.0]
+# In new setting we drop ExtraTrees/RF (CPU-only, very slow), use single PCA
+# dim (multi-resolution adds <1% empirically), and reduce seed/grid sizes —
+# trades small accuracy for ~20× wall-clock speedup.
+if cfg.name == "new":
+    PCA_DIMS = [128]
+    EXPERT_TYPES = ["lr", "gbt"]
+    N_SEEDS = 2
+    N_FOLDS = 5
+    C_GRID = [1e-2, 1e-1, 1.0]
+else:
+    PCA_DIMS = [32, 128]
+    EXPERT_TYPES = ["lr", "gbt", "et", "rf"]
+    N_SEEDS = 5
+    N_FOLDS = 5
+    C_GRID = [1e-3, 1e-2, 1e-1, 1.0, 10.0]
 
 MC_METHODS = ["lr_probe", "pca_lr", "iti", "kb_mlp", "attn_satisfies", "sep", "step"]
 BIN_METHODS = MC_METHODS + ["mm_probe"]
 
-ALL_DATASETS = {
-    "common_claim_3class": {
-        "n_classes": 3, "ext": "common_claim_3class",
-        "splits": {"train": "train", "val": "val", "test": "test"},
-        "best_single": 0.7576,
-    },
-    "e2h_amc_3class": {
-        "n_classes": 3, "ext": "e2h_amc_3class",
-        "splits": {"train": "train_sub", "val": "val_split", "test": "eval"},
-        "best_single": 0.8934,
-    },
-    "e2h_amc_5class": {
-        "n_classes": 5, "ext": "e2h_amc_5class",
-        "splits": {"train": "train_sub", "val": "val_split", "test": "eval"},
-        "best_single": 0.8752,
-    },
-    "when2call_3class": {
-        "n_classes": 3, "ext": "when2call_3class",
-        "splits": {"train": "train", "val": "val", "test": "test"},
-        "best_single": 0.8741,
-    },
-    "ragtruth_binary": {
-        "n_classes": 2, "ext": "ragtruth",
-        "splits": {"train": "train", "val": "val", "test": "test"},
-        "best_single": 0.8808,
-    },
+_OLD_BEST_SINGLE = {
+    "common_claim_3class": 0.7576, "e2h_amc_3class": 0.8934, "e2h_amc_5class": 0.8752,
+    "when2call_3class": 0.8741, "ragtruth_binary": 0.8808, "fava_binary": 0.9856,
 }
+ALL_DATASETS = {}
+for _ds, _info in cfg.datasets.items():
+    ALL_DATASETS[_ds] = {
+        "n_classes": _info["n_classes"], "ext": _info["ext"],
+        "splits": _info["splits"],
+        "best_single": _OLD_BEST_SINGLE.get(_ds, 0.5),
+    }
 
 
 def _patch_best_single(datasets_dict):
@@ -93,9 +88,9 @@ def _patch_best_single(datasets_dict):
     try:
         with open(path) as f:
             oc = json.load(f)
-        for ds, cfg in datasets_dict.items():
+        for ds, ds_cfg in datasets_dict.items():
             if ds in oc and "best_single_auroc" in oc[ds]:
-                cfg["best_single"] = float(oc[ds]["best_single_auroc"])
+                ds_cfg["best_single"] = float(oc[ds]["best_single_auroc"])
     except Exception as e:
         print(f"[WARN] _patch_best_single: {e}, keeping hardcoded values")
     return datasets_dict
@@ -113,9 +108,27 @@ TARGET_RESULTS = {
 }
 
 
-def load_labels(ext, split):
-    with open(os.path.join(EXTRACTION_DIR, ext, split, "meta.json")) as f:
-        return np.array(json.load(f)["labels"])
+def load_labels(ds_name, split):
+    """Setting-aware. Pass dataset name + alias ('train'/'val'/'test')."""
+    return cfg.load_labels(_MODEL, ds_name, split)
+
+
+_USE_GPU_LR = cfg.name == "new"
+if _USE_GPU_LR:
+    # Rebind HGB to xgboost-gpu shim so all HistGradientBoostingClassifier(...) calls go to GPU.
+    from fusion._gpu_clf import get_hgb_class as _get_hgb_class
+    HistGradientBoostingClassifier = _get_hgb_class(True)
+if _USE_GPU_LR:
+    from fusion._gpu_clf import gpu_lr_fit_predict as _gpu_lr_fit_predict
+
+
+def _fit_predict_proba(X_tr, y_tr, X_te, n_classes, C=0.1, max_iter=2000):
+    if _USE_GPU_LR and n_classes == 2:
+        p1 = _gpu_lr_fit_predict(X_tr, y_tr, X_te, C=C)[0]
+        return np.stack([1 - p1, p1], axis=1)
+    clf = LogisticRegression(max_iter=max_iter, C=C, random_state=42)
+    clf.fit(X_tr, y_tr)
+    return clf.predict_proba(X_te)
 
 def compute_auroc(y, p, nc):
     if nc == 2: return roc_auc_score(y, p[:, 1])
@@ -154,14 +167,18 @@ def train_expert_oof(Xs, Xts, labels, nc, etype, seed, skf):
         for C in C_GRID:
             inner = np.zeros((n_trva, nc))
             for _, (ti, vi) in enumerate(skf.split(Xs, labels)):
-                clf = LogisticRegression(max_iter=2000, C=C, random_state=seed)
-                clf.fit(Xs[ti], labels[ti]); inner[vi] = clf.predict_proba(Xs[vi])
+                inner[vi] = _fit_predict_proba(Xs[ti], labels[ti], Xs[vi], nc, C=C, max_iter=2000)
             try: au = compute_auroc(labels, inner, nc)
             except: au = 0.5
             if au > best_au: best_au, best_C = au, C
         for _, (ti, vi) in enumerate(skf.split(Xs, labels)):
-            clf = LogisticRegression(max_iter=2000, C=best_C, random_state=seed)
-            clf.fit(Xs[ti], labels[ti]); oof[vi] = clf.predict_proba(Xs[vi]); ta += clf.predict_proba(Xts)/N_FOLDS
+            if _USE_GPU_LR and nc == 2:
+                p_vi, p_te = _gpu_lr_fit_predict(Xs[ti], labels[ti], Xs[vi], Xts, C=best_C)
+                oof[vi] = np.stack([1 - p_vi, p_vi], axis=1)
+                ta += np.stack([1 - p_te, p_te], axis=1) / N_FOLDS
+            else:
+                clf = LogisticRegression(max_iter=2000, C=best_C, random_state=seed)
+                clf.fit(Xs[ti], labels[ti]); oof[vi] = clf.predict_proba(Xs[vi]); ta += clf.predict_proba(Xts)/N_FOLDS
 
     elif etype == "gbt":
         best_au, bp = -1, {}
@@ -198,9 +215,9 @@ def run_unified(ds_name, info):
     ext = info["ext"]
     methods_pool = BIN_METHODS if nc == 2 else MC_METHODS
 
-    tr_labels = load_labels(ext, sp["train"])
-    va_labels = load_labels(ext, sp["val"])
-    te_labels = load_labels(ext, sp["test"])
+    tr_labels = load_labels(ds_name, "train")
+    va_labels = load_labels(ds_name, "val")
+    te_labels = load_labels(ds_name, "test")
     trva_labels = np.concatenate([tr_labels, va_labels])
     n_trva, n_te = len(trva_labels), len(te_labels)
 
@@ -369,9 +386,29 @@ def main():
     print("PCA({32,128}) × {LR,GBT,ET,RF} × 5seeds → {L2-LR, L1-LR, GBT} blend")
     print("=" * 70)
 
+    out_path = os.path.join(RESULTS_DIR, "baseline_only_v21_winning_results.json")
+
+    # Resume from checkpoint if present (per-dataset granularity)
     results = {}
+    if os.path.exists(out_path):
+        try:
+            with open(out_path) as f:
+                results = json.load(f)
+            print(f"[CHECKPOINT] Resuming from {out_path}: {len(results)} datasets done")
+        except Exception:
+            results = {}
+
+    def _convert(o):
+        if isinstance(o, (np.bool_, np.integer)): return int(o)
+        if isinstance(o, np.floating): return float(o)
+        if isinstance(o, np.ndarray): return o.tolist()
+        return o
+
     all_match = True
     for ds_name, info in ALL_DATASETS.items():
+        if ds_name in results and "test_auroc" in results[ds_name]:
+            print(f"\n[SKIP] {ds_name}: already done (test_auroc={results[ds_name]['test_auroc']:.4f})")
+            continue
         print(f"\n{'='*70}")
         print(f"Dataset: {ds_name} (nc={info['n_classes']}, best={info['best_single']:.4f})")
         print(f"{'='*70}")
@@ -380,6 +417,9 @@ def main():
         results[ds_name] = r
         if not r["target_met"]: all_match = False
         print(f"    Time: {time.time()-t0:.0f}s")
+        # checkpoint after each dataset
+        with open(out_path, "w") as f:
+            json.dump(results, f, indent=2, default=_convert)
 
     # Summary
     print(f"\n{'='*70}")

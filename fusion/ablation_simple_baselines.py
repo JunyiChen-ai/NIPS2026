@@ -7,7 +7,10 @@ Schema per dataset:
     { "common_claim_3class": {"best_single": 0.7576, "score_avg": 0.7651,
                               "lr_on_preds": 0.7735}, ... }
 """
-import os, json, time, warnings
+import os, json, time, warnings, argparse
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 import torch
 import numpy as np
 from sklearn.linear_model import LogisticRegression
@@ -15,20 +18,40 @@ from sklearn.preprocessing import StandardScaler, label_binarize
 from sklearn.decomposition import PCA
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
+from fusion.settings import get_config as _get_config
 
 warnings.filterwarnings("ignore")
 
-MODELS = ["qwen2.5-7b", "llama3.1-8b", "mistral-7b-v0.3"]
+# Setting parsed at the bottom; default to old.
+_ap = argparse.ArgumentParser(add_help=False)
+_ap.add_argument("--setting", default="old", choices=["old", "new"])
+_ap.add_argument("--models", nargs="+", default=["qwen2.5-7b", "llama3.1-8b", "mistral-7b-v0.3"])
+_cli, _ = _ap.parse_known_args()
+cfg = _get_config(_cli.setting)
+MODELS = _cli.models
 
 MC_METHODS = ["lr_probe", "pca_lr", "iti", "kb_mlp", "attn_satisfies", "sep", "step"]
 
-ALL_DATASETS = {
-    "common_claim_3class": {"n_classes": 3, "ext": "common_claim_3class", "train": "train", "val": "val", "test": "test"},
-    "e2h_amc_3class": {"n_classes": 3, "ext": "e2h_amc_3class", "train": "train_sub", "val": "val_split", "test": "eval"},
-    "e2h_amc_5class": {"n_classes": 5, "ext": "e2h_amc_5class", "train": "train_sub", "val": "val_split", "test": "eval"},
-    "when2call_3class": {"n_classes": 3, "ext": "when2call_3class", "train": "train", "val": "val", "test": "test"},
-    "ragtruth_binary": {"n_classes": 2, "ext": "ragtruth", "train": "train", "val": "val", "test": "test"},
-}
+ALL_DATASETS = {}
+for _ds, _info in cfg.datasets.items():
+    ALL_DATASETS[_ds] = {
+        "n_classes": _info["n_classes"], "ext": _info["ext"],
+        "train": _info["splits"]["train"], "val": _info["splits"]["val"], "test": _info["splits"]["test"],
+    }
+
+
+_USE_GPU_LR = cfg.name == "new"
+if _USE_GPU_LR:
+    from fusion._gpu_clf import gpu_lr_fit_predict as _gpu_lr_fit_predict
+
+
+def _fit_predict_proba(X_tr, y_tr, X_te, n_classes, C=0.1, max_iter=2000):
+    if _USE_GPU_LR and n_classes == 2:
+        p1 = _gpu_lr_fit_predict(X_tr, y_tr, X_te, C=C)[0]
+        return np.stack([1 - p1, p1], axis=1)
+    clf = LogisticRegression(max_iter=max_iter, C=C, random_state=42)
+    clf.fit(X_tr, y_tr)
+    return clf.predict_proba(X_te)
 
 
 def compute_auroc(y, p, nc):
@@ -38,9 +61,8 @@ def compute_auroc(y, p, nc):
     return roc_auc_score(yb, p, average="macro", multi_class="ovr")
 
 
-def load_labels(extraction_dir, ext, split):
-    with open(os.path.join(extraction_dir, ext, split, "meta.json")) as f:
-        return np.array(json.load(f)["labels"])
+def load_labels(model, ds_name, split_alias):
+    return cfg.load_labels(model, ds_name, split_alias)
 
 
 def load_method_features(processed_dir, ds_name, method):
@@ -57,12 +79,11 @@ def load_method_features(processed_dir, ds_name, method):
     return result
 
 
-def run(ds_name, info, processed_dir, extraction_dir, best_single):
+def run(ds_name, info, processed_dir, extraction_dir, best_single, model):
     nc = info["n_classes"]
-    ext = info["ext"]
-    tr_labels = load_labels(extraction_dir, ext, info["train"])
-    va_labels = load_labels(extraction_dir, ext, info["val"])
-    te_labels = load_labels(extraction_dir, ext, info["test"])
+    tr_labels = load_labels(model, ds_name, "train")
+    va_labels = load_labels(model, ds_name, "val")
+    te_labels = load_labels(model, ds_name, "test")
     trva_labels = np.concatenate([tr_labels, va_labels])
     n_trva = len(trva_labels)
 
@@ -86,8 +107,7 @@ def run(ds_name, info, processed_dir, extraction_dir, best_single):
         for C in [1e-2, 1e-1, 1.0, 10.0]:
             inner = np.zeros((n_trva, nc))
             for _, (ti, vi) in enumerate(skf.split(Xs, trva_labels)):
-                clf = LogisticRegression(max_iter=2000, C=C, random_state=42)
-                clf.fit(Xs[ti], trva_labels[ti]); inner[vi] = clf.predict_proba(Xs[vi])
+                inner[vi] = _fit_predict_proba(Xs[ti], trva_labels[ti], Xs[vi], nc, C=C, max_iter=2000)
             try:
                 au = compute_auroc(trva_labels, inner, nc)
             except Exception:
@@ -97,10 +117,15 @@ def run(ds_name, info, processed_dir, extraction_dir, best_single):
 
         oof = np.zeros((n_trva, nc)); ta = np.zeros((len(te_labels), nc))
         for _, (ti, vi) in enumerate(skf.split(Xs, trva_labels)):
-            clf = LogisticRegression(max_iter=2000, C=best_C, random_state=42)
-            clf.fit(Xs[ti], trva_labels[ti])
-            oof[vi] = clf.predict_proba(Xs[vi])
-            ta += clf.predict_proba(Xts) / 5
+            if _USE_GPU_LR and nc == 2:
+                p_vi, p_te = _gpu_lr_fit_predict(Xs[ti], trva_labels[ti], Xs[vi], Xts, C=best_C)
+                oof[vi] = np.stack([1 - p_vi, p_vi], axis=1)
+                ta += np.stack([1 - p_te, p_te], axis=1) / 5
+            else:
+                clf = LogisticRegression(max_iter=2000, C=best_C, random_state=42)
+                clf.fit(Xs[ti], trva_labels[ti])
+                oof[vi] = clf.predict_proba(Xs[vi])
+                ta += clf.predict_proba(Xts) / 5
         all_oof.append(oof); all_te.append(ta)
 
     bs = best_single
@@ -140,23 +165,31 @@ def run(ds_name, info, processed_dir, extraction_dir, best_single):
 
 def main():
     for model in MODELS:
-        processed_dir = f"/home/junyi/NIPS2026/reproduce/processed_features/{model}"
-        extraction_dir = f"/home/junyi/NIPS2026/extraction/features/{model}"
-        oracle_path = f"/home/junyi/NIPS2026/fusion/results/{model}/oracle_complete.json"
-        out_path = f"/home/junyi/NIPS2026/fusion/results/{model}/simple_fusion_baselines.json"
+        processed_dir = str(cfg.base_processed / model)
+        extraction_dir = str(cfg.base_extraction / model)
+        oracle_path = str(cfg.model_results_dir(model) / "oracle_complete.json")
+        out_path = str(cfg.model_results_dir(model) / "simple_fusion_baselines.json")
+        os.makedirs(str(cfg.model_results_dir(model)), exist_ok=True)
 
+        if not os.path.exists(oracle_path):
+            print(f"[SKIP] {model}: oracle_complete.json missing at {oracle_path} — run exp1 first.")
+            continue
         with open(oracle_path) as f:
             oracle = json.load(f)
-        best_single = {ds: oracle[ds]["best_single_auroc"] for ds in ALL_DATASETS}
+        best_single = {ds: oracle[ds]["best_single_auroc"]
+                       for ds in ALL_DATASETS if ds in oracle and "best_single_auroc" in oracle[ds]}
 
-        print(f"\n===== {model} =====")
+        print(f"\n===== {model} ({cfg.name}) =====")
         print("Simple Fusion Baselines")
         print("=" * 70)
 
         out = {}
         for ds_name, info in ALL_DATASETS.items():
+            if ds_name not in best_single:
+                print(f"[SKIP] {ds_name}: no best_single in oracle file")
+                continue
             t0 = time.time()
-            r = run(ds_name, info, processed_dir, extraction_dir, best_single[ds_name])
+            r = run(ds_name, info, processed_dir, extraction_dir, best_single[ds_name], model)
             out[ds_name] = r
             print(
                 f"{ds_name:25s} best={r['best_single']:.4f} | "

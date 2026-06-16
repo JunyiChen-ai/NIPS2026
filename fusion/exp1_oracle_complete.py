@@ -13,37 +13,51 @@ from sklearn.metrics import roc_auc_score
 
 warnings.filterwarnings("ignore")
 
+import sys as _sys
+_sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parents[1]))
 import argparse as _argparse
 _ap = _argparse.ArgumentParser(add_help=False)
 _ap.add_argument("--model", default="qwen2.5-7b")
+_ap.add_argument("--setting", default="old", choices=["old", "new"])
 _cli, _ = _ap.parse_known_args()
 _MODEL = _cli.model
-from pathlib import Path as _Path
-_REPO_ROOT = _Path(__file__).resolve().parents[1]
-_BASE_PROCESSED = str(_REPO_ROOT / "reproduce" / "processed_features")
-_BASE_EXTRACTION = str(_REPO_ROOT / "extraction" / "features")
-_BASE_RESULTS = str(_REPO_ROOT / "fusion" / "results")
-PROCESSED_DIR = os.path.join(_BASE_PROCESSED, _MODEL) if _MODEL else _BASE_PROCESSED
-EXTRACTION_DIR = os.path.join(_BASE_EXTRACTION, _MODEL) if _MODEL else _BASE_EXTRACTION
-RESULTS_DIR = os.path.join(_BASE_RESULTS, _MODEL) if _MODEL else _BASE_RESULTS
+from fusion.settings import get_config as _get_config
+cfg = _get_config(_cli.setting)
+PROCESSED_DIR = str(cfg.base_processed / _MODEL)
+EXTRACTION_DIR = str(cfg.base_extraction / _MODEL)
+RESULTS_DIR = str(cfg.model_results_dir(_MODEL))
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 MC_METHODS = ["lr_probe", "pca_lr", "iti", "kb_mlp", "attn_satisfies", "sep", "step"]
 BIN_EXTRA = ["mm_probe", "lid", "llm_check", "seakr"]
 
-ALL_DATASETS = {
-    "common_claim_3class": {"n_classes": 3, "ext": "common_claim_3class", "train": "train", "val": "val", "test": "test"},
-    "e2h_amc_3class":      {"n_classes": 3, "ext": "e2h_amc_3class", "train": "train_sub", "val": "val_split", "test": "eval"},
-    "e2h_amc_5class":      {"n_classes": 5, "ext": "e2h_amc_5class", "train": "train_sub", "val": "val_split", "test": "eval"},
-    "when2call_3class":    {"n_classes": 3, "ext": "when2call_3class", "train": "train", "val": "val", "test": "test"},
-    "ragtruth_binary":     {"n_classes": 2, "ext": "ragtruth", "train": "train", "val": "val", "test": "test"},
-    "fava_binary":         {"n_classes": 2, "ext": "fava", "train": "train", "val": "val", "test": "test"},
-}
+ALL_DATASETS = cfg.datasets
 
 
-def load_labels(ext, split):
-    with open(os.path.join(EXTRACTION_DIR, ext, split, "meta.json")) as f:
-        return np.array(json.load(f)["labels"])
+def load_labels(ds_name, split):
+    """Setting-aware label loader. Caller passes dataset name (key in cfg.datasets)
+    and a split alias ('train'/'val'/'test'). The cfg figures out the per-setting
+    physical layout (old: meta.json from ext/split_dir; new: correctness_labels)."""
+    return cfg.load_labels(_MODEL, ds_name, split)
+
+
+# In new setting (all binary), use GPU LBFGS for ~100x speedup over sklearn LR.
+# In old setting (3/5-class), keep sklearn for multinomial support.
+_USE_GPU_LR = cfg.name == "new"
+if _USE_GPU_LR:
+    from fusion._gpu_clf import gpu_lr_fit_predict as _gpu_lr_fit_predict
+
+
+def _fit_predict_proba(X_tr, y_tr, X_te, n_classes, C=0.1, max_iter=2000):
+    """Returns (n_te, n_classes) probabilities. Uses GPU LBFGS for binary in new
+    setting; otherwise sklearn LR."""
+    if _USE_GPU_LR and n_classes == 2:
+        # GPU path returns positive-class probabilities; assemble (n,2) matrix.
+        p1 = _gpu_lr_fit_predict(X_tr, y_tr, X_te, C=C)[0]
+        return np.stack([1 - p1, p1], axis=1)
+    clf = LogisticRegression(max_iter=max_iter, C=C, random_state=42)
+    clf.fit(X_tr, y_tr)
+    return clf.predict_proba(X_te)
 
 
 def compute_auroc(y, p, nc):
@@ -60,17 +74,16 @@ def main():
 
     results = {}
 
-    for ds_name, cfg in ALL_DATASETS.items():
-        nc = cfg["n_classes"]
-        ext = cfg["ext"]
+    for ds_name, ds_cfg in ALL_DATASETS.items():
+        nc = ds_cfg["n_classes"]
         probe_dir = os.path.join(PROCESSED_DIR, ds_name)
         if not os.path.exists(probe_dir):
             print(f"\n[SKIP] {ds_name}: no processed features")
             continue
 
-        tr_labels = load_labels(ext, cfg["train"])
-        va_labels = load_labels(ext, cfg["val"])
-        te_labels = load_labels(ext, cfg["test"])
+        tr_labels = load_labels(ds_name, "train")
+        va_labels = load_labels(ds_name, "val")
+        te_labels = load_labels(ds_name, "test")
         trva_labels = np.concatenate([tr_labels, va_labels])
 
         methods = MC_METHODS if nc > 2 else MC_METHODS + BIN_EXTRA
@@ -96,9 +109,8 @@ def main():
                 te_s = pca.transform(te_s)
 
             try:
-                clf = LogisticRegression(max_iter=2000, C=0.1, random_state=42)
-                clf.fit(trva_s, trva_labels)
-                all_probe_preds[method] = clf.predict_proba(te_s)
+                all_probe_preds[method] = _fit_predict_proba(
+                    trva_s, trva_labels, te_s, nc, C=0.1, max_iter=2000)
             except Exception as e:
                 print(f"  [WARN] {method} failed: {e}")
 

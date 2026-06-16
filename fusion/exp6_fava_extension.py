@@ -15,19 +15,26 @@ from sklearn.ensemble import HistGradientBoostingClassifier, ExtraTreesClassifie
 
 warnings.filterwarnings("ignore")
 
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 import argparse as _argparse
 _ap = _argparse.ArgumentParser(add_help=False)
 _ap.add_argument("--model", default="qwen2.5-7b")
+_ap.add_argument("--setting", default="old", choices=["old", "new"])
 _cli, _ = _ap.parse_known_args()
 _MODEL = _cli.model
-from pathlib import Path as _Path
-_REPO_ROOT = _Path(__file__).resolve().parents[1]
-_BASE_PROCESSED = str(_REPO_ROOT / "reproduce" / "processed_features")
-_BASE_EXTRACTION = str(_REPO_ROOT / "extraction" / "features")
-_BASE_RESULTS = str(_REPO_ROOT / "fusion" / "results")
-PROCESSED_DIR = os.path.join(_BASE_PROCESSED, _MODEL) if _MODEL else _BASE_PROCESSED
-EXTRACTION_DIR = os.path.join(_BASE_EXTRACTION, _MODEL) if _MODEL else _BASE_EXTRACTION
-RESULTS_DIR = os.path.join(_BASE_RESULTS, _MODEL) if _MODEL else _BASE_RESULTS
+# In new setting, fava is folded into the main pipeline (exp1/exp2/v21 etc).
+# This standalone exp6 is only meaningful in old setting.
+if _cli.setting == "new":
+    print("[DEPRECATED] exp6_fava_extension is only used in old setting. "
+          "In new setting, fava is part of the main pipeline. Skipping.")
+    raise SystemExit(0)
+from fusion.settings import get_config as _get_config
+cfg = _get_config(_cli.setting)
+PROCESSED_DIR = str(cfg.base_processed / _MODEL)
+EXTRACTION_DIR = str(cfg.base_extraction / _MODEL)
+RESULTS_DIR = str(cfg.model_results_dir(_MODEL))
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 PCA_DIMS = [32, 128]

@@ -25,21 +25,58 @@ from torch.utils.data import Dataset, DataLoader
 
 warnings.filterwarnings("ignore")
 
-EXTRACTION_DIR = "/home/junyi/NIPS2026/extraction/features"
+import sys as _sys
+import argparse as _argparse
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+_ap = _argparse.ArgumentParser(add_help=False)
+_ap.add_argument("--model", default="qwen2.5-7b")
+_ap.add_argument("--setting", default="old", choices=["old", "new"])
+_cli, _ = _ap.parse_known_args()
+_MODEL = _cli.model
+from fusion.settings import get_config as _get_config
+cfg = _get_config(_cli.setting)
+
+# Old setting: per-dataset (no model subdir in raw extraction tree was the old layout
+# for some datasets). Currently extraction tree has {model}/{dataset}/{split}/. We
+# bake _MODEL into the path here.
+EXTRACTION_DIR = str(cfg.base_extraction / _MODEL)
 
 DATASETS = {
-    "common_claim_3class": {"n_classes": 3, "splits": {"train": "train", "val": "val", "test": "test"}},
-    "e2h_amc_3class":      {"n_classes": 3, "splits": {"train": "train_sub", "val": "val_split", "test": "eval"}},
-    "e2h_amc_5class":      {"n_classes": 5, "splits": {"train": "train_sub", "val": "val_split", "test": "eval"}},
-    "when2call_3class":     {"n_classes": 3, "splits": {"train": "train", "val": "val", "test": "test"}},
+    ds: {"n_classes": info["n_classes"], "splits": info["splits"]}
+    for ds, info in cfg.datasets.items()
 }
 
-BASELINES = {
-    "common_claim_3class": 0.7576,
-    "e2h_amc_3class": 0.8934,
-    "e2h_amc_5class": 0.8752,
-    "when2call_3class": 0.8741,
+# Old-setting hardcoded baselines; new setting auto-loads from
+# reproduce/results_correctness/{model}/{ds}.json best-method test AUROC.
+_OLD_BASELINES = {
+    "common_claim_3class": 0.7576, "e2h_amc_3class": 0.8934, "e2h_amc_5class": 0.8752,
+    "when2call_3class": 0.8741, "ragtruth_binary": 0.8808, "fava_binary": 0.9856,
 }
+
+def _load_new_baselines():
+    out = {}
+    base = _Path("/home/junyi/NIPS2026/reproduce/results_correctness") / _MODEL
+    for ds in DATASETS:
+        p = base / f"{ds}.json"
+        if not p.exists():
+            continue
+        with open(p) as f:
+            data = json.load(f)
+        scores = []
+        for method, res in data.items():
+            if isinstance(res, dict):
+                if "auroc" in res:
+                    scores.append(float(res["auroc"]))
+                elif method == "coe":
+                    for v in res.values():
+                        if isinstance(v, dict) and "auroc" in v:
+                            scores.append(float(v["auroc"]))
+        if scores:
+            out[ds] = max(scores)
+    return out
+
+BASELINES = _load_new_baselines() if cfg.name == "new" else _OLD_BASELINES
 
 EMBED_DIM = 64
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -219,23 +256,27 @@ class HierarchicalFusion(nn.Module):
         return main_logits, aux_logits
 
 
-def load_split_data(dataset, split_name):
-    """Load raw features for a split."""
-    split_dir = os.path.join(EXTRACTION_DIR, dataset, split_name)
-    features = {}
+def load_split_data(dataset, split_alias):
+    """Load raw features for a split. Setting-aware via cfg.raw_view: in old
+    setting reads pre-split tensors directly; in new setting loads the full
+    'all' tensor and indexes by split_indices.
 
+    Args:
+        dataset: dataset name (key in cfg.datasets)
+        split_alias: one of 'train' / 'val' / 'test' (logical alias)
+    """
+    features = {}
     for fname in ["input_last_token_hidden", "input_per_head_activation",
                    "input_attn_value_norms", "input_attn_stats",
                    "gen_last_token_hidden"]:
-        path = os.path.join(split_dir, f"{fname}.pt")
-        if os.path.exists(path):
-            t = torch.load(path, map_location="cpu")
-            if isinstance(t, torch.Tensor):
-                features[fname] = t.half()  # keep as fp16 to save memory
+        try:
+            t = cfg.raw_view(_MODEL, dataset, split_alias, f"{fname}.pt")
+        except FileNotFoundError:
+            continue
+        if isinstance(t, torch.Tensor):
+            features[fname] = t.half()  # keep as fp16 to save memory
 
-    with open(os.path.join(split_dir, "meta.json")) as f:
-        labels = np.array(json.load(f)["labels"])
-
+    labels = cfg.load_labels(_MODEL, dataset, split_alias)
     return features, labels
 
 
@@ -248,18 +289,17 @@ def compute_auroc(y_true, y_prob, n_classes):
 
 def train_and_eval(dataset, info):
     n_classes = info["n_classes"]
-    splits = info["splits"]
-    baseline = BASELINES[dataset]
+    baseline = BASELINES.get(dataset, 0.5)
 
     print(f"\n{'='*60}")
     print(f"Dataset: {dataset} ({n_classes}-class, baseline={baseline:.4f})")
     print(f"{'='*60}")
 
-    # Load data
+    # Load data via cfg-aware load_split_data (uses logical aliases now).
     t0 = time.time()
-    train_feats, train_labels = load_split_data(dataset, splits["train"])
-    val_feats, val_labels = load_split_data(dataset, splits["val"])
-    test_feats, test_labels = load_split_data(dataset, splits["test"])
+    train_feats, train_labels = load_split_data(dataset, "train")
+    val_feats, val_labels = load_split_data(dataset, "val")
+    test_feats, test_labels = load_split_data(dataset, "test")
     print(f"Loaded: train={len(train_labels)}, val={len(val_labels)}, test={len(test_labels)}  [{time.time()-t0:.1f}s]")
     print(f"Features: {[(k, v.shape) for k, v in train_feats.items()]}")
 
@@ -402,7 +442,7 @@ def main():
     print("=" * 70)
     all_pass = True
     for ds in DATASETS:
-        bl = BASELINES[ds]
+        bl = BASELINES.get(ds, 0.5)
         r = all_results[ds]
         delta = r["delta"]
         status = "PASS" if delta >= 0.03 else "FAIL"
@@ -412,9 +452,11 @@ def main():
 
     print(f"\n{'ALL TARGETS MET' if all_pass else 'Some targets not met'}")
 
-    os.makedirs("/home/junyi/NIPS2026/fusion/results", exist_ok=True)
-    with open("/home/junyi/NIPS2026/fusion/results/neural_fusion_results.json", "w") as f:
+    os.makedirs(str(cfg.base_results), exist_ok=True)
+    out_path = str(cfg.base_results / "neural_fusion_results.json")
+    with open(out_path, "w") as f:
         json.dump(all_results, f, indent=2, default=str)
+    print(f"Saved to {out_path}")
 
 
 if __name__ == "__main__":

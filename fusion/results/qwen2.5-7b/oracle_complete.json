@@ -108,5 +108,22 @@
       "llm_check": 0.619,
       "seakr": 0.5301
     }
+  },
+  "belebele": {
+    "oracle_auroc": 0.9987408773929775,
+    "oracle_accuracy": 0.9611111111111111,
+    "best_single_auroc": 0.9343780411842355,
+    "best_single_method": "sep",
+    "headroom": 0.06436283620874195,
+    "n_probes": 7,
+    "per_probe_auroc": {
+      "sep": 0.9344,
+      "pca_lr": 0.9335,
+      "lr_probe": 0.933,
+      "step": 0.9277,
+      "iti": 0.9217,
+      "attn_satisfies": 0.7327,
+      "kb_mlp": 0.4838
+    }
   }
 }

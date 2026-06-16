@@ -1,0 +1,3662 @@
+{
+  "timestamp": "20260510_070745",
+  "run_id": "initial_pattern_audit",
+  "inputs": {
+    "old_summary": "fusion/results/cross_model_summary.json",
+    "new_summary": "fusion/results_correctness/cross_model_summary.json",
+    "new_native": "reproduce/results_correctness/_summary.json"
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "text": "Dataset-label / latent-task settings should favor input-side probes."
+    },
+    {
+      "id": "H2",
+      "text": "LLM-response correctness settings should favor generation-side probes."
+    },
+    {
+      "id": "H3",
+      "text": "Fusion/oracle headroom should remain positive even under best-single dominance."
+    },
+    {
+      "id": "H4",
+      "text": "Post-generation dominance should have dataset/model exceptions worth cherry-picking."
+    }
+  ],
+  "best_single_summary": {
+    "dataset_label": {
+      "n": 12,
+      "timing_counts": {
+        "input_side": 11,
+        "generation_side": 1
+      },
+      "method_counts": {
+        "pca_lr": 6,
+        "iti": 3,
+        "lr_probe": 2,
+        "kb_mlp": 1
+      },
+      "family_counts": {
+        "residual_hidden": 9,
+        "attention_head": 3
+      }
+    },
+    "response_correctness_fusion": {
+      "n": 30,
+      "timing_counts": {
+        "generation_side": 25,
+        "input_side": 5
+      },
+      "method_counts": {
+        "sep": 18,
+        "step": 4,
+        "iti": 2,
+        "seakr": 2,
+        "attn_satisfies": 1,
+        "kb_mlp": 1,
+        "lr_probe": 1,
+        "pca_lr": 1
+      },
+      "family_counts": {
+        "semantic_uncertainty": 18,
+        "step_trajectory": 4,
+        "residual_hidden": 3,
+        "attention_head": 2,
+        "sample_consistency": 2,
+        "attention_flow": 1
+      }
+    },
+    "response_correctness_native": {
+      "n": 30,
+      "timing_counts": {
+        "generation_side": 26,
+        "input_side": 4
+      },
+      "method_counts": {
+        "step": 16,
+        "sep": 8,
+        "iti": 2,
+        "kb_mlp": 2,
+        "lr_probe": 2
+      },
+      "family_counts": {
+        "step_trajectory": 16,
+        "semantic_uncertainty": 8,
+        "residual_hidden": 4,
+        "attention_head": 2
+      }
+    }
+  },
+  "gap_summary": {
+    "dataset_label": {
+      "n": 12,
+      "mean": -0.02214166666666666,
+      "median": -0.023050000000000015,
+      "min": -0.056400000000000006,
+      "max": 0.009199999999999986,
+      "positive_rate": 0.08333333333333333
+    },
+    "response_correctness_fusion": {
+      "n": 30,
+      "mean": 0.07975333333333333,
+      "median": 0.06884999999999997,
+      "min": -0.09460000000000002,
+      "max": 0.276,
+      "positive_rate": 0.8333333333333334
+    },
+    "response_correctness_native": {
+      "n": 30,
+      "mean": 0.08882941654483799,
+      "median": 0.08039019934564962,
+      "min": -0.045608108108108225,
+      "max": 0.2596822244289968,
+      "positive_rate": 0.8666666666666667
+    }
+  },
+  "headroom_summary": {
+    "dataset_label": {
+      "oracle_headroom": {
+        "n": 12,
+        "mean": 0.11605620281607214,
+        "median": 0.11864918482523917,
+        "min": 0.007350885263053497,
+        "max": 0.2155655301246665,
+        "positive_rate": 1.0
+      },
+      "v21_delta": {
+        "n": 12,
+        "mean": 0.019693180075661815,
+        "median": 0.014261068587073211,
+        "min": 0.0028508852630535486,
+        "max": 0.07518540394911843,
+        "positive_rate": 1.0
+      }
+    },
+    "response_correctness_fusion": {
+      "oracle_headroom": {
+        "n": 30,
+        "mean": 0.1883725017527819,
+        "median": 0.1806244964785545,
+        "min": 0.02359882005899716,
+        "max": 0.3144444444444445,
+        "positive_rate": 1.0
+      },
+      "v21_delta": {
+        "n": 30,
+        "mean": 0.014912723166882583,
+        "median": 0.013856350892092417,
+        "min": -0.07116113306982874,
+        "max": 0.10041607142857145,
+        "positive_rate": 0.9333333333333333
+      }
+    }
+  },
+  "domain_tables": {
+    "dataset_label": {
+      "factual_claim": {
+        "n": 2,
+        "best_timing_counts": {
+          "input_side": 2
+        },
+        "best_method_counts": {
+          "lr_probe": 1,
+          "pca_lr": 1
+        }
+      },
+      "factual_hallucination": {
+        "n": 2,
+        "best_timing_counts": {
+          "input_side": 2
+        },
+        "best_method_counts": {
+          "iti": 1,
+          "pca_lr": 1
+        }
+      },
+      "math_difficulty": {
+        "n": 4,
+        "best_timing_counts": {
+          "input_side": 4
+        },
+        "best_method_counts": {
+          "pca_lr": 4
+        }
+      },
+      "rag_hallucination": {
+        "n": 2,
+        "best_timing_counts": {
+          "input_side": 2
+        },
+        "best_method_counts": {
+          "iti": 2
+        }
+      },
+      "tool_routing": {
+        "n": 2,
+        "best_timing_counts": {
+          "generation_side": 1,
+          "input_side": 1
+        },
+        "best_method_counts": {
+          "kb_mlp": 1,
+          "lr_probe": 1
+        }
+      }
+    },
+    "response_correctness_fusion": {
+      "commonsense_qa": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 2,
+          "input_side": 1
+        },
+        "best_method_counts": {
+          "iti": 1,
+          "sep": 1,
+          "step": 1
+        }
+      },
+      "factual_claim": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 3
+        },
+        "best_method_counts": {
+          "sep": 3
+        }
+      },
+      "factual_hallucination": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 3
+        },
+        "best_method_counts": {
+          "sep": 3
+        }
+      },
+      "knowledge_qa": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 3
+        },
+        "best_method_counts": {
+          "sep": 3
+        }
+      },
+      "math_reasoning": {
+        "n": 6,
+        "best_timing_counts": {
+          "generation_side": 6
+        },
+        "best_method_counts": {
+          "sep": 4,
+          "seakr": 1,
+          "step": 1
+        }
+      },
+      "math_theory_qa": {
+        "n": 3,
+        "best_timing_counts": {
+          "input_side": 3
+        },
+        "best_method_counts": {
+          "attn_satisfies": 1,
+          "lr_probe": 1,
+          "pca_lr": 1
+        }
+      },
+      "rag_hallucination": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 2,
+          "input_side": 1
+        },
+        "best_method_counts": {
+          "sep": 2,
+          "iti": 1
+        }
+      },
+      "reading_comprehension": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 3
+        },
+        "best_method_counts": {
+          "step": 2,
+          "seakr": 1
+        }
+      },
+      "tool_routing": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 3
+        },
+        "best_method_counts": {
+          "sep": 2,
+          "kb_mlp": 1
+        }
+      }
+    },
+    "response_correctness_native": {
+      "commonsense_qa": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 2,
+          "input_side": 1
+        },
+        "best_method_counts": {
+          "sep": 2,
+          "iti": 1
+        }
+      },
+      "factual_claim": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 3
+        },
+        "best_method_counts": {
+          "kb_mlp": 1,
+          "sep": 1,
+          "step": 1
+        }
+      },
+      "factual_hallucination": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 3
+        },
+        "best_method_counts": {
+          "step": 2,
+          "sep": 1
+        }
+      },
+      "knowledge_qa": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 3
+        },
+        "best_method_counts": {
+          "step": 2,
+          "kb_mlp": 1
+        }
+      },
+      "math_reasoning": {
+        "n": 6,
+        "best_timing_counts": {
+          "generation_side": 6
+        },
+        "best_method_counts": {
+          "step": 5,
+          "sep": 1
+        }
+      },
+      "math_theory_qa": {
+        "n": 3,
+        "best_timing_counts": {
+          "input_side": 2,
+          "generation_side": 1
+        },
+        "best_method_counts": {
+          "lr_probe": 2,
+          "step": 1
+        }
+      },
+      "rag_hallucination": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 2,
+          "input_side": 1
+        },
+        "best_method_counts": {
+          "step": 2,
+          "iti": 1
+        }
+      },
+      "reading_comprehension": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 3
+        },
+        "best_method_counts": {
+          "step": 2,
+          "sep": 1
+        }
+      },
+      "tool_routing": {
+        "n": 3,
+        "best_timing_counts": {
+          "generation_side": 3
+        },
+        "best_method_counts": {
+          "sep": 2,
+          "step": 1
+        }
+      }
+    }
+  },
+  "top_exceptions": {
+    "dataset_label_generation_wins": [
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.8732,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8824,
+        "generation_minus_input": 0.009199999999999986
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "fava_binary",
+        "domain": "factual_hallucination",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.9926,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.9907,
+        "generation_minus_input": -0.0019000000000000128
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7621,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.7559,
+        "generation_minus_input": -0.006199999999999983
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.864,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8494,
+        "generation_minus_input": -0.014599999999999946
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7712,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.7499,
+        "generation_minus_input": -0.021299999999999986
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "fava_binary",
+        "domain": "factual_hallucination",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.9846,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.9632,
+        "generation_minus_input": -0.021400000000000086
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "ragtruth_binary",
+        "domain": "rag_hallucination",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.8862,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8615,
+        "generation_minus_input": -0.024699999999999944
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "e2h_amc_3class",
+        "domain": "math_difficulty",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.8785,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8488,
+        "generation_minus_input": -0.02969999999999995
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "e2h_amc_3class",
+        "domain": "math_difficulty",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.8937,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8637,
+        "generation_minus_input": -0.030000000000000027
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "e2h_amc_5class",
+        "domain": "math_difficulty",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.8576,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8246,
+        "generation_minus_input": -0.03300000000000003
+      }
+    ],
+    "correctness_input_wins_fusion": [
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.8505,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7559,
+        "generation_minus_input": -0.09460000000000002
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7337,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7089,
+        "generation_minus_input": -0.024800000000000044
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.8522,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.836,
+        "generation_minus_input": -0.016199999999999992
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_input_method": "attn_satisfies",
+        "best_input_auroc": 0.7502,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.742,
+        "generation_minus_input": -0.008199999999999985
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.7277,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7221,
+        "generation_minus_input": -0.005600000000000049
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_input_method": "attn_satisfies",
+        "best_input_auroc": 0.7399,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7402,
+        "generation_minus_input": 0.00029999999999996696
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.816,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.8258,
+        "generation_minus_input": 0.009800000000000031
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_input_method": "mm_probe",
+        "best_input_auroc": 0.8008,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.8159,
+        "generation_minus_input": 0.015100000000000002
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "attn_satisfies",
+        "best_input_auroc": 0.7024,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.7188,
+        "generation_minus_input": 0.01639999999999997
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7412,
+        "best_generation_method": "seakr",
+        "best_generation_auroc": 0.7614,
+        "generation_minus_input": 0.020199999999999996
+      }
+    ],
+    "correctness_input_wins_native": [
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7263513513513514,
+        "best_generation_method": "coe",
+        "best_generation_auroc": 0.6807432432432432,
+        "generation_minus_input": -0.045608108108108225
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7717391304347826,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7299077733860343,
+        "generation_minus_input": -0.0418313570487483
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.8461163882519924,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8289485751719619,
+        "generation_minus_input": -0.01716781308003057
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.7442022263450835,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7381725417439703,
+        "generation_minus_input": -0.006029684601113194
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7224170172978027,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7264882343774349,
+        "generation_minus_input": 0.004071217079632206
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.817909823203264,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8256135579035464,
+        "generation_minus_input": 0.007703734700282405
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.709619476125702,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7179815841791357,
+        "generation_minus_input": 0.008362108053433737
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7304249458980917,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.7526805036395829,
+        "generation_minus_input": 0.02225555774149124
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7882391705021674,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.8256880733944955,
+        "generation_minus_input": 0.03744890289232805
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.9196257044057377,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.9628025742827868,
+        "generation_minus_input": 0.04317686987704916
+      }
+    ]
+  },
+  "rows": {
+    "dataset_label_best_single": [
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_method": "lr_probe",
+        "best_auroc": 0.7711775896236243,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "lr_probe": 0.7712,
+          "pca_lr": 0.7604,
+          "kb_mlp": 0.7499,
+          "iti": 0.7153,
+          "attn_satisfies": 0.7058,
+          "step": 0.5264,
+          "sep": 0.5158
+        }
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "e2h_amc_3class",
+        "domain": "math_difficulty",
+        "best_method": "pca_lr",
+        "best_auroc": 0.8937013882570563,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "pca_lr": 0.8937,
+          "lr_probe": 0.8772,
+          "kb_mlp": 0.8637,
+          "attn_satisfies": 0.8575,
+          "iti": 0.8574,
+          "sep": 0.6514,
+          "step": 0.6228
+        }
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "e2h_amc_5class",
+        "domain": "math_difficulty",
+        "best_method": "pca_lr",
+        "best_auroc": 0.8760320988721064,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "pca_lr": 0.876,
+          "lr_probe": 0.8631,
+          "kb_mlp": 0.8403,
+          "iti": 0.84,
+          "attn_satisfies": 0.8236,
+          "sep": 0.6213,
+          "step": 0.606
+        }
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_method": "lr_probe",
+        "best_auroc": 0.8640145960508816,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "lr_probe": 0.864,
+          "kb_mlp": 0.8494,
+          "iti": 0.8405,
+          "attn_satisfies": 0.8079,
+          "pca_lr": 0.7977,
+          "step": 0.5568,
+          "sep": 0.5451
+        }
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "ragtruth_binary",
+        "domain": "rag_hallucination",
+        "best_method": "iti",
+        "best_auroc": 0.8804154067579522,
+        "best_timing": "input_side",
+        "best_family": "attention_head",
+        "per_probe_auroc": {
+          "iti": 0.8804,
+          "mm_probe": 0.8576,
+          "lr_probe": 0.8576,
+          "pca_lr": 0.8355,
+          "kb_mlp": 0.824,
+          "attn_satisfies": 0.7969,
+          "llm_check": 0.7219,
+          "lid": 0.6963,
+          "sep": 0.6951,
+          "step": 0.69,
+          "seakr": 0.5527
+        }
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "fava_binary",
+        "domain": "factual_hallucination",
+        "best_method": "iti",
+        "best_auroc": 0.9846127481487494,
+        "best_timing": "input_side",
+        "best_family": "attention_head",
+        "per_probe_auroc": {
+          "iti": 0.9846,
+          "mm_probe": 0.9836,
+          "lr_probe": 0.9836,
+          "pca_lr": 0.9814,
+          "kb_mlp": 0.9632,
+          "attn_satisfies": 0.9599,
+          "lid": 0.8841,
+          "step": 0.661,
+          "sep": 0.659,
+          "llm_check": 0.619,
+          "seakr": 0.5301
+        }
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_method": "pca_lr",
+        "best_auroc": 0.7621188820218125,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "pca_lr": 0.7621,
+          "kb_mlp": 0.7559,
+          "lr_probe": 0.7558,
+          "iti": 0.7324,
+          "attn_satisfies": 0.7299,
+          "step": 0.6074,
+          "sep": 0.5819
+        }
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "e2h_amc_3class",
+        "domain": "math_difficulty",
+        "best_method": "pca_lr",
+        "best_auroc": 0.8785349656300032,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "pca_lr": 0.8785,
+          "lr_probe": 0.8658,
+          "iti": 0.8614,
+          "kb_mlp": 0.8488,
+          "attn_satisfies": 0.8409,
+          "step": 0.6685,
+          "sep": 0.6474
+        }
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "e2h_amc_5class",
+        "domain": "math_difficulty",
+        "best_method": "pca_lr",
+        "best_auroc": 0.8575795325390014,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "pca_lr": 0.8576,
+          "iti": 0.8368,
+          "lr_probe": 0.8357,
+          "kb_mlp": 0.8246,
+          "attn_satisfies": 0.8053,
+          "step": 0.6303,
+          "sep": 0.6151
+        }
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_method": "kb_mlp",
+        "best_auroc": 0.8824026192580741,
+        "best_timing": "generation_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "kb_mlp": 0.8824,
+          "lr_probe": 0.8732,
+          "iti": 0.8558,
+          "attn_satisfies": 0.852,
+          "pca_lr": 0.8142,
+          "step": 0.5737,
+          "sep": 0.5643
+        }
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "ragtruth_binary",
+        "domain": "rag_hallucination",
+        "best_method": "iti",
+        "best_auroc": 0.8862428971958504,
+        "best_timing": "input_side",
+        "best_family": "attention_head",
+        "per_probe_auroc": {
+          "iti": 0.8862,
+          "mm_probe": 0.8615,
+          "lr_probe": 0.8615,
+          "kb_mlp": 0.8615,
+          "pca_lr": 0.8487,
+          "attn_satisfies": 0.8064,
+          "lid": 0.7137,
+          "step": 0.7058,
+          "llm_check": 0.6909,
+          "sep": 0.6852,
+          "seakr": 0.5267
+        }
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "fava_binary",
+        "domain": "factual_hallucination",
+        "best_method": "pca_lr",
+        "best_auroc": 0.9926491147369465,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "pca_lr": 0.9926,
+          "iti": 0.9912,
+          "kb_mlp": 0.9907,
+          "lr_probe": 0.9904,
+          "mm_probe": 0.9903,
+          "attn_satisfies": 0.9822,
+          "lid": 0.9247,
+          "sep": 0.7725,
+          "step": 0.7045,
+          "llm_check": 0.6438,
+          "seakr": 0.5158
+        }
+      }
+    ],
+    "response_correctness_fusion_best_single": [
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_method": "sep",
+        "best_auroc": 0.8639858906525574,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.864,
+          "step": 0.8453,
+          "lr_probe": 0.7546,
+          "mm_probe": 0.7546,
+          "kb_mlp": 0.7507,
+          "pca_lr": 0.748,
+          "iti": 0.7438,
+          "attn_satisfies": 0.676,
+          "llm_check": 0.6455,
+          "seakr": 0.5806,
+          "lid": 0.5462
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_method": "sep",
+        "best_auroc": 0.8852707749766574,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.8853,
+          "step": 0.883,
+          "kb_mlp": 0.7623,
+          "mm_probe": 0.7585,
+          "lr_probe": 0.7585,
+          "attn_satisfies": 0.7522,
+          "pca_lr": 0.7481,
+          "iti": 0.7307,
+          "seakr": 0.6596,
+          "lid": 0.6475,
+          "llm_check": 0.6103
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_method": "sep",
+        "best_auroc": 0.7568275673990963,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.7568,
+          "pca_lr": 0.7256,
+          "iti": 0.7211,
+          "step": 0.7199,
+          "mm_probe": 0.695,
+          "lr_probe": 0.695,
+          "attn_satisfies": 0.6708,
+          "lid": 0.6577,
+          "llm_check": 0.6372,
+          "kb_mlp": 0.6371,
+          "seakr": 0.5721
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_method": "sep",
+        "best_auroc": 0.8366298235408183,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.8366,
+          "step": 0.7173,
+          "iti": 0.6714,
+          "pca_lr": 0.665,
+          "attn_satisfies": 0.6519,
+          "lr_probe": 0.6371,
+          "mm_probe": 0.6371,
+          "seakr": 0.6353,
+          "lid": 0.5342,
+          "llm_check": 0.5088,
+          "kb_mlp": 0.4942
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_method": "step",
+        "best_auroc": 0.8364197530864198,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "step": 0.8364,
+          "sep": 0.8083,
+          "seakr": 0.7032,
+          "iti": 0.6313,
+          "lr_probe": 0.6307,
+          "mm_probe": 0.6307,
+          "lid": 0.5641,
+          "pca_lr": 0.5463,
+          "llm_check": 0.4993,
+          "attn_satisfies": 0.4949,
+          "kb_mlp": 0.4931
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_method": "lr_probe",
+        "best_auroc": 0.8504611330698287,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "lr_probe": 0.8505,
+          "mm_probe": 0.8505,
+          "pca_lr": 0.7661,
+          "step": 0.7559,
+          "attn_satisfies": 0.7411,
+          "iti": 0.7292,
+          "sep": 0.7144,
+          "kb_mlp": 0.696,
+          "llm_check": 0.6854,
+          "seakr": 0.6726,
+          "lid": 0.6169
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_method": "sep",
+        "best_auroc": 0.9486950719960278,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.9487,
+          "step": 0.92,
+          "lr_probe": 0.6727,
+          "mm_probe": 0.6727,
+          "pca_lr": 0.6675,
+          "lid": 0.666,
+          "attn_satisfies": 0.6433,
+          "iti": 0.6353,
+          "seakr": 0.5762,
+          "kb_mlp": 0.5634,
+          "llm_check": 0.5306
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_method": "sep",
+        "best_auroc": 0.7341317124764033,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.7341,
+          "step": 0.7249,
+          "pca_lr": 0.652,
+          "mm_probe": 0.6345,
+          "lr_probe": 0.6345,
+          "iti": 0.6313,
+          "seakr": 0.6307,
+          "attn_satisfies": 0.6003,
+          "kb_mlp": 0.5659,
+          "llm_check": 0.5658,
+          "lid": 0.5373
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_method": "sep",
+        "best_auroc": 0.822245668368964,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.8222,
+          "step": 0.8099,
+          "pca_lr": 0.6985,
+          "attn_satisfies": 0.6696,
+          "lr_probe": 0.6549,
+          "mm_probe": 0.6549,
+          "iti": 0.6517,
+          "seakr": 0.6207,
+          "kb_mlp": 0.5862,
+          "lid": 0.5257,
+          "llm_check": 0.5219
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_method": "sep",
+        "best_auroc": 0.768671794551752,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.7687,
+          "step": 0.7426,
+          "pca_lr": 0.6856,
+          "iti": 0.6739,
+          "mm_probe": 0.658,
+          "lr_probe": 0.658,
+          "attn_satisfies": 0.6441,
+          "lid": 0.6422,
+          "kb_mlp": 0.628,
+          "llm_check": 0.5791,
+          "seakr": 0.4573
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_method": "seakr",
+        "best_auroc": 0.7613839285714286,
+        "best_timing": "generation_side",
+        "best_family": "sample_consistency",
+        "per_probe_auroc": {
+          "seakr": 0.7614,
+          "step": 0.7498,
+          "pca_lr": 0.7412,
+          "llm_check": 0.736,
+          "sep": 0.7263,
+          "lid": 0.6614,
+          "iti": 0.6449,
+          "mm_probe": 0.6305,
+          "lr_probe": 0.6304,
+          "kb_mlp": 0.6304,
+          "attn_satisfies": 0.6122
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_method": "sep",
+        "best_auroc": 0.9057729565604988,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.9058,
+          "step": 0.9032,
+          "kb_mlp": 0.8047,
+          "lr_probe": 0.7965,
+          "mm_probe": 0.7965,
+          "iti": 0.7956,
+          "pca_lr": 0.7903,
+          "attn_satisfies": 0.7623,
+          "lid": 0.7132,
+          "llm_check": 0.6591,
+          "seakr": 0.5713
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_method": "sep",
+        "best_auroc": 0.7664315884028057,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.7664,
+          "step": 0.7433,
+          "pca_lr": 0.7162,
+          "kb_mlp": 0.7153,
+          "iti": 0.7019,
+          "attn_satisfies": 0.7018,
+          "lr_probe": 0.6983,
+          "mm_probe": 0.6983,
+          "seakr": 0.6661,
+          "lid": 0.619,
+          "llm_check": 0.5892
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_method": "step",
+        "best_auroc": 0.7270270270270269,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "step": 0.727,
+          "sep": 0.7077,
+          "seakr": 0.6352,
+          "pca_lr": 0.6194,
+          "kb_mlp": 0.5977,
+          "iti": 0.5948,
+          "attn_satisfies": 0.5798,
+          "llm_check": 0.5322,
+          "lr_probe": 0.5297,
+          "mm_probe": 0.5297,
+          "lid": 0.4606
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_method": "seakr",
+        "best_auroc": 0.8549260194875496,
+        "best_timing": "generation_side",
+        "best_family": "sample_consistency",
+        "per_probe_auroc": {
+          "seakr": 0.8549,
+          "sep": 0.7795,
+          "step": 0.7795,
+          "attn_satisfies": 0.6785,
+          "pca_lr": 0.6767,
+          "lid": 0.6684,
+          "lr_probe": 0.6398,
+          "mm_probe": 0.6398,
+          "iti": 0.6189,
+          "kb_mlp": 0.6023,
+          "llm_check": 0.3966
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_method": "attn_satisfies",
+        "best_auroc": 0.7501974203737826,
+        "best_timing": "input_side",
+        "best_family": "attention_flow",
+        "per_probe_auroc": {
+          "attn_satisfies": 0.7502,
+          "step": 0.742,
+          "sep": 0.7226,
+          "kb_mlp": 0.6841,
+          "pca_lr": 0.6639,
+          "iti": 0.6452,
+          "lr_probe": 0.6428,
+          "mm_probe": 0.6428,
+          "lid": 0.6023,
+          "seakr": 0.5728,
+          "llm_check": 0.5615
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_method": "sep",
+        "best_auroc": 0.9764011799410028,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.9764,
+          "step": 0.9528,
+          "seakr": 0.8321,
+          "lr_probe": 0.7293,
+          "mm_probe": 0.7293,
+          "pca_lr": 0.72,
+          "kb_mlp": 0.7179,
+          "iti": 0.693,
+          "attn_satisfies": 0.6789,
+          "lid": 0.6609,
+          "llm_check": 0.4575
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_method": "sep",
+        "best_auroc": 0.843181251558215,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.8432,
+          "step": 0.834,
+          "seakr": 0.6669,
+          "kb_mlp": 0.6309,
+          "lr_probe": 0.6271,
+          "mm_probe": 0.6271,
+          "pca_lr": 0.6126,
+          "attn_satisfies": 0.6041,
+          "iti": 0.5833,
+          "lid": 0.5245,
+          "llm_check": 0.5093
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_method": "sep",
+        "best_auroc": 0.8576769860914426,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.8577,
+          "step": 0.8472,
+          "seakr": 0.75,
+          "pca_lr": 0.6934,
+          "iti": 0.6912,
+          "kb_mlp": 0.6778,
+          "mm_probe": 0.6738,
+          "lr_probe": 0.6738,
+          "attn_satisfies": 0.6404,
+          "llm_check": 0.5476,
+          "lid": 0.5163
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_method": "sep",
+        "best_auroc": 0.7867283806317891,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.7867,
+          "step": 0.7839,
+          "pca_lr": 0.7311,
+          "iti": 0.7194,
+          "kb_mlp": 0.7172,
+          "mm_probe": 0.7133,
+          "lr_probe": 0.7132,
+          "attn_satisfies": 0.6872,
+          "llm_check": 0.6034,
+          "lid": 0.5815,
+          "seakr": 0.4683
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_method": "sep",
+        "best_auroc": 0.7541560840452551,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.7542,
+          "step": 0.7514,
+          "pca_lr": 0.668,
+          "lr_probe": 0.6531,
+          "mm_probe": 0.6531,
+          "kb_mlp": 0.6274,
+          "attn_satisfies": 0.6238,
+          "llm_check": 0.6129,
+          "iti": 0.6125,
+          "lid": 0.6094,
+          "seakr": 0.555
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_method": "step",
+        "best_auroc": 0.8158856660385712,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "step": 0.8159,
+          "sep": 0.8108,
+          "mm_probe": 0.8008,
+          "lr_probe": 0.8008,
+          "kb_mlp": 0.7713,
+          "iti": 0.7642,
+          "attn_satisfies": 0.7545,
+          "pca_lr": 0.7443,
+          "lid": 0.7,
+          "llm_check": 0.6868,
+          "seakr": 0.5424
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_method": "sep",
+        "best_auroc": 0.7401550921371893,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.7402,
+          "attn_satisfies": 0.7399,
+          "lr_probe": 0.7341,
+          "mm_probe": 0.7341,
+          "pca_lr": 0.73,
+          "kb_mlp": 0.7248,
+          "step": 0.7238,
+          "iti": 0.7013,
+          "lid": 0.6926,
+          "llm_check": 0.6068,
+          "seakr": 0.5901
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_method": "iti",
+        "best_auroc": 0.7277365491651205,
+        "best_timing": "input_side",
+        "best_family": "attention_head",
+        "per_probe_auroc": {
+          "iti": 0.7277,
+          "sep": 0.7221,
+          "step": 0.7221,
+          "kb_mlp": 0.6891,
+          "pca_lr": 0.6841,
+          "lr_probe": 0.6664,
+          "mm_probe": 0.6664,
+          "attn_satisfies": 0.6625,
+          "seakr": 0.6526,
+          "lid": 0.6122,
+          "llm_check": 0.5454
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_method": "step",
+        "best_auroc": 0.6855555555555555,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "step": 0.6856,
+          "sep": 0.6849,
+          "kb_mlp": 0.6642,
+          "iti": 0.6578,
+          "lr_probe": 0.6149,
+          "mm_probe": 0.6149,
+          "lid": 0.6113,
+          "seakr": 0.6109,
+          "pca_lr": 0.6044,
+          "llm_check": 0.5573,
+          "attn_satisfies": 0.5502
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_method": "pca_lr",
+        "best_auroc": 0.7336711711711711,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "pca_lr": 0.7337,
+          "iti": 0.7162,
+          "lr_probe": 0.714,
+          "mm_probe": 0.714,
+          "sep": 0.7089,
+          "attn_satisfies": 0.6678,
+          "step": 0.6678,
+          "kb_mlp": 0.6639,
+          "llm_check": 0.6244,
+          "seakr": 0.4623,
+          "lid": 0.4347
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_method": "sep",
+        "best_auroc": 0.951171875,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.9512,
+          "step": 0.9408,
+          "kb_mlp": 0.9168,
+          "lr_probe": 0.9142,
+          "mm_probe": 0.9142,
+          "pca_lr": 0.9055,
+          "attn_satisfies": 0.8888,
+          "iti": 0.8677,
+          "seakr": 0.5334,
+          "llm_check": 0.5028,
+          "lid": 0.4689
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_method": "iti",
+        "best_auroc": 0.8522043891254504,
+        "best_timing": "input_side",
+        "best_family": "attention_head",
+        "per_probe_auroc": {
+          "iti": 0.8522,
+          "kb_mlp": 0.836,
+          "pca_lr": 0.7988,
+          "attn_satisfies": 0.7913,
+          "lr_probe": 0.7892,
+          "mm_probe": 0.7892,
+          "sep": 0.768,
+          "step": 0.7652,
+          "llm_check": 0.7122,
+          "seakr": 0.5484,
+          "lid": 0.3526
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_method": "sep",
+        "best_auroc": 0.8258060466576002,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "sep": 0.8258,
+          "step": 0.8166,
+          "pca_lr": 0.816,
+          "iti": 0.8034,
+          "attn_satisfies": 0.7985,
+          "kb_mlp": 0.798,
+          "lr_probe": 0.7954,
+          "mm_probe": 0.7954,
+          "lid": 0.615,
+          "seakr": 0.5816,
+          "llm_check": 0.5633
+        }
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_method": "kb_mlp",
+        "best_auroc": 0.7188099473335426,
+        "best_timing": "generation_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "kb_mlp": 0.7188,
+          "attn_satisfies": 0.7024,
+          "step": 0.7019,
+          "mm_probe": 0.7013,
+          "lr_probe": 0.7013,
+          "sep": 0.6961,
+          "pca_lr": 0.6745,
+          "iti": 0.649,
+          "lid": 0.577,
+          "seakr": 0.5605,
+          "llm_check": 0.5574
+        }
+      }
+    ],
+    "response_correctness_native_best_single": [
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_method": "step",
+        "best_auroc": 0.8468430335097001,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.7814462081128748,
+          "mm_probe": 0.6060670194003528,
+          "pca_lr": 0.7420811287477954,
+          "iti": 0.7317813051146386,
+          "kb_mlp": 0.6764726631393299,
+          "lid": 0.5461728395061728,
+          "attn_satisfies": 0.6327336860670195,
+          "llm_check": 0.6455026455026456,
+          "sep": 0.8273721340388007,
+          "coe": 0.6646208112874781,
+          "seakr": 0.5806349206349206,
+          "step": 0.8468430335097001
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_method": "step",
+        "best_auroc": 0.8765968508615567,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.7405992700110348,
+          "mm_probe": 0.6717914438502675,
+          "pca_lr": 0.7439202953908837,
+          "iti": 0.7206943383413972,
+          "kb_mlp": 0.7549868432221373,
+          "lid": 0.6474779305661659,
+          "attn_satisfies": 0.7186783804430863,
+          "llm_check": 0.610251676428147,
+          "sep": 0.8577105084458024,
+          "coe": 0.6131748153806977,
+          "seakr": 0.6595763305322129,
+          "step": 0.8765968508615567
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_method": "step",
+        "best_auroc": 0.7264882343774349,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.6898472806607449,
+          "mm_probe": 0.6872759856630825,
+          "pca_lr": 0.7224170172978027,
+          "iti": 0.7123948106591865,
+          "kb_mlp": 0.6789874551971327,
+          "lid": 0.6576573944210691,
+          "attn_satisfies": 0.5642531556802245,
+          "llm_check": 0.6372428705002338,
+          "sep": 0.6781108773570204,
+          "coe": 0.5460203366058906,
+          "seakr": 0.5720644382110021,
+          "step": 0.7264882343774349
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_method": "sep",
+        "best_auroc": 0.806282722513089,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "lr_probe": 0.6587163079309676,
+          "mm_probe": 0.5701958503005624,
+          "pca_lr": 0.6644366879968976,
+          "iti": 0.6414582121388404,
+          "kb_mlp": 0.5683536940081443,
+          "lid": 0.534225324801241,
+          "attn_satisfies": 0.6217762264882684,
+          "llm_check": 0.5088229590847392,
+          "sep": 0.806282722513089,
+          "coe": 0.6181888694977701,
+          "seakr": 0.6350591429125461,
+          "step": 0.6206127593562148
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_method": "sep",
+        "best_auroc": 0.7980109739368999,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "lr_probe": 0.5567558299039781,
+          "mm_probe": 0.6150548696844993,
+          "pca_lr": 0.5733882030178326,
+          "iti": 0.630315500685871,
+          "kb_mlp": 0.5704732510288065,
+          "lid": 0.5641289437585734,
+          "attn_satisfies": 0.5480109739368999,
+          "llm_check": 0.5006858710562414,
+          "sep": 0.7980109739368999,
+          "coe": 0.678326474622771,
+          "seakr": 0.7023319615912209,
+          "step": 0.6752400548696845
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_method": "lr_probe",
+        "best_auroc": 0.7717391304347826,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "lr_probe": 0.7717391304347826,
+          "mm_probe": 0.6604084321475626,
+          "pca_lr": 0.7476943346508563,
+          "iti": 0.7167325428194993,
+          "kb_mlp": 0.724308300395257,
+          "lid": 0.6169301712779973,
+          "attn_satisfies": 0.7117918313570488,
+          "llm_check": 0.6854413702239789,
+          "sep": 0.7233201581027668,
+          "coe": 0.6857707509881423,
+          "seakr": 0.6725955204216074,
+          "step": 0.7299077733860343
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_method": "step",
+        "best_auroc": 0.9407429245283018,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.681060700099305,
+          "mm_probe": 0.6802422107745779,
+          "pca_lr": 0.6630461767626614,
+          "iti": 0.6647684955312809,
+          "kb_mlp": 0.5724460029791459,
+          "lid": 0.6659787735849056,
+          "attn_satisfies": 0.5904760427010923,
+          "llm_check": 0.5305750372393248,
+          "sep": 0.9337838257199602,
+          "coe": 0.6230526936444886,
+          "seakr": 0.5761544190665343,
+          "step": 0.9407429245283018
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_method": "step",
+        "best_auroc": 0.7467745750382678,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.6240723137821929,
+          "mm_probe": 0.6193641528211032,
+          "pca_lr": 0.6443508762534641,
+          "iti": 0.62574583071149,
+          "kb_mlp": 0.6021068462461899,
+          "lid": 0.5373261215910461,
+          "attn_satisfies": 0.5472735062187889,
+          "llm_check": 0.5657535958300421,
+          "sep": 0.6678961437707236,
+          "coe": 0.5847290464523673,
+          "seakr": 0.6305544026883376,
+          "step": 0.7467745750382678
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_method": "step",
+        "best_auroc": 0.8107361064865146,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.668272683144048,
+          "mm_probe": 0.6207300488223659,
+          "pca_lr": 0.6985048401137718,
+          "iti": 0.6535176574892386,
+          "kb_mlp": 0.589374616381368,
+          "lid": 0.5256929205563423,
+          "attn_satisfies": 0.6251068114622238,
+          "llm_check": 0.5219038716898476,
+          "sep": 0.7550376899037594,
+          "coe": 0.5558889722430608,
+          "seakr": 0.6207460956148129,
+          "step": 0.8107361064865146
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_method": "sep",
+        "best_auroc": 0.7646503572877338,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "lr_probe": 0.6368692857365743,
+          "mm_probe": 0.6329726651480638,
+          "pca_lr": 0.6852552501014135,
+          "iti": 0.671580023091085,
+          "kb_mlp": 0.5867475894779541,
+          "lid": 0.6422208006989734,
+          "attn_satisfies": 0.6139927294286517,
+          "llm_check": 0.5790557618497831,
+          "sep": 0.7646503572877338,
+          "coe": 0.5865174587324866,
+          "seakr": 0.5426170936437109,
+          "step": 0.7590297063687708
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_method": "step",
+        "best_auroc": 0.8303571428571429,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.7263392857142857,
+          "mm_probe": 0.7735491071428572,
+          "pca_lr": 0.7374999999999999,
+          "iti": 0.6791294642857143,
+          "kb_mlp": 0.7694196428571429,
+          "lid": 0.6613839285714286,
+          "attn_satisfies": 0.5764508928571428,
+          "llm_check": 0.7360491071428571,
+          "sep": 0.7811383928571429,
+          "coe": 0.7790178571428571,
+          "seakr": 0.7612723214285715,
+          "step": 0.8303571428571429
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_method": "step",
+        "best_auroc": 0.904347480703117,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.7905697931515374,
+          "mm_probe": 0.6927062416424307,
+          "pca_lr": 0.7875467251567803,
+          "iti": 0.7894973763300396,
+          "kb_mlp": 0.7978383960528,
+          "lid": 0.7132277981031903,
+          "attn_satisfies": 0.7072655136346986,
+          "llm_check": 0.6590575089037076,
+          "sep": 0.871773371404866,
+          "coe": 0.6867571968877846,
+          "seakr": 0.5713510245331896,
+          "step": 0.904347480703117
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_method": "step",
+        "best_auroc": 0.7705024558989355,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.6957074326777899,
+          "mm_probe": 0.6881772834126484,
+          "pca_lr": 0.7072797813581024,
+          "iti": 0.7037344953462149,
+          "kb_mlp": 0.7280832521071039,
+          "lid": 0.6189725359784417,
+          "attn_satisfies": 0.6037067828679549,
+          "llm_check": 0.5892437360243105,
+          "sep": 0.7205531028419625,
+          "coe": 0.5898266536704699,
+          "seakr": 0.6660550809395486,
+          "step": 0.7705024558989355
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_method": "sep",
+        "best_auroc": 0.7653153153153153,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "lr_probe": 0.5559459459459459,
+          "mm_probe": 0.5946846846846847,
+          "pca_lr": 0.5968468468468469,
+          "iti": 0.6125225225225225,
+          "kb_mlp": 0.6224324324324324,
+          "lid": 0.5393693693693694,
+          "attn_satisfies": 0.5362162162162162,
+          "llm_check": 0.5321621621621622,
+          "sep": 0.7653153153153153,
+          "coe": 0.6340540540540541,
+          "seakr": 0.6352252252252253,
+          "step": 0.6885585585585586
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_method": "step",
+        "best_auroc": 0.901840490797546,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.6964994586791772,
+          "mm_probe": 0.6066402020931072,
+          "pca_lr": 0.6737639841212558,
+          "iti": 0.5568386863948034,
+          "kb_mlp": 0.6423673763984121,
+          "lid": 0.6683507758931794,
+          "attn_satisfies": 0.6059184409960303,
+          "llm_check": 0.6033922771562612,
+          "sep": 0.8238902923132443,
+          "coe": 0.725369902562252,
+          "seakr": 0.8549260194875496,
+          "step": 0.901840490797546
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_method": "step",
+        "best_auroc": 0.7828375888391682,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.6638589102395368,
+          "mm_probe": 0.698078441695183,
+          "pca_lr": 0.6720189523558832,
+          "iti": 0.6783364043169255,
+          "kb_mlp": 0.7265069755198736,
+          "lid": 0.6022637536193735,
+          "attn_satisfies": 0.7201895235588313,
+          "llm_check": 0.5614635430376415,
+          "sep": 0.7486180573835219,
+          "coe": 0.6528033693077127,
+          "seakr": 0.5727823111345091,
+          "step": 0.7828375888391682
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_method": "sep",
+        "best_auroc": 0.9839716998525074,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "lr_probe": 0.7337297197640118,
+          "mm_probe": 0.6895395464601769,
+          "pca_lr": 0.7189343657817109,
+          "iti": 0.6804595317109146,
+          "kb_mlp": 0.7260670169616519,
+          "lid": 0.6608821902654868,
+          "attn_satisfies": 0.6592689896755162,
+          "llm_check": 0.5425424041297935,
+          "sep": 0.9839716998525074,
+          "coe": 0.6016316371681416,
+          "seakr": 0.8321464786135694,
+          "step": 0.9827963679941003
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_method": "step",
+        "best_auroc": 0.8526143269942086,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.6214835432070005,
+          "mm_probe": 0.560201249841624,
+          "pca_lr": 0.6004675666507269,
+          "iti": 0.5843561353817984,
+          "kb_mlp": 0.6114946193051076,
+          "lid": 0.5245165957551161,
+          "attn_satisfies": 0.5609737157243809,
+          "llm_check": 0.5092593727904001,
+          "sep": 0.8293340853636106,
+          "coe": 0.5960248660446068,
+          "seakr": 0.6669323295363978,
+          "step": 0.8526143269942086
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_method": "sep",
+        "best_auroc": 0.8547043177906777,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "lr_probe": 0.6874526118160557,
+          "mm_probe": 0.6810459299316807,
+          "pca_lr": 0.6937951065306434,
+          "iti": 0.6805645261582776,
+          "kb_mlp": 0.6836214401193881,
+          "lid": 0.5163215937674257,
+          "attn_satisfies": 0.6047634903378251,
+          "llm_check": 0.5476369092273068,
+          "sep": 0.8547043177906777,
+          "coe": 0.5595035122416968,
+          "seakr": 0.750013038018863,
+          "step": 0.8497819642076294
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_method": "sep",
+        "best_auroc": 0.820741190954852,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "lr_probe": 0.739355899449873,
+          "mm_probe": 0.6757484376704537,
+          "pca_lr": 0.7296351707263857,
+          "iti": 0.7164196549628313,
+          "kb_mlp": 0.712028768681721,
+          "lid": 0.5815177583493073,
+          "attn_satisfies": 0.6493096139760314,
+          "llm_check": 0.6034215406673212,
+          "sep": 0.820741190954852,
+          "coe": 0.5698139230445556,
+          "seakr": 0.5320608724110524,
+          "step": 0.7803076347655338
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_method": "sep",
+        "best_auroc": 0.7882706072500578,
+        "best_timing": "generation_side",
+        "best_family": "semantic_uncertainty",
+        "per_probe_auroc": {
+          "lr_probe": 0.6428653890556453,
+          "mm_probe": 0.6035557607942739,
+          "pca_lr": 0.659374278457631,
+          "iti": 0.6128492265065806,
+          "kb_mlp": 0.6626645116601247,
+          "lid": 0.6093858231355347,
+          "attn_satisfies": 0.5864696374971139,
+          "llm_check": 0.612906949896098,
+          "sep": 0.7882706072500578,
+          "coe": 0.6786538905564535,
+          "seakr": 0.5550103902101131,
+          "step": 0.7796698222119602
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_method": "step",
+        "best_auroc": 0.8256880733944955,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.7882391705021674,
+          "mm_probe": 0.7460744035667584,
+          "pca_lr": 0.7418218886108795,
+          "iti": 0.7616532295431377,
+          "kb_mlp": 0.7692212646341087,
+          "lid": 0.6999969110060854,
+          "attn_satisfies": 0.6958164725748824,
+          "llm_check": 0.6867863136976287,
+          "sep": 0.7786323994275065,
+          "coe": 0.6904210298705712,
+          "seakr": 0.5424273314181571,
+          "step": 0.8256880733944955
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_method": "kb_mlp",
+        "best_auroc": 0.7526805036395829,
+        "best_timing": "generation_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "lr_probe": 0.7039068135615449,
+          "mm_probe": 0.6966030559380942,
+          "pca_lr": 0.7304249458980917,
+          "iti": 0.6979146173519575,
+          "kb_mlp": 0.7526805036395829,
+          "lid": 0.6925536100727916,
+          "attn_satisfies": 0.6238195947275231,
+          "llm_check": 0.6068348744179946,
+          "sep": 0.7165469866876516,
+          "coe": 0.6278198570398059,
+          "seakr": 0.5900550855793822,
+          "step": 0.7466719129123222
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_method": "iti",
+        "best_auroc": 0.7442022263450835,
+        "best_timing": "input_side",
+        "best_family": "attention_head",
+        "per_probe_auroc": {
+          "lr_probe": 0.6886209029066171,
+          "mm_probe": 0.6219078540507113,
+          "pca_lr": 0.6685992578849722,
+          "iti": 0.7442022263450835,
+          "kb_mlp": 0.6508194186765616,
+          "lid": 0.6122448979591836,
+          "attn_satisfies": 0.6429344465058752,
+          "llm_check": 0.5453772418058133,
+          "sep": 0.7381725417439703,
+          "coe": 0.6290197897340755,
+          "seakr": 0.6525974025974027,
+          "step": 0.7200061842918987
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_method": "step",
+        "best_auroc": 0.7202222222222223,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.6286666666666667,
+          "mm_probe": 0.6266666666666666,
+          "pca_lr": 0.5982222222222223,
+          "iti": 0.6362222222222221,
+          "kb_mlp": 0.6837777777777777,
+          "lid": 0.6113333333333334,
+          "attn_satisfies": 0.48177777777777775,
+          "llm_check": 0.5573333333333333,
+          "sep": 0.6211111111111112,
+          "coe": 0.6362222222222222,
+          "seakr": 0.6108888888888888,
+          "step": 0.7202222222222223
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_method": "lr_probe",
+        "best_auroc": 0.7263513513513514,
+        "best_timing": "input_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "lr_probe": 0.7263513513513514,
+          "mm_probe": 0.6480855855855856,
+          "pca_lr": 0.6818693693693694,
+          "iti": 0.7088963963963963,
+          "kb_mlp": 0.6683558558558559,
+          "lid": 0.5653153153153153,
+          "attn_satisfies": 0.6362612612612613,
+          "llm_check": 0.6244369369369369,
+          "sep": 0.5332207207207207,
+          "coe": 0.6807432432432432,
+          "seakr": 0.5377252252252251,
+          "step": 0.5788288288288288
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_method": "step",
+        "best_auroc": 0.9628025742827868,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.9196257044057377,
+          "mm_probe": 0.7643282530737705,
+          "pca_lr": 0.9052334144467213,
+          "iti": 0.8651623335040983,
+          "kb_mlp": 0.9368556288422132,
+          "lid": 0.531067895107582,
+          "attn_satisfies": 0.8427774398053278,
+          "llm_check": 0.502779601050205,
+          "sep": 0.9626704982069672,
+          "coe": 0.6732617987961065,
+          "seakr": 0.5333672195184427,
+          "step": 0.9628025742827868
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_method": "iti",
+        "best_auroc": 0.8461163882519924,
+        "best_timing": "input_side",
+        "best_family": "attention_head",
+        "per_probe_auroc": {
+          "lr_probe": 0.81351020853805,
+          "mm_probe": 0.6917676602249153,
+          "pca_lr": 0.7960803581176984,
+          "iti": 0.8461163882519924,
+          "kb_mlp": 0.8289485751719619,
+          "lid": 0.6474134730865815,
+          "attn_satisfies": 0.7702696800960803,
+          "llm_check": 0.7122415110819957,
+          "sep": 0.7493765694944863,
+          "coe": 0.6557899333988426,
+          "seakr": 0.5483546238672344,
+          "step": 0.7735844524511409
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_method": "kb_mlp",
+        "best_auroc": 0.8256135579035464,
+        "best_timing": "generation_side",
+        "best_family": "residual_hidden",
+        "per_probe_auroc": {
+          "lr_probe": 0.8029082540014645,
+          "mm_probe": 0.7593869651637201,
+          "pca_lr": 0.817909823203264,
+          "iti": 0.8030881891411235,
+          "kb_mlp": 0.8256135579035464,
+          "lid": 0.6149848310492729,
+          "attn_satisfies": 0.7173051574432472,
+          "llm_check": 0.5633329846218225,
+          "sep": 0.8033225232764933,
+          "coe": 0.5724657390940475,
+          "seakr": 0.5816340621403913,
+          "step": 0.8236510095198242
+        }
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_method": "step",
+        "best_auroc": 0.7179815841791357,
+        "best_timing": "generation_side",
+        "best_family": "step_trajectory",
+        "per_probe_auroc": {
+          "lr_probe": 0.709619476125702,
+          "mm_probe": 0.6496634229709463,
+          "pca_lr": 0.6758440584562798,
+          "iti": 0.640411914478044,
+          "kb_mlp": 0.709994419448223,
+          "lid": 0.5770203341355377,
+          "attn_satisfies": 0.6645521607198912,
+          "llm_check": 0.5573576087335635,
+          "sep": 0.7101121342122703,
+          "coe": 0.5661164591398975,
+          "seakr": 0.5604923093020822,
+          "step": 0.7179815841791357
+        }
+      }
+    ],
+    "dataset_label_gap": [
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7712,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.7499,
+        "generation_minus_input": -0.021299999999999986
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "e2h_amc_3class",
+        "domain": "math_difficulty",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.8937,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8637,
+        "generation_minus_input": -0.030000000000000027
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "e2h_amc_5class",
+        "domain": "math_difficulty",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.876,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8403,
+        "generation_minus_input": -0.035699999999999954
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.864,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8494,
+        "generation_minus_input": -0.014599999999999946
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "ragtruth_binary",
+        "domain": "rag_hallucination",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.8804,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.824,
+        "generation_minus_input": -0.056400000000000006
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "fava_binary",
+        "domain": "factual_hallucination",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.9846,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.9632,
+        "generation_minus_input": -0.021400000000000086
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7621,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.7559,
+        "generation_minus_input": -0.006199999999999983
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "e2h_amc_3class",
+        "domain": "math_difficulty",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.8785,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8488,
+        "generation_minus_input": -0.02969999999999995
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "e2h_amc_5class",
+        "domain": "math_difficulty",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.8576,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8246,
+        "generation_minus_input": -0.03300000000000003
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.8732,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8824,
+        "generation_minus_input": 0.009199999999999986
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "ragtruth_binary",
+        "domain": "rag_hallucination",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.8862,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8615,
+        "generation_minus_input": -0.024699999999999944
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "fava_binary",
+        "domain": "factual_hallucination",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.9926,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.9907,
+        "generation_minus_input": -0.0019000000000000128
+      }
+    ],
+    "response_correctness_fusion_gap": [
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7546,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.864,
+        "generation_minus_input": 0.10939999999999994
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_input_method": "mm_probe",
+        "best_input_auroc": 0.7585,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.8853,
+        "generation_minus_input": 0.12680000000000002
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7256,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7568,
+        "generation_minus_input": 0.031200000000000006
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.6714,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.8366,
+        "generation_minus_input": 0.1652
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.6313,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.8364,
+        "generation_minus_input": 0.20510000000000006
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.8505,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7559,
+        "generation_minus_input": -0.09460000000000002
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.6727,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.9487,
+        "generation_minus_input": 0.276
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.652,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7341,
+        "generation_minus_input": 0.08209999999999995
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.6985,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.8222,
+        "generation_minus_input": 0.12370000000000003
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.6856,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7687,
+        "generation_minus_input": 0.08310000000000006
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7412,
+        "best_generation_method": "seakr",
+        "best_generation_auroc": 0.7614,
+        "generation_minus_input": 0.020199999999999996
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7965,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.9058,
+        "generation_minus_input": 0.10930000000000006
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7162,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7664,
+        "generation_minus_input": 0.05020000000000002
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.6194,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.727,
+        "generation_minus_input": 0.10760000000000003
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_input_method": "attn_satisfies",
+        "best_input_auroc": 0.6785,
+        "best_generation_method": "seakr",
+        "best_generation_auroc": 0.8549,
+        "generation_minus_input": 0.1764
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_input_method": "attn_satisfies",
+        "best_input_auroc": 0.7502,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.742,
+        "generation_minus_input": -0.008199999999999985
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7293,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.9764,
+        "generation_minus_input": 0.2471000000000001
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.6271,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.8432,
+        "generation_minus_input": 0.21609999999999996
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.6934,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.8577,
+        "generation_minus_input": 0.1643
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7311,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7867,
+        "generation_minus_input": 0.05559999999999998
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.668,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7542,
+        "generation_minus_input": 0.08619999999999994
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_input_method": "mm_probe",
+        "best_input_auroc": 0.8008,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.8159,
+        "generation_minus_input": 0.015100000000000002
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_input_method": "attn_satisfies",
+        "best_input_auroc": 0.7399,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7402,
+        "generation_minus_input": 0.00029999999999996696
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.7277,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7221,
+        "generation_minus_input": -0.005600000000000049
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.6578,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.6856,
+        "generation_minus_input": 0.027799999999999936
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7337,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7089,
+        "generation_minus_input": -0.024800000000000044
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.9142,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.9512,
+        "generation_minus_input": 0.03700000000000003
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.8522,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.836,
+        "generation_minus_input": -0.016199999999999992
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.816,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.8258,
+        "generation_minus_input": 0.009800000000000031
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "attn_satisfies",
+        "best_input_auroc": 0.7024,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.7188,
+        "generation_minus_input": 0.01639999999999997
+      }
+    ],
+    "response_correctness_native_gap": [
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7814462081128748,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.8468430335097001,
+        "generation_minus_input": 0.06539682539682534
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7439202953908837,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.8765968508615567,
+        "generation_minus_input": 0.13267655547067303
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7224170172978027,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7264882343774349,
+        "generation_minus_input": 0.004071217079632206
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.6644366879968976,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.806282722513089,
+        "generation_minus_input": 0.14184603451619138
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.630315500685871,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7980109739368999,
+        "generation_minus_input": 0.16769547325102885
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7717391304347826,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7299077733860343,
+        "generation_minus_input": -0.0418313570487483
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.681060700099305,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.9407429245283018,
+        "generation_minus_input": 0.2596822244289968
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.6443508762534641,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7467745750382678,
+        "generation_minus_input": 0.10242369878480373
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.6985048401137718,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.8107361064865146,
+        "generation_minus_input": 0.11223126637274283
+      },
+      {
+        "setting": "correctness_native",
+        "model": "qwen2.5-7b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.6852552501014135,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7646503572877338,
+        "generation_minus_input": 0.07939510718632026
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_input_method": "mm_probe",
+        "best_input_auroc": 0.7735491071428572,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.8303571428571429,
+        "generation_minus_input": 0.05680803571428572
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7905697931515374,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.904347480703117,
+        "generation_minus_input": 0.11377768755157958
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7072797813581024,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7705024558989355,
+        "generation_minus_input": 0.06322267454083308
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.6125225225225225,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7653153153153153,
+        "generation_minus_input": 0.1527927927927928
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.6964994586791772,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.901840490797546,
+        "generation_minus_input": 0.20534103211836885
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_input_method": "attn_satisfies",
+        "best_input_auroc": 0.7201895235588313,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7828375888391682,
+        "generation_minus_input": 0.06264806528033695
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7337297197640118,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.9839716998525074,
+        "generation_minus_input": 0.25024198008849563
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.6214835432070005,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.8526143269942086,
+        "generation_minus_input": 0.23113078378720808
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.6937951065306434,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.8547043177906777,
+        "generation_minus_input": 0.16090921126003432
+      },
+      {
+        "setting": "correctness_native",
+        "model": "llama3.1-8b",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.739355899449873,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.820741190954852,
+        "generation_minus_input": 0.08138529150497897
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "gsm8k",
+        "domain": "math_reasoning",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.659374278457631,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7882706072500578,
+        "generation_minus_input": 0.12889632879242685
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "math",
+        "domain": "math_reasoning",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7882391705021674,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.8256880733944955,
+        "generation_minus_input": 0.03744890289232805
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "mmlu",
+        "domain": "knowledge_qa",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.7304249458980917,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.7526805036395829,
+        "generation_minus_input": 0.02225555774149124
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "commonsenseqa",
+        "domain": "commonsense_qa",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.7442022263450835,
+        "best_generation_method": "sep",
+        "best_generation_auroc": 0.7381725417439703,
+        "generation_minus_input": -0.006029684601113194
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "belebele",
+        "domain": "reading_comprehension",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.6362222222222221,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7202222222222223,
+        "generation_minus_input": 0.08400000000000019
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "theoremqa",
+        "domain": "math_theory_qa",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.7263513513513514,
+        "best_generation_method": "coe",
+        "best_generation_auroc": 0.6807432432432432,
+        "generation_minus_input": -0.045608108108108225
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "fava",
+        "domain": "factual_hallucination",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.9196257044057377,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.9628025742827868,
+        "generation_minus_input": 0.04317686987704916
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "ragtruth",
+        "domain": "rag_hallucination",
+        "best_input_method": "iti",
+        "best_input_auroc": 0.8461163882519924,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8289485751719619,
+        "generation_minus_input": -0.01716781308003057
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "common_claim_3class",
+        "domain": "factual_claim",
+        "best_input_method": "pca_lr",
+        "best_input_auroc": 0.817909823203264,
+        "best_generation_method": "kb_mlp",
+        "best_generation_auroc": 0.8256135579035464,
+        "generation_minus_input": 0.007703734700282405
+      },
+      {
+        "setting": "correctness_native",
+        "model": "mistral-7b-v0.3",
+        "dataset": "when2call_3class",
+        "domain": "tool_routing",
+        "best_input_method": "lr_probe",
+        "best_input_auroc": 0.709619476125702,
+        "best_generation_method": "step",
+        "best_generation_auroc": 0.7179815841791357,
+        "generation_minus_input": 0.008362108053433737
+      }
+    ],
+    "dataset_label_headroom": [
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "common_claim_3class",
+        "best_single": 0.7711775896236243,
+        "oracle_auroc": 0.9792145382137397,
+        "oracle_headroom": 0.20803694859011546,
+        "v21_fusion": 0.7817,
+        "v21_delta": 0.01052241037637569,
+        "ladder_final": 0.7817
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "e2h_amc_3class",
+        "best_single": 0.8937013882570563,
+        "oracle_auroc": 0.9985563552010103,
+        "oracle_headroom": 0.10485496694395402,
+        "v21_fusion": 0.903,
+        "v21_delta": 0.009298611742943774,
+        "ladder_final": 0.903
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "e2h_amc_5class",
+        "best_single": 0.8760320988721064,
+        "oracle_auroc": 0.9941208190237708,
+        "oracle_headroom": 0.11808872015166438,
+        "v21_fusion": 0.8913,
+        "v21_delta": 0.015267901127893557,
+        "ladder_final": 0.8913
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "when2call_3class",
+        "best_single": 0.8640145960508816,
+        "oracle_auroc": 0.9901647760026848,
+        "oracle_headroom": 0.12615017995180322,
+        "v21_fusion": 0.9392,
+        "v21_delta": 0.07518540394911843,
+        "ladder_final": 0.9387
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "ragtruth_binary",
+        "best_single": 0.8804154067579522,
+        "oracle_auroc": 0.9996963014802002,
+        "oracle_headroom": 0.11928089472224801,
+        "v21_fusion": 0.893,
+        "v21_delta": 0.012584593242047859,
+        "ladder_final": 0.893
+      },
+      {
+        "setting": "dataset_label",
+        "model": "qwen2.5-7b",
+        "dataset": "fava_binary",
+        "best_single": 0.9846127481487494,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.01538725185125056,
+        "v21_fusion": 0.988,
+        "v21_delta": 0.00338725185125055,
+        "ladder_final": null
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "common_claim_3class",
+        "best_single": 0.7621188820218125,
+        "oracle_auroc": 0.977684412146479,
+        "oracle_headroom": 0.2155655301246665,
+        "v21_fusion": 0.7796,
+        "v21_delta": 0.01748111797818741,
+        "ladder_final": 0.7796
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "e2h_amc_3class",
+        "best_single": 0.8785349656300032,
+        "oracle_auroc": 0.9977446151288172,
+        "oracle_headroom": 0.11920964949881396,
+        "v21_fusion": 0.8928,
+        "v21_delta": 0.01426503436999682,
+        "ladder_final": 0.8928
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "e2h_amc_5class",
+        "best_single": 0.8575795325390014,
+        "oracle_auroc": 0.9930231488392804,
+        "oracle_headroom": 0.135443616300279,
+        "v21_fusion": 0.8757,
+        "v21_delta": 0.0181204674609986,
+        "ladder_final": 0.8757
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "when2call_3class",
+        "best_single": 0.8824026192580741,
+        "oracle_auroc": 0.9923386324973817,
+        "oracle_headroom": 0.10993601323930768,
+        "v21_fusion": 0.9255,
+        "v21_delta": 0.04309738074192593,
+        "ladder_final": 0.9255
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "ragtruth_binary",
+        "best_single": 0.8862428971958504,
+        "oracle_auroc": 0.9996126743515596,
+        "oracle_headroom": 0.11336977715570928,
+        "v21_fusion": 0.9005,
+        "v21_delta": 0.014257102804149602,
+        "ladder_final": 0.9005
+      },
+      {
+        "setting": "dataset_label",
+        "model": "llama3.1-8b",
+        "dataset": "fava_binary",
+        "best_single": 0.9926491147369465,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.007350885263053497,
+        "v21_fusion": 0.9955,
+        "v21_delta": 0.0028508852630535486,
+        "ladder_final": null
+      }
+    ],
+    "response_correctness_fusion_headroom": [
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "gsm8k",
+        "best_single": 0.8639858906525574,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.13601410934744262,
+        "v21_fusion": 0.8848,
+        "v21_delta": 0.020814109347442655,
+        "ladder_final": 0.8825
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "math",
+        "best_single": 0.8852707749766574,
+        "oracle_auroc": 0.9985092521857227,
+        "oracle_headroom": 0.11323847720906532,
+        "v21_fusion": 0.8925,
+        "v21_delta": 0.007229225023342556,
+        "ladder_final": 0.8895
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "mmlu",
+        "best_single": 0.7568275673990963,
+        "oracle_auroc": 0.9988799283154122,
+        "oracle_headroom": 0.24205236091631588,
+        "v21_fusion": 0.7784,
+        "v21_delta": 0.02157243260090369,
+        "ladder_final": 0.7818
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "commonsenseqa",
+        "best_single": 0.8366298235408183,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.16337017645918173,
+        "v21_fusion": 0.8374,
+        "v21_delta": 0.0007701764591817595,
+        "ladder_final": 0.8604
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "belebele",
+        "best_single": 0.8364197530864198,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.1635802469135802,
+        "v21_fusion": 0.8522,
+        "v21_delta": 0.015780246913580154,
+        "ladder_final": 0.8326
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "theoremqa",
+        "best_single": 0.8504611330698287,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.14953886693017127,
+        "v21_fusion": 0.7793,
+        "v21_delta": -0.07116113306982874,
+        "ladder_final": 0.8294
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "fava",
+        "best_single": 0.9486950719960278,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.05130492800397224,
+        "v21_fusion": 0.9592,
+        "v21_delta": 0.010504928003972291,
+        "ladder_final": 0.9566
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "ragtruth",
+        "best_single": 0.7341317124764033,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.2658682875235967,
+        "v21_fusion": 0.773,
+        "v21_delta": 0.03886828752359672,
+        "ladder_final": 0.7326
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "common_claim_3class",
+        "best_single": 0.822245668368964,
+        "oracle_auroc": 0.9996068535850541,
+        "oracle_headroom": 0.17736118521609012,
+        "v21_fusion": 0.8302,
+        "v21_delta": 0.007954331631036093,
+        "ladder_final": 0.8276
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "qwen2.5-7b",
+        "dataset": "when2call_3class",
+        "best_single": 0.768671794551752,
+        "oracle_auroc": 0.9999609947889038,
+        "oracle_headroom": 0.23128920023715172,
+        "v21_fusion": 0.797,
+        "v21_delta": 0.02832820544824799,
+        "ladder_final": 0.7913
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "gsm8k",
+        "best_single": 0.7613839285714286,
+        "oracle_auroc": 0.9989955357142857,
+        "oracle_headroom": 0.23761160714285712,
+        "v21_fusion": 0.8618,
+        "v21_delta": 0.10041607142857145,
+        "ladder_final": 0.8397
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "math",
+        "best_single": 0.9057729565604988,
+        "oracle_auroc": 0.9989540626061936,
+        "oracle_headroom": 0.09318110604569474,
+        "v21_fusion": 0.909,
+        "v21_delta": 0.003227043439501198,
+        "ladder_final": 0.9041
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "mmlu",
+        "best_single": 0.7664315884028057,
+        "oracle_auroc": 0.9981079066567284,
+        "oracle_headroom": 0.23167631825392276,
+        "v21_fusion": 0.7846,
+        "v21_delta": 0.01816841159719429,
+        "ladder_final": 0.7756
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "commonsenseqa",
+        "best_single": 0.7270270270270269,
+        "oracle_auroc": 0.9998198198198198,
+        "oracle_headroom": 0.2727927927927929,
+        "v21_fusion": 0.7354,
+        "v21_delta": 0.008372972972973125,
+        "ladder_final": 0.7334
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "belebele",
+        "best_single": 0.8549260194875496,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.14507398051245035,
+        "v21_fusion": 0.9026,
+        "v21_delta": 0.04767398051245031,
+        "ladder_final": 0.7744
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "theoremqa",
+        "best_single": 0.7501974203737826,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.24980257962621744,
+        "v21_fusion": 0.7607,
+        "v21_delta": 0.010502579626217479,
+        "ladder_final": 0.7531
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "fava",
+        "best_single": 0.9764011799410028,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.02359882005899716,
+        "v21_fusion": 0.9844,
+        "v21_delta": 0.007998820058997214,
+        "ladder_final": 0.9822
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "ragtruth",
+        "best_single": 0.843181251558215,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.156818748441785,
+        "v21_fusion": 0.8578,
+        "v21_delta": 0.014618748441785012,
+        "ladder_final": 0.8467
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "common_claim_3class",
+        "best_single": 0.8576769860914426,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.1423230139085574,
+        "v21_fusion": 0.8584,
+        "v21_delta": 0.0007230139085574461,
+        "ladder_final": 0.8552
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "llama3.1-8b",
+        "dataset": "when2call_3class",
+        "best_single": 0.7867283806317891,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.21327161936821093,
+        "v21_fusion": 0.8147,
+        "v21_delta": 0.02797161936821091,
+        "ladder_final": 0.8119
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "gsm8k",
+        "best_single": 0.7541560840452551,
+        "oracle_auroc": 0.9996536596628954,
+        "oracle_headroom": 0.2454975756176403,
+        "v21_fusion": 0.7645,
+        "v21_delta": 0.01034391595474482,
+        "ladder_final": 0.77
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "math",
+        "best_single": 0.8158856660385712,
+        "oracle_auroc": 0.99977347377959,
+        "oracle_headroom": 0.18388780774101887,
+        "v21_fusion": 0.8207,
+        "v21_delta": 0.004814333961428829,
+        "ladder_final": 0.8075
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "mmlu",
+        "best_single": 0.7401550921371893,
+        "oracle_auroc": 0.9982621811266312,
+        "oracle_headroom": 0.2581070889894419,
+        "v21_fusion": 0.7686,
+        "v21_delta": 0.02844490786281062,
+        "ladder_final": 0.7604
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "commonsenseqa",
+        "best_single": 0.7277365491651205,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.27226345083487946,
+        "v21_fusion": 0.7375,
+        "v21_delta": 0.009763450834879506,
+        "ladder_final": 0.7582
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "belebele",
+        "best_single": 0.6855555555555555,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.3144444444444445,
+        "v21_fusion": 0.7047,
+        "v21_delta": 0.01914444444444452,
+        "ladder_final": 0.6929
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "theoremqa",
+        "best_single": 0.7336711711711711,
+        "oracle_auroc": 0.9988738738738738,
+        "oracle_headroom": 0.26520270270270274,
+        "v21_fusion": 0.7489,
+        "v21_delta": 0.015228828828828922,
+        "ladder_final": 0.737
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "fava",
+        "best_single": 0.951171875,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.048828125,
+        "v21_fusion": 0.9691,
+        "v21_delta": 0.01792812499999996,
+        "ladder_final": 0.9642
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "ragtruth",
+        "best_single": 0.8522043891254504,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.14779561087454962,
+        "v21_fusion": 0.8261,
+        "v21_delta": -0.026104389125450433,
+        "ladder_final": 0.8222
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "common_claim_3class",
+        "best_single": 0.8258060466576002,
+        "oracle_auroc": 0.9999958154618684,
+        "oracle_headroom": 0.17418976880426829,
+        "v21_fusion": 0.8389,
+        "v21_delta": 0.013093953342399822,
+        "ladder_final": 0.8371
+      },
+      {
+        "setting": "response_correctness_fusion",
+        "model": "mistral-7b-v0.3",
+        "dataset": "when2call_3class",
+        "best_single": 0.7188099473335426,
+        "oracle_auroc": 1.0,
+        "oracle_headroom": 0.28119005266645736,
+        "v21_fusion": 0.7532,
+        "v21_delta": 0.03439005266645734,
+        "ladder_final": 0.7347
+      }
+    ]
+  }
+}

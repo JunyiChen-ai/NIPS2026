@@ -1,0 +1,1492 @@
+{
+  "common_claim_3class": {
+    "status": "done",
+    "n_methods": 7,
+    "method_results": {
+      "lr_probe": {
+        "status": "ok",
+        "val_auroc": 0.7723975684963408,
+        "test_auroc": 0.7649107145778339,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "pca_lr": {
+        "status": "ok",
+        "val_auroc": 0.7827991639551911,
+        "test_auroc": 0.7576864053186089,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "iti": {
+        "status": "ok",
+        "val_auroc": 0.7462804803638753,
+        "test_auroc": 0.7157687510333165,
+        "timing": "input_side",
+        "family": "attention_head"
+      },
+      "kb_mlp": {
+        "status": "ok",
+        "val_auroc": 0.767809051655928,
+        "test_auroc": 0.753017873773088,
+        "timing": "generation_side",
+        "family": "residual_hidden"
+      },
+      "attn_satisfies": {
+        "status": "ok",
+        "val_auroc": 0.7118060842136016,
+        "test_auroc": 0.7118161809335882,
+        "timing": "input_side",
+        "family": "attention_flow"
+      },
+      "sep": {
+        "status": "ok",
+        "val_auroc": 0.5100418948945707,
+        "test_auroc": 0.5205002966180792,
+        "timing": "generation_side",
+        "family": "semantic_uncertainty"
+      },
+      "step": {
+        "status": "ok",
+        "val_auroc": 0.5390080424763259,
+        "test_auroc": 0.5253005003550453,
+        "timing": "generation_side",
+        "family": "step_trajectory"
+      }
+    },
+    "best_val_single_method": "pca_lr",
+    "best_val_single_test_auroc": 0.7576864053186089,
+    "best_test_single_method": "lr_probe",
+    "best_test_single_auroc_oracle": 0.7649107145778339,
+    "selection": {
+      "selected_variant": "single:pca_lr",
+      "selected_val_auroc": 0.7827991639551911,
+      "selected_test_auroc": 0.7576864053186089,
+      "variant_ranking": [
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.788618134839695,
+          "test_auroc": 0.7685221638242977
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.7861199314279727,
+          "test_auroc": 0.7662146157778901
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.7852700939735114,
+          "test_auroc": 0.7651069352100729
+        },
+        {
+          "variant": "single:pca_lr",
+          "val_auroc": 0.7827991639551911,
+          "test_auroc": 0.7576864053186089
+        }
+      ],
+      "selection_margin": 0.02,
+      "margin_guard_triggered": true,
+      "guarded_best_variant": "weighted_all_methods",
+      "guarded_best_val_auroc": 0.788618134839695,
+      "guarded_best_test_auroc": 0.7685221638242977
+    },
+    "diagnostic_selection_all_candidates": {
+      "selected_variant": "meta_lr_scaffold",
+      "selected_val_auroc": 0.8143494124007024,
+      "selected_test_auroc": 0.7678947665402803,
+      "variant_ranking": [
+        {
+          "variant": "meta_lr_scaffold",
+          "val_auroc": 0.8143494124007024,
+          "test_auroc": 0.7678947665402803
+        },
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.788618134839695,
+          "test_auroc": 0.7685221638242977
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.7861199314279727,
+          "test_auroc": 0.7662146157778901
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.7852700939735114,
+          "test_auroc": 0.7651069352100729
+        },
+        {
+          "variant": "single:pca_lr",
+          "val_auroc": 0.7827991639551911,
+          "test_auroc": 0.7576864053186089
+        }
+      ]
+    },
+    "selected_delta_vs_val_single": 0.0,
+    "selected_delta_vs_test_oracle_single": -0.007224309259225015,
+    "candidate_details": {
+      "single:pca_lr": {
+        "method": "pca_lr"
+      },
+      "weighted_all_methods": {
+        "weights": {
+          "lr_probe": 0.22741079257431068,
+          "pca_lr": 0.25764358760186346,
+          "iti": 0.16622677713112324,
+          "kb_mlp": 0.21522754963721177,
+          "attn_satisfies": 0.10990982199710485,
+          "sep": 0.009761928349652359,
+          "step": 0.013819542708733522
+        }
+      },
+      "family_aware_scaffold": {
+        "group_weights": {
+          "residual_hidden": 0.4622556718812562,
+          "attention_head": 0.29823862981656235,
+          "attention_flow": 0.19719659661055547,
+          "semantic_uncertainty": 0.01751453156714464,
+          "step_trajectory": 0.02479457012448124
+        },
+        "within_group_weights": {
+          "residual_hidden": {
+            "lr_probe": 0.3247417688400328,
+            "pca_lr": 0.36791408807381537,
+            "kb_mlp": 0.3073441430861517
+          },
+          "attention_head": {
+            "iti": 1.0
+          },
+          "attention_flow": {
+            "attn_satisfies": 1.0
+          },
+          "semantic_uncertainty": {
+            "sep": 1.0
+          },
+          "step_trajectory": {
+            "step": 1.0
+          }
+        }
+      },
+      "timing_aware_scaffold": {
+        "group_weights": {
+          "input_side": 0.5448494680943139,
+          "generation_side": 0.45515053190568605
+        },
+        "within_group_weights": {
+          "input_side": {
+            "lr_probe": 0.2987565522414954,
+            "pca_lr": 0.3384743048811554,
+            "iti": 0.21837722943462354,
+            "attn_satisfies": 0.1443919134427257
+          },
+          "generation_side": {
+            "kb_mlp": 0.9012538513423894,
+            "sep": 0.04087755278765445,
+            "step": 0.05786859586995609
+          }
+        }
+      },
+      "meta_lr_scaffold": {
+        "meta_input_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ]
+      }
+    }
+  },
+  "e2h_amc_3class": {
+    "status": "done",
+    "n_methods": 7,
+    "method_results": {
+      "lr_probe": {
+        "status": "ok",
+        "val_auroc": 0.890098330152323,
+        "test_auroc": 0.8883291009375623,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "pca_lr": {
+        "status": "ok",
+        "val_auroc": 0.894315348126948,
+        "test_auroc": 0.8911478300930099,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "iti": {
+        "status": "ok",
+        "val_auroc": 0.8669826073070258,
+        "test_auroc": 0.8599362199627781,
+        "timing": "input_side",
+        "family": "attention_head"
+      },
+      "kb_mlp": {
+        "status": "ok",
+        "val_auroc": 0.8751840148692027,
+        "test_auroc": 0.8791467950698107,
+        "timing": "generation_side",
+        "family": "residual_hidden"
+      },
+      "attn_satisfies": {
+        "status": "ok",
+        "val_auroc": 0.8749587289355477,
+        "test_auroc": 0.8769440881108502,
+        "timing": "input_side",
+        "family": "attention_flow"
+      },
+      "sep": {
+        "status": "ok",
+        "val_auroc": 0.6453434605368856,
+        "test_auroc": 0.6346440197021274,
+        "timing": "generation_side",
+        "family": "semantic_uncertainty"
+      },
+      "step": {
+        "status": "ok",
+        "val_auroc": 0.6021973806817725,
+        "test_auroc": 0.5960607653336764,
+        "timing": "generation_side",
+        "family": "step_trajectory"
+      }
+    },
+    "best_val_single_method": "pca_lr",
+    "best_val_single_test_auroc": 0.8911478300930099,
+    "best_test_single_method": "pca_lr",
+    "best_test_single_auroc_oracle": 0.8911478300930099,
+    "selection": {
+      "selected_variant": "single:pca_lr",
+      "selected_val_auroc": 0.894315348126948,
+      "selected_test_auroc": 0.8911478300930099,
+      "variant_ranking": [
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.9082584915094029,
+          "test_auroc": 0.9037319236116824
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.9068805333108565,
+          "test_auroc": 0.9014846702961844
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.9046327299200468,
+          "test_auroc": 0.9022700556855248
+        },
+        {
+          "variant": "single:pca_lr",
+          "val_auroc": 0.894315348126948,
+          "test_auroc": 0.8911478300930099
+        }
+      ],
+      "selection_margin": 0.02,
+      "margin_guard_triggered": true,
+      "guarded_best_variant": "weighted_all_methods",
+      "guarded_best_val_auroc": 0.9082584915094029,
+      "guarded_best_test_auroc": 0.9037319236116824
+    },
+    "diagnostic_selection_all_candidates": {
+      "selected_variant": "meta_lr_scaffold",
+      "selected_val_auroc": 0.9387640636021323,
+      "selected_test_auroc": 0.8955621936948767,
+      "variant_ranking": [
+        {
+          "variant": "meta_lr_scaffold",
+          "val_auroc": 0.9387640636021323,
+          "test_auroc": 0.8955621936948767
+        },
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.9082584915094029,
+          "test_auroc": 0.9037319236116824
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.9068805333108565,
+          "test_auroc": 0.9014846702961844
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.9046327299200468,
+          "test_auroc": 0.9022700556855248
+        },
+        {
+          "variant": "single:pca_lr",
+          "val_auroc": 0.894315348126948,
+          "test_auroc": 0.8911478300930099
+        }
+      ]
+    },
+    "selected_delta_vs_val_single": 0.0,
+    "selected_delta_vs_test_oracle_single": 0.0,
+    "candidate_details": {
+      "single:pca_lr": {
+        "method": "pca_lr"
+      },
+      "weighted_all_methods": {
+        "weights": {
+          "lr_probe": 0.21909247421023972,
+          "pca_lr": 0.23046479395632227,
+          "iti": 0.16601949533126983,
+          "kb_mlp": 0.18318967911811743,
+          "attn_satisfies": 0.18269510724509785,
+          "sep": 0.011616604092908968,
+          "step": 0.006921846046043867
+        }
+      },
+      "family_aware_scaffold": {
+        "group_weights": {
+          "residual_hidden": 0.38557455702494436,
+          "attention_head": 0.2777556271002109,
+          "attention_flow": 0.3056544291966937,
+          "semantic_uncertainty": 0.01943492930250511,
+          "step_trajectory": 0.011580457375645994
+        },
+        "within_group_weights": {
+          "residual_hidden": {
+            "lr_probe": 0.34625607464474695,
+            "pca_lr": 0.36422900963066007,
+            "kb_mlp": 0.2895149157245929
+          },
+          "attention_head": {
+            "iti": 1.0
+          },
+          "attention_flow": {
+            "attn_satisfies": 1.0
+          },
+          "semantic_uncertainty": {
+            "sep": 1.0
+          },
+          "step_trajectory": {
+            "step": 1.0
+          }
+        }
+      },
+      "timing_aware_scaffold": {
+        "group_weights": {
+          "input_side": 0.557143241419388,
+          "generation_side": 0.442856758580612
+        },
+        "within_group_weights": {
+          "input_side": {
+            "lr_probe": 0.274458467396999,
+            "pca_lr": 0.2887046411166099,
+            "iti": 0.2079736257983888,
+            "attn_satisfies": 0.22886326568800244
+          },
+          "generation_side": {
+            "kb_mlp": 0.9081018090673485,
+            "sep": 0.05758544500308859,
+            "step": 0.03431274592956285
+          }
+        }
+      },
+      "meta_lr_scaffold": {
+        "meta_input_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ]
+      }
+    }
+  },
+  "e2h_amc_5class": {
+    "status": "done",
+    "n_methods": 7,
+    "method_results": {
+      "lr_probe": {
+        "status": "ok",
+        "val_auroc": 0.8735348612182164,
+        "test_auroc": 0.8702425356656198,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "pca_lr": {
+        "status": "ok",
+        "val_auroc": 0.8624680809832151,
+        "test_auroc": 0.869878785700589,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "iti": {
+        "status": "ok",
+        "val_auroc": 0.8428780066054127,
+        "test_auroc": 0.8327911313202845,
+        "timing": "input_side",
+        "family": "attention_head"
+      },
+      "kb_mlp": {
+        "status": "ok",
+        "val_auroc": 0.8603671822575585,
+        "test_auroc": 0.856296647168047,
+        "timing": "generation_side",
+        "family": "residual_hidden"
+      },
+      "attn_satisfies": {
+        "status": "ok",
+        "val_auroc": 0.8441605379594062,
+        "test_auroc": 0.8425578443575267,
+        "timing": "input_side",
+        "family": "attention_flow"
+      },
+      "sep": {
+        "status": "ok",
+        "val_auroc": 0.6154969297642263,
+        "test_auroc": 0.6028201345723538,
+        "timing": "generation_side",
+        "family": "semantic_uncertainty"
+      },
+      "step": {
+        "status": "ok",
+        "val_auroc": 0.6044525552773617,
+        "test_auroc": 0.5908948366581999,
+        "timing": "generation_side",
+        "family": "step_trajectory"
+      }
+    },
+    "best_val_single_method": "lr_probe",
+    "best_val_single_test_auroc": 0.8702425356656198,
+    "best_test_single_method": "lr_probe",
+    "best_test_single_auroc_oracle": 0.8702425356656198,
+    "selection": {
+      "selected_variant": "single:lr_probe",
+      "selected_val_auroc": 0.8735348612182164,
+      "selected_test_auroc": 0.8702425356656198,
+      "variant_ranking": [
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.8818656057051271,
+          "test_auroc": 0.8823732850091763
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.8817305547937588,
+          "test_auroc": 0.8808264104218836
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.8816226472844797,
+          "test_auroc": 0.8792602201464679
+        },
+        {
+          "variant": "single:lr_probe",
+          "val_auroc": 0.8735348612182164,
+          "test_auroc": 0.8702425356656198
+        }
+      ],
+      "selection_margin": 0.02,
+      "margin_guard_triggered": true,
+      "guarded_best_variant": "weighted_all_methods",
+      "guarded_best_val_auroc": 0.8818656057051271,
+      "guarded_best_test_auroc": 0.8823732850091763
+    },
+    "diagnostic_selection_all_candidates": {
+      "selected_variant": "meta_lr_scaffold",
+      "selected_val_auroc": 0.9542614903872009,
+      "selected_test_auroc": 0.8684864349308137,
+      "variant_ranking": [
+        {
+          "variant": "meta_lr_scaffold",
+          "val_auroc": 0.9542614903872009,
+          "test_auroc": 0.8684864349308137
+        },
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.8818656057051271,
+          "test_auroc": 0.8823732850091763
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.8817305547937588,
+          "test_auroc": 0.8808264104218836
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.8816226472844797,
+          "test_auroc": 0.8792602201464679
+        },
+        {
+          "variant": "single:lr_probe",
+          "val_auroc": 0.8735348612182164,
+          "test_auroc": 0.8702425356656198
+        }
+      ]
+    },
+    "selected_delta_vs_val_single": 0.0,
+    "selected_delta_vs_test_oracle_single": 0.0,
+    "candidate_details": {
+      "single:lr_probe": {
+        "method": "lr_probe"
+      },
+      "weighted_all_methods": {
+        "weights": {
+          "lr_probe": 0.23756252571331604,
+          "pca_lr": 0.2080190146620531,
+          "iti": 0.1644404666163048,
+          "kb_mlp": 0.2028402467616751,
+          "attn_satisfies": 0.16699084254975438,
+          "sep": 0.010740006320051221,
+          "step": 0.009406897376845242
+        }
+      },
+      "family_aware_scaffold": {
+        "group_weights": {
+          "residual_hidden": 0.40323561104841266,
+          "attention_head": 0.2791191575271041,
+          "attention_flow": 0.2834481332139881,
+          "semantic_uncertainty": 0.018229950191537794,
+          "step_trajectory": 0.015967148018957444
+        },
+        "within_group_weights": {
+          "residual_hidden": {
+            "lr_probe": 0.36637036328192824,
+            "pca_lr": 0.3208081819405124,
+            "kb_mlp": 0.31282145477755935
+          },
+          "attention_head": {
+            "iti": 1.0
+          },
+          "attention_flow": {
+            "attn_satisfies": 1.0
+          },
+          "semantic_uncertainty": {
+            "sep": 1.0
+          },
+          "step_trajectory": {
+            "step": 1.0
+          }
+        }
+      },
+      "timing_aware_scaffold": {
+        "group_weights": {
+          "input_side": 0.5394210494594612,
+          "generation_side": 0.46057895054053877
+        },
+        "within_group_weights": {
+          "input_side": {
+            "lr_probe": 0.3057382202282999,
+            "pca_lr": 0.26771631226538944,
+            "iti": 0.2116315923389852,
+            "attn_satisfies": 0.21491387516732546
+          },
+          "generation_side": {
+            "kb_mlp": 0.9096499342878526,
+            "sep": 0.04816423860282743,
+            "step": 0.04218582710932007
+          }
+        }
+      },
+      "meta_lr_scaffold": {
+        "meta_input_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ]
+      }
+    }
+  },
+  "when2call_3class": {
+    "status": "done",
+    "n_methods": 7,
+    "method_results": {
+      "lr_probe": {
+        "status": "ok",
+        "val_auroc": 0.8099224701319362,
+        "test_auroc": 0.8157921417649278,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "pca_lr": {
+        "status": "ok",
+        "val_auroc": 0.8097363328495404,
+        "test_auroc": 0.7980690807439436,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "iti": {
+        "status": "ok",
+        "val_auroc": 0.8188523447557664,
+        "test_auroc": 0.8148517767161835,
+        "timing": "input_side",
+        "family": "attention_head"
+      },
+      "kb_mlp": {
+        "status": "ok",
+        "val_auroc": 0.749610710683624,
+        "test_auroc": 0.7653810581717003,
+        "timing": "generation_side",
+        "family": "residual_hidden"
+      },
+      "attn_satisfies": {
+        "status": "ok",
+        "val_auroc": 0.7953723975629955,
+        "test_auroc": 0.7738375076641967,
+        "timing": "input_side",
+        "family": "attention_flow"
+      },
+      "sep": {
+        "status": "ok",
+        "val_auroc": 0.5542395431026707,
+        "test_auroc": 0.531925404926121,
+        "timing": "generation_side",
+        "family": "semantic_uncertainty"
+      },
+      "step": {
+        "status": "ok",
+        "val_auroc": 0.5620726837388174,
+        "test_auroc": 0.551254964509918,
+        "timing": "generation_side",
+        "family": "step_trajectory"
+      }
+    },
+    "best_val_single_method": "iti",
+    "best_val_single_test_auroc": 0.8148517767161835,
+    "best_test_single_method": "lr_probe",
+    "best_test_single_auroc_oracle": 0.8157921417649278,
+    "selection": {
+      "selected_variant": "family_aware_scaffold",
+      "selected_val_auroc": 0.8391693931268603,
+      "selected_test_auroc": 0.8210977321146813,
+      "variant_ranking": [
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.8391693931268603,
+          "test_auroc": 0.8210977321146813
+        },
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.8390640246652398,
+          "test_auroc": 0.8219354555592321
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.83227124383984,
+          "test_auroc": 0.8201729207637539
+        },
+        {
+          "variant": "single:iti",
+          "val_auroc": 0.8188523447557664,
+          "test_auroc": 0.8148517767161835
+        }
+      ],
+      "selection_margin": 0.02,
+      "margin_guard_triggered": false
+    },
+    "diagnostic_selection_all_candidates": {
+      "selected_variant": "meta_lr_scaffold",
+      "selected_val_auroc": 0.8873506596803686,
+      "selected_test_auroc": 0.8129506283898742,
+      "variant_ranking": [
+        {
+          "variant": "meta_lr_scaffold",
+          "val_auroc": 0.8873506596803686,
+          "test_auroc": 0.8129506283898742
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.8391693931268603,
+          "test_auroc": 0.8210977321146813
+        },
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.8390640246652398,
+          "test_auroc": 0.8219354555592321
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.83227124383984,
+          "test_auroc": 0.8201729207637539
+        },
+        {
+          "variant": "single:iti",
+          "val_auroc": 0.8188523447557664,
+          "test_auroc": 0.8148517767161835
+        }
+      ]
+    },
+    "selected_delta_vs_val_single": 0.0062459553984978156,
+    "selected_delta_vs_test_oracle_single": 0.005305590349753531,
+    "candidate_details": {
+      "single:iti": {
+        "method": "iti"
+      },
+      "weighted_all_methods": {
+        "weights": {
+          "lr_probe": 0.2205947357795141,
+          "pca_lr": 0.22010255480797086,
+          "iti": 0.24554635271133685,
+          "kb_mlp": 0.10697403376963652,
+          "attn_satisfies": 0.18525372510700944,
+          "sep": 0.010258761479836986,
+          "step": 0.011269836344695392
+        }
+      },
+      "family_aware_scaffold": {
+        "group_weights": {
+          "residual_hidden": 0.32781551664732794,
+          "attention_head": 0.36489494724564997,
+          "attention_flow": 0.27529689406321756,
+          "semantic_uncertainty": 0.01524506549438147,
+          "step_trajectory": 0.016747576549423
+        },
+        "within_group_weights": {
+          "residual_hidden": {
+            "lr_probe": 0.4027867189111225,
+            "pca_lr": 0.4018880394483608,
+            "kb_mlp": 0.19532524164051665
+          },
+          "attention_head": {
+            "iti": 1.0
+          },
+          "attention_flow": {
+            "attn_satisfies": 1.0
+          },
+          "semantic_uncertainty": {
+            "sep": 1.0
+          },
+          "step_trajectory": {
+            "step": 1.0
+          }
+        }
+      },
+      "timing_aware_scaffold": {
+        "group_weights": {
+          "input_side": 0.696545113780504,
+          "generation_side": 0.30345488621949596
+        },
+        "within_group_weights": {
+          "input_side": {
+            "lr_probe": 0.25312151680163136,
+            "pca_lr": 0.2525567635512072,
+            "iti": 0.281752259516856,
+            "attn_satisfies": 0.2125694601303054
+          },
+          "generation_side": {
+            "kb_mlp": 0.8324657047295109,
+            "sep": 0.0798330847591957,
+            "step": 0.08770121051129341
+          }
+        }
+      },
+      "meta_lr_scaffold": {
+        "meta_input_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ]
+      }
+    }
+  },
+  "ragtruth_binary": {
+    "status": "done",
+    "n_methods": 11,
+    "method_results": {
+      "lr_probe": {
+        "status": "ok",
+        "val_auroc": 0.8016309849175018,
+        "test_auroc": 0.8318852635795052,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "pca_lr": {
+        "status": "ok",
+        "val_auroc": 0.8050726288085839,
+        "test_auroc": 0.833465376168029,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "iti": {
+        "status": "ok",
+        "val_auroc": 0.8431584674562203,
+        "test_auroc": 0.8675060189525481,
+        "timing": "input_side",
+        "family": "attention_head"
+      },
+      "kb_mlp": {
+        "status": "ok",
+        "val_auroc": 0.8015550663022573,
+        "test_auroc": 0.8228887451089134,
+        "timing": "generation_side",
+        "family": "residual_hidden"
+      },
+      "attn_satisfies": {
+        "status": "ok",
+        "val_auroc": 0.7742749772244154,
+        "test_auroc": 0.7830602247369047,
+        "timing": "input_side",
+        "family": "attention_flow"
+      },
+      "sep": {
+        "status": "ok",
+        "val_auroc": 0.6485316074501468,
+        "test_auroc": 0.6615544082500363,
+        "timing": "generation_side",
+        "family": "semantic_uncertainty"
+      },
+      "step": {
+        "status": "ok",
+        "val_auroc": 0.6621874683672437,
+        "test_auroc": 0.7049920994370574,
+        "timing": "generation_side",
+        "family": "step_trajectory"
+      },
+      "mm_probe": {
+        "status": "ok",
+        "val_auroc": 0.8016309849175018,
+        "test_auroc": 0.8318852635795051,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "lid": {
+        "status": "ok",
+        "val_auroc": 0.6913591962749266,
+        "test_auroc": 0.6962816737749726,
+        "timing": "generation_side",
+        "family": "geometry_uncertainty"
+      },
+      "llm_check": {
+        "status": "ok",
+        "val_auroc": 0.6827234537908695,
+        "test_auroc": 0.7218671737111519,
+        "timing": "generation_side",
+        "family": "mixed_uncertainty"
+      },
+      "seakr": {
+        "status": "ok",
+        "val_auroc": 0.5370862435469177,
+        "test_auroc": 0.5527225031800316,
+        "timing": "generation_side",
+        "family": "sample_consistency"
+      }
+    },
+    "best_val_single_method": "iti",
+    "best_val_single_test_auroc": 0.8675060189525481,
+    "best_test_single_method": "iti",
+    "best_test_single_auroc_oracle": 0.8675060189525481,
+    "selection": {
+      "selected_variant": "single:iti",
+      "selected_val_auroc": 0.8431584674562203,
+      "selected_test_auroc": 0.8675060189525481,
+      "variant_ranking": [
+        {
+          "variant": "single:iti",
+          "val_auroc": 0.8431584674562203,
+          "test_auroc": 0.8675060189525481
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.8400837635388199,
+          "test_auroc": 0.8662736191620561
+        },
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.8327196578601073,
+          "test_auroc": 0.8600940144983032
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.8298284239295475,
+          "test_auroc": 0.8570878392950673
+        }
+      ],
+      "selection_margin": 0.02,
+      "margin_guard_triggered": false
+    },
+    "diagnostic_selection_all_candidates": {
+      "selected_variant": "meta_lr_scaffold",
+      "selected_val_auroc": 0.861442200627594,
+      "selected_test_auroc": 0.8764101074388532,
+      "variant_ranking": [
+        {
+          "variant": "meta_lr_scaffold",
+          "val_auroc": 0.861442200627594,
+          "test_auroc": 0.8764101074388532
+        },
+        {
+          "variant": "single:iti",
+          "val_auroc": 0.8431584674562203,
+          "test_auroc": 0.8675060189525481
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.8400837635388199,
+          "test_auroc": 0.8662736191620561
+        },
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.8327196578601073,
+          "test_auroc": 0.8600940144983032
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.8298284239295475,
+          "test_auroc": 0.8570878392950673
+        }
+      ]
+    },
+    "selected_delta_vs_val_single": 0.0,
+    "selected_delta_vs_test_oracle_single": 0.0,
+    "candidate_details": {
+      "single:iti": {
+        "method": "iti"
+      },
+      "weighted_all_methods": {
+        "weights": {
+          "lr_probe": 0.1369410821787308,
+          "pca_lr": 0.1427151239258764,
+          "iti": 0.2254008937345099,
+          "kb_mlp": 0.1368163824615853,
+          "attn_satisfies": 0.09862045396118102,
+          "sep": 0.02180977462569086,
+          "step": 0.025693256838133532,
+          "mm_probe": 0.1369410821787308,
+          "lid": 0.03646268148644721,
+          "llm_check": 0.03287328765882827,
+          "seakr": 0.005725980950285681
+        }
+      },
+      "family_aware_scaffold": {
+        "group_weights": {
+          "residual_hidden": 0.24217677244052854,
+          "attention_head": 0.3824882706768034,
+          "attention_flow": 0.1673514521792606,
+          "semantic_uncertainty": 0.03700953817093995,
+          "step_trajectory": 0.04359951379628462,
+          "geometry_uncertainty": 0.06187441298443711,
+          "mixed_uncertainty": 0.055783483107641495,
+          "sample_consistency": 0.009716556644104255
+        },
+        "within_group_weights": {
+          "residual_hidden": {
+            "lr_probe": 0.24744795695849192,
+            "pca_lr": 0.25788145734415,
+            "kb_mlp": 0.24722262873886622,
+            "mm_probe": 0.24744795695849192
+          },
+          "attention_head": {
+            "iti": 1.0
+          },
+          "attention_flow": {
+            "attn_satisfies": 1.0
+          },
+          "semantic_uncertainty": {
+            "sep": 1.0
+          },
+          "step_trajectory": {
+            "step": 1.0
+          },
+          "geometry_uncertainty": {
+            "lid": 1.0
+          },
+          "mixed_uncertainty": {
+            "llm_check": 1.0
+          },
+          "sample_consistency": {
+            "seakr": 1.0
+          }
+        }
+      },
+      "timing_aware_scaffold": {
+        "group_weights": {
+          "input_side": 0.6222809030579856,
+          "generation_side": 0.37771909694201444
+        },
+        "within_group_weights": {
+          "input_side": {
+            "lr_probe": 0.18490094027637774,
+            "pca_lr": 0.192697181778609,
+            "iti": 0.3043413746084729,
+            "attn_satisfies": 0.13315956306016244,
+            "mm_probe": 0.18490094027637774
+          },
+          "generation_side": {
+            "kb_mlp": 0.5274719060021744,
+            "sep": 0.08408381499577415,
+            "step": 0.0990559091826514,
+            "lid": 0.14057556379994676,
+            "llm_check": 0.12673727653067043,
+            "seakr": 0.022075529488782927
+          }
+        }
+      },
+      "meta_lr_scaffold": {
+        "meta_input_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step",
+          "mm_probe",
+          "lid",
+          "llm_check",
+          "seakr"
+        ]
+      }
+    }
+  },
+  "fava_binary": {
+    "status": "done",
+    "n_methods": 11,
+    "method_results": {
+      "lr_probe": {
+        "status": "ok",
+        "val_auroc": 0.9900731077981652,
+        "test_auroc": 0.9827908109424467,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "pca_lr": {
+        "status": "ok",
+        "val_auroc": 0.9848767201834862,
+        "test_auroc": 0.9809688737361437,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "iti": {
+        "status": "ok",
+        "val_auroc": 0.9836940940366972,
+        "test_auroc": 0.9829170838181309,
+        "timing": "input_side",
+        "family": "attention_head"
+      },
+      "kb_mlp": {
+        "status": "ok",
+        "val_auroc": 0.9657396788990826,
+        "test_auroc": 0.9569950663383572,
+        "timing": "generation_side",
+        "family": "residual_hidden"
+      },
+      "attn_satisfies": {
+        "status": "ok",
+        "val_auroc": 0.9375,
+        "test_auroc": 0.9663482786301196,
+        "timing": "input_side",
+        "family": "attention_flow"
+      },
+      "sep": {
+        "status": "ok",
+        "val_auroc": 0.6177250573394496,
+        "test_auroc": 0.6515319605667849,
+        "timing": "generation_side",
+        "family": "semantic_uncertainty"
+      },
+      "step": {
+        "status": "ok",
+        "val_auroc": 0.6393348623853211,
+        "test_auroc": 0.5876920024172236,
+        "timing": "generation_side",
+        "family": "step_trajectory"
+      },
+      "mm_probe": {
+        "status": "ok",
+        "val_auroc": 0.9900731077981652,
+        "test_auroc": 0.982799830433567,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "lid": {
+        "status": "ok",
+        "val_auroc": 0.8310636467889907,
+        "test_auroc": 0.8840544416484023,
+        "timing": "generation_side",
+        "family": "geometry_uncertainty"
+      },
+      "llm_check": {
+        "status": "ok",
+        "val_auroc": 0.6177250573394496,
+        "test_auroc": 0.6190437535514246,
+        "timing": "generation_side",
+        "family": "mixed_uncertainty"
+      },
+      "seakr": {
+        "status": "ok",
+        "val_auroc": 0.44054615825688076,
+        "test_auroc": 0.530134119832959,
+        "timing": "generation_side",
+        "family": "sample_consistency"
+      }
+    },
+    "best_val_single_method": "lr_probe",
+    "best_val_single_test_auroc": 0.9827908109424467,
+    "best_test_single_method": "iti",
+    "best_test_single_auroc_oracle": 0.9829170838181309,
+    "selection": {
+      "selected_variant": "single:lr_probe",
+      "selected_val_auroc": 0.9900731077981652,
+      "selected_test_auroc": 0.9827908109424467,
+      "variant_ranking": [
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.9903239678899083,
+          "test_auroc": 0.9877515310586177
+        },
+        {
+          "variant": "single:lr_probe",
+          "val_auroc": 0.9900731077981652,
+          "test_auroc": 0.9827908109424467
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.9892488532110091,
+          "test_auroc": 0.9881123107034301
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.9889979931192661,
+          "test_auroc": 0.9860739057102398
+        }
+      ],
+      "selection_margin": 0.02,
+      "margin_guard_triggered": true,
+      "guarded_best_variant": "weighted_all_methods",
+      "guarded_best_val_auroc": 0.9903239678899083,
+      "guarded_best_test_auroc": 0.9877515310586177
+    },
+    "diagnostic_selection_all_candidates": {
+      "selected_variant": "meta_lr_scaffold",
+      "selected_val_auroc": 0.9922950114678899,
+      "selected_test_auroc": 0.9844954947641853,
+      "variant_ranking": [
+        {
+          "variant": "meta_lr_scaffold",
+          "val_auroc": 0.9922950114678899,
+          "test_auroc": 0.9844954947641853
+        },
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.9903239678899083,
+          "test_auroc": 0.9877515310586177
+        },
+        {
+          "variant": "single:lr_probe",
+          "val_auroc": 0.9900731077981652,
+          "test_auroc": 0.9827908109424467
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.9892488532110091,
+          "test_auroc": 0.9881123107034301
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.9889979931192661,
+          "test_auroc": 0.9860739057102398
+        }
+      ]
+    },
+    "selected_delta_vs_val_single": 0.0,
+    "selected_delta_vs_test_oracle_single": -0.00012627287568423018,
+    "candidate_details": {
+      "single:lr_probe": {
+        "method": "lr_probe"
+      },
+      "weighted_all_methods": {
+        "weights": {
+          "lr_probe": 0.18748709101527186,
+          "pca_lr": 0.17615307189930657,
+          "iti": 0.17367084807178254,
+          "kb_mlp": 0.14000929991016248,
+          "attn_satisfies": 0.09976652453451186,
+          "sep": 0.0021501409316957145,
+          "step": 0.0027866803540800727,
+          "mm_probe": 0.18748709101527186,
+          "lid": 0.027815584663104312,
+          "llm_check": 0.0021501409316957145,
+          "seakr": 0.000523526673117232
+        }
+      },
+      "family_aware_scaffold": {
+        "group_weights": {
+          "residual_hidden": 0.37773121407758437,
+          "attention_head": 0.3498955578050681,
+          "attention_flow": 0.20100013410338008,
+          "semantic_uncertainty": 0.004331900079996304,
+          "step_trajectory": 0.0056143393536735664,
+          "geometry_uncertainty": 0.0560402025983559,
+          "mixed_uncertainty": 0.004331900079996304,
+          "sample_consistency": 0.0010547519019454127
+        },
+        "within_group_weights": {
+          "residual_hidden": {
+            "lr_probe": 0.2712735854782645,
+            "pca_lr": 0.2548744830823739,
+            "kb_mlp": 0.20257834596109703,
+            "mm_probe": 0.2712735854782645
+          },
+          "attention_head": {
+            "iti": 1.0
+          },
+          "attention_flow": {
+            "attn_satisfies": 1.0
+          },
+          "semantic_uncertainty": {
+            "sep": 1.0
+          },
+          "step_trajectory": {
+            "step": 1.0
+          },
+          "geometry_uncertainty": {
+            "lid": 1.0
+          },
+          "mixed_uncertainty": {
+            "llm_check": 1.0
+          },
+          "sample_consistency": {
+            "seakr": 1.0
+          }
+        }
+      },
+      "timing_aware_scaffold": {
+        "group_weights": {
+          "input_side": 0.5724859760606024,
+          "generation_side": 0.42751402393939764
+        },
+        "within_group_weights": {
+          "input_side": {
+            "lr_probe": 0.2273770726775816,
+            "pca_lr": 0.2136316138606328,
+            "iti": 0.21062126907061746,
+            "attn_satisfies": 0.12099297171358661,
+            "mm_probe": 0.2273770726775816
+          },
+          "generation_side": {
+            "kb_mlp": 0.798067670993434,
+            "sep": 0.012256028469302424,
+            "step": 0.015884369834081417,
+            "lid": 0.15855174537440184,
+            "llm_check": 0.012256028469302424,
+            "seakr": 0.0029841568594779024
+          }
+        }
+      },
+      "meta_lr_scaffold": {
+        "meta_input_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step",
+          "mm_probe",
+          "lid",
+          "llm_check",
+          "seakr"
+        ]
+      }
+    }
+  },
+  "belebele": {
+    "status": "done",
+    "n_methods": 7,
+    "method_results": {
+      "lr_probe": {
+        "status": "ok",
+        "val_auroc": 0.9117165721758561,
+        "test_auroc": 0.9258163137530767,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "pca_lr": {
+        "status": "ok",
+        "val_auroc": 0.9278081061041306,
+        "test_auroc": 0.9337465125346796,
+        "timing": "input_side",
+        "family": "residual_hidden"
+      },
+      "iti": {
+        "status": "ok",
+        "val_auroc": 0.9203288568580302,
+        "test_auroc": 0.9272479191730166,
+        "timing": "input_side",
+        "family": "attention_head"
+      },
+      "kb_mlp": {
+        "status": "ok",
+        "val_auroc": 0.5082725906980066,
+        "test_auroc": 0.47535787275565117,
+        "timing": "generation_side",
+        "family": "residual_hidden"
+      },
+      "attn_satisfies": {
+        "status": "ok",
+        "val_auroc": 0.6615788718857833,
+        "test_auroc": 0.6613346721080859,
+        "timing": "input_side",
+        "family": "attention_flow"
+      },
+      "sep": {
+        "status": "ok",
+        "val_auroc": 0.9149969416853645,
+        "test_auroc": 0.9367581964623813,
+        "timing": "generation_side",
+        "family": "semantic_uncertainty"
+      },
+      "step": {
+        "status": "ok",
+        "val_auroc": 0.8971787932264692,
+        "test_auroc": 0.9300742614911931,
+        "timing": "generation_side",
+        "family": "step_trajectory"
+      }
+    },
+    "best_val_single_method": "pca_lr",
+    "best_val_single_test_auroc": 0.9337465125346796,
+    "best_test_single_method": "sep",
+    "best_test_single_auroc_oracle": 0.9367581964623813,
+    "selection": {
+      "selected_variant": "weighted_all_methods",
+      "selected_val_auroc": 0.9719842252978605,
+      "selected_test_auroc": 0.9688677193743905,
+      "variant_ranking": [
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.9719842252978605,
+          "test_auroc": 0.9688677193743905
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.971493041874359,
+          "test_auroc": 0.9691320396749987
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.9709887161595909,
+          "test_auroc": 0.9693365594532277
+        },
+        {
+          "variant": "single:pca_lr",
+          "val_auroc": 0.9278081061041306,
+          "test_auroc": 0.9337465125346796
+        }
+      ],
+      "selection_margin": 0.02,
+      "margin_guard_triggered": false
+    },
+    "diagnostic_selection_all_candidates": {
+      "selected_variant": "meta_lr_scaffold",
+      "selected_val_auroc": 0.9904989888246782,
+      "selected_test_auroc": 0.9695856289949432,
+      "variant_ranking": [
+        {
+          "variant": "meta_lr_scaffold",
+          "val_auroc": 0.9904989888246782,
+          "test_auroc": 0.9695856289949432
+        },
+        {
+          "variant": "weighted_all_methods",
+          "val_auroc": 0.9719842252978605,
+          "test_auroc": 0.9688677193743905
+        },
+        {
+          "variant": "family_aware_scaffold",
+          "val_auroc": 0.971493041874359,
+          "test_auroc": 0.9691320396749987
+        },
+        {
+          "variant": "timing_aware_scaffold",
+          "val_auroc": 0.9709887161595909,
+          "test_auroc": 0.9693365594532277
+        },
+        {
+          "variant": "single:pca_lr",
+          "val_auroc": 0.9278081061041306,
+          "test_auroc": 0.9337465125346796
+        }
+      ]
+    },
+    "selected_delta_vs_val_single": 0.03512120683971098,
+    "selected_delta_vs_test_oracle_single": 0.03210952291200919,
+    "candidate_details": {
+      "single:pca_lr": {
+        "method": "pca_lr"
+      },
+      "weighted_all_methods": {
+        "weights": {
+          "lr_probe": 0.19013049022589978,
+          "pca_lr": 0.2306286945117515,
+          "iti": 0.21083124848509452,
+          "kb_mlp": 0.0015013772437520011,
+          "attn_satisfies": 0.009450410914814678,
+          "sep": 0.19776413064342568,
+          "step": 0.15969364797526167
+        }
+      },
+      "family_aware_scaffold": {
+        "group_weights": {
+          "residual_hidden": 0.2853015664903059,
+          "attention_head": 0.26081093501936065,
+          "attention_flow": 0.011690726705459148,
+          "semantic_uncertainty": 0.24464612431515065,
+          "step_trajectory": 0.1975506474697237
+        },
+        "within_group_weights": {
+          "residual_hidden": {
+            "lr_probe": 0.45026816933539077,
+            "pca_lr": 0.5461762600550618,
+            "kb_mlp": 0.003555570609547294
+          },
+          "attention_head": {
+            "iti": 1.0
+          },
+          "attention_flow": {
+            "attn_satisfies": 1.0
+          },
+          "semantic_uncertainty": {
+            "sep": 1.0
+          },
+          "step_trajectory": {
+            "step": 1.0
+          }
+        }
+      },
+      "timing_aware_scaffold": {
+        "group_weights": {
+          "input_side": 0.5383579765328951,
+          "generation_side": 0.4616420234671049
+        },
+        "within_group_weights": {
+          "input_side": {
+            "lr_probe": 0.29659653041561856,
+            "pca_lr": 0.35977223077264797,
+            "iti": 0.3288889474254036,
+            "attn_satisfies": 0.0147422913863297
+          },
+          "generation_side": {
+            "kb_mlp": 0.004182585175031335,
+            "sep": 0.5509376969874896,
+            "step": 0.44487971783747904
+          }
+        }
+      },
+      "meta_lr_scaffold": {
+        "meta_input_methods": [
+          "lr_probe",
+          "pca_lr",
+          "iti",
+          "kb_mlp",
+          "attn_satisfies",
+          "sep",
+          "step"
+        ]
+      }
+    }
+  }
+}
