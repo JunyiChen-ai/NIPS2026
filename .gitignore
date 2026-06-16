@@ -6,8 +6,10 @@ extraction/hf_cache/
 extraction/logs/
 extraction/__pycache__/
 reproduce/processed_features/
+reproduce/processed_features_correctness/
 reproduce/data/
 reproduce/logs/
+reproduce/logs_correctness/
 reproduce/__pycache__/
 
 # Large baseline repos (cloned separately)
@@ -21,6 +23,7 @@ __pycache__/
 *.bin
 *.h5
 *.xlsx
+*.pid
 
 # SLURM / run scripts (cluster-local infrastructure, not portable across machines)
 slurm/
@@ -45,8 +48,9 @@ reproduce/__pycache__/
 *.fdb_latexmk
 *.synctex.gz
 
-# Paper / slides / paper-plan (tracked separately, not in main repo)
+# Paper / slides / figures (tracked separately, not in main repo)
 paper/
 PAPER_PLAN.md
-slides/figures/
+slides/
+figures/
 Formatting_Instructions_For_NeurIPS_2026/
